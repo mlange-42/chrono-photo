@@ -25,6 +25,7 @@ impl Cli {
     }
 }
 
+#[allow(dead_code)]
 pub struct CliParsed {
     file: Option<String>,
     pattern: Option<String>,

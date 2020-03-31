@@ -7,4 +7,5 @@ edition = "2018"
 [dependencies]
 image = "0.23"
 rand = "0.5.5"
+glob = "0.3"
 structopt = "0.3" # TODO put CLI in feature

@@ -1,34 +1,28 @@
 //! Lists files by pattern
+extern crate glob;
 
-use std::ffi::OsString;
-use std::fs;
-use std::path::Path;
+use std::path::PathBuf;
 
 #[derive(Debug)]
 pub struct FileLister {
-    path: OsString,
-    pattern: OsString,
+    pattern: String,
 }
 
 impl FileLister {
-    pub fn new(pattern: &str) -> Result<Self, std::io::Error> {
-        let pp = Path::new(pattern);
-
-        let path: OsString = pp
-            .parent()
-            .expect("Path required")
-            .as_os_str()
-            .to_os_string();
-        let pattern: OsString = pp.file_name()
-            .expect("A search pattern requires at least a file pattern, optionally preceeded by a path.")
-            .to_os_string();
-
-        Ok(FileLister { path, pattern })
+    pub fn new(pattern: &str) -> Self {
+        FileLister {
+            pattern: pattern.to_string(),
+        }
     }
 
-    pub fn list_files(&self) -> () {
-        let paths = fs::read_dir(path);
-        println!("{:?}", paths);
+    pub fn list_files<'a>(&self) -> Result<Vec<PathBuf>, glob::PatternError> {
+        // TODO Return an iterator instead of a vector. Having problems with "size not known at compile time".
+        let mut paths: glob::Paths = glob::glob(&self.pattern)?;
+        let vec = paths
+            .filter(|p| p.is_ok() && p.as_ref().unwrap().is_file())
+            .map(|p| p.unwrap())
+            .collect();
+        Ok(vec)
     }
 }
 
@@ -38,10 +32,13 @@ mod test {
 
     #[test]
     fn parse_pattern() {
-        let pattern = "test/path/*.jpg";
+        let pattern = "test_data/*.txt";
         let lister = FileLister::new(&pattern);
 
-        let pattern = "*.jpg";
-        let lister = FileLister::new(&pattern);
+        let list = lister.list_files().expect("Error processing pattern");
+
+        for entry in list {
+            //println!("{:?}", entry);
+        }
     }
 }
