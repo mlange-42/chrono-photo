@@ -1,43 +1,55 @@
-use chrono_photo::cli::Cli;
-use chrono_photo::img_stream::{ImageStream, PixelInputStream, PixelOutputStream};
+use chrono_photo::cli::{Cli, CliParsed};
+use chrono_photo::img_stream::ImageStream;
+use chrono_photo::time_slice::{TimeSliceError, TimeSlicer};
+use image::flat::SampleLayout;
 use std::path::PathBuf;
 use structopt::StructOpt;
 
 fn main() {
-    //let args = Cli::from_args().parse().unwrap();
+    let mut args = CliParsed {
+        pattern: "test_data/*.png".to_string(),
+        temp_dir: Some(PathBuf::from("test_data/temp")),
+    };
 
-    let pattern = "test_data/*.png"; //args.pattern.unwrap();
-    let img_stream = ImageStream::from_pattern(&pattern).expect("Error processing pattern");
-    let out_file = "test_data/temp.bin";
+    let mut args = Cli::from_args().parse().unwrap();
 
-    let mut layout: Option<image::flat::SampleLayout> = None;
-    let mut count = 0;
-    let mut out_stream = PixelOutputStream::new(PathBuf::from(out_file)).unwrap();
-    for img in img_stream {
-        let dyn_img = img.unwrap();
-        let pix = dyn_img.as_flat_samples_u8().unwrap();
-        match layout {
-            Some(lay) => {
-                if pix.layout != lay {
-                    panic!("Image layout does not fit!");
-                }
-            }
-            None => layout = Some(pix.layout),
+    // Determine tem directory
+    if args.temp_dir.is_none() {
+        let mut dir = std::env::temp_dir();
+        dir.push("chrono-photo");
+        args.temp_dir = Some(dir);
+    }
+    let temp_dir = args.temp_dir.as_ref().unwrap();
+    println!("Temp directory: {:?}", temp_dir);
+    if !temp_dir.is_dir() {
+        std::fs::create_dir(temp_dir)
+            .expect(&format!("Unable to create temp directory {:?}", temp_dir));
+        println!("  ... created.");
+    }
+
+    // Convert to time slices
+    let (temp_files, layout) = match to_time_slices(&args.pattern, &args.temp_dir.unwrap()) {
+        Ok(fl) => fl,
+        Err(err) => {
+            println!("{:?}", err.to_string());
+            return;
         }
-        out_stream.write_chunk(pix.samples).unwrap();
-        count += 1;
-    }
-    out_stream.close().unwrap();
-    if count == 0 {
-        println!("WARNING: no images found for pattern {}", pattern);
-    } else {
-        println!("Processed {} images", count);
-    }
+    };
 
-    let mut reader = PixelInputStream::new(PathBuf::from(out_file)).unwrap();
+    // Process time slices
 
-    let mut buff = Vec::new();
-    while let Some(size) = reader.read_chunk(&mut buff) {
-        buff.clear();
-    }
+    println!(
+        "Created {:?} temp files. Layout: {:?}",
+        temp_files.len(),
+        layout
+    );
+}
+
+fn to_time_slices(
+    image_pattern: &str,
+    temp_path: &PathBuf,
+) -> Result<(Vec<PathBuf>, SampleLayout), TimeSliceError> {
+    let images = ImageStream::from_pattern(image_pattern).expect("Error processing pattern");
+
+    TimeSlicer::write_time_slices(images, temp_path.clone())
 }

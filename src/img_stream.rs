@@ -35,20 +35,23 @@ impl Iterator for ImageStream {
 }
 
 pub struct PixelOutputStream {
+    path: PathBuf,
     stream: BufWriter<std::fs::File>,
 }
 impl PixelOutputStream {
-    pub fn new(file: PathBuf) -> std::io::Result<Self> {
-        let stream = PixelOutputStream {
-            stream: BufWriter::new(File::create(file)?),
-        };
+    pub fn new(path: PathBuf) -> std::io::Result<Self> {
+        let stream = BufWriter::new(File::create(&path)?);
+        let stream = PixelOutputStream { path, stream };
         Ok(stream)
+    }
+    pub fn path(&self) -> &PathBuf {
+        &self.path
     }
     pub fn write_chunk(&mut self, bytes: &[u8]) -> std::io::Result<()> {
         let mut e = GzEncoder::new(Vec::new(), Compression::default());
         e.write_all(bytes)?;
         let compressed = &e.finish()?;
-        println!("Compressed {} to {}", bytes.len(), compressed.len());
+        //println!("Compressed {} to {}", bytes.len(), compressed.len());
         self.stream
             .write_u32::<BigEndian>(compressed.len() as u32)?;
         self.stream.write_all(compressed)
@@ -87,7 +90,7 @@ impl PixelInputStream {
         }
         let mut d = GzDecoder::new(&compressed[..]);
         let size = d.read_to_end(out).unwrap();
-        println!("Decompressed {} to {}", compressed.len(), size);
+        //println!("Decompressed {} to {}", compressed.len(), size);
         Some(size)
     }
 }

@@ -1,5 +1,6 @@
 //! Command-line interface for chrono-photo.
 use core::fmt;
+use std::path::PathBuf;
 use structopt::StructOpt;
 
 /// Raw command line arguments.
@@ -7,28 +8,24 @@ use structopt::StructOpt;
 #[structopt(name = "chrono-photo command line application")]
 pub struct Cli {
     #[structopt(short, long)]
-    file: Option<String>,
-    #[structopt(short, long)]
-    pattern: Option<String>,
+    pattern: String,
+    #[structopt(short, long, name = "temp-dir")]
+    temp_dir: Option<String>,
 }
 
 impl Cli {
     pub fn parse(&self) -> Result<CliParsed, ParseCliError> {
-        if self.file.is_none() && self.pattern.is_none() {
-            return Err( ParseCliError("Missing required option: either specify `--file` for processing a video, or `--pattern` for processing a sequence of images".to_string()) );
-        }
-
         Ok(CliParsed {
-            file: self.file.clone(),
             pattern: self.pattern.clone(),
+            temp_dir: self.temp_dir.as_ref().map(|d| PathBuf::from(d)),
         })
     }
 }
 
 #[allow(dead_code)]
 pub struct CliParsed {
-    pub file: Option<String>,
-    pub pattern: Option<String>,
+    pub pattern: String,
+    pub temp_dir: Option<PathBuf>,
 }
 
 /// Error type for failed parsing of `String`s to `enum`s.
