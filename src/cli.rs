@@ -27,8 +27,8 @@ impl Cli {
 
 #[allow(dead_code)]
 pub struct CliParsed {
-    file: Option<String>,
-    pattern: Option<String>,
+    pub file: Option<String>,
+    pub pattern: Option<String>,
 }
 
 /// Error type for failed parsing of `String`s to `enum`s.

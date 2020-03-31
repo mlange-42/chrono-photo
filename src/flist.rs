@@ -1,6 +1,7 @@
 //! Lists files by pattern
 extern crate glob;
 
+use std::collections::VecDeque;
 use std::path::PathBuf;
 
 #[derive(Debug)]
@@ -15,9 +16,9 @@ impl FileLister {
         }
     }
 
-    pub fn list_files<'a>(&self) -> Result<Vec<PathBuf>, glob::PatternError> {
+    pub fn list_files<'a>(&self) -> Result<VecDeque<PathBuf>, glob::PatternError> {
         // TODO Return an iterator instead of a vector. Having problems with "size not known at compile time".
-        let mut paths: glob::Paths = glob::glob(&self.pattern)?;
+        let paths: glob::Paths = glob::glob(&self.pattern)?;
         let vec = paths
             .filter(|p| p.is_ok() && p.as_ref().unwrap().is_file())
             .map(|p| p.unwrap())
