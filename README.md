@@ -7,7 +7,7 @@ Chronophotography command line tool and library in [Rust](https://www.rust-lang.
 
 This tool creates chrono-photos like [Xavi Bou's "Ornithographies"](http://www.xavibou.com/) from video footage or photo series.
 
-_Warning:_ I just started this project, and there is nothing useful is available yet. However, the image above shows a proof of concept for the intended algorithm. 
+_Warning:_ I just started this project, and there is nothing useful available yet. However, the image above shows a proof of concept for the intended algorithm. 
 
 ## Command line tool
 
