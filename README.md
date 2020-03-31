@@ -5,9 +5,12 @@ Chronophotography command line tool and library in [Rust](https://www.rust-lang.
 ![A simple Chronophotography example](https://user-images.githubusercontent.com/44003176/77975353-236da480-72fa-11ea-9ff9-5c110895fe5d.jpg)
 <sup>_A simple Chronophotography example_</sup>
 
-This tool creates chrono-photos like [Xavi Bou's "Ornithographies"](http://www.xavibou.com/) from video footage or photo series.
+This tool creates chrono-photos like 
+[Xavi Bou's "Ornithographies"](http://www.xavibou.com/) 
+from video footage or photo series.
 
-_Warning:_ I just started this project, and there is nothing useful is available yet. However, the image above shows a proof of concept for the intended algorithm. 
+_Warning:_ I just started this project, and there is nothing useful available yet. 
+However, the image above shows a proof of concept for the intended algorithm, which is based on outlier detection. 
 
 ## Command line tool
 
