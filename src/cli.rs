@@ -1,4 +1,6 @@
 //! Command-line interface for chrono-photo.
+use crate::chrono::SelectionMode;
+use crate::EnumFromString;
 use core::fmt;
 use std::path::PathBuf;
 use structopt::StructOpt;
@@ -13,9 +15,12 @@ pub struct Cli {
     /// Temp directory. Optional, default system temp directory.
     #[structopt(short, long, name = "temp-dir")]
     temp_dir: Option<String>,
-    /// PAth to output file
+    /// Path to output file
     #[structopt(short, long)]
     output: String,
+    /// Pixel selection mode (lighter|darker|outlier). Optional, default 'outlier'.
+    #[structopt(short, long)]
+    mode: Option<String>,
 }
 
 impl Cli {
@@ -24,6 +29,8 @@ impl Cli {
             pattern: self.pattern.clone(),
             temp_dir: self.temp_dir.as_ref().map(|d| PathBuf::from(d)),
             output: PathBuf::from(&self.output),
+            mode: SelectionMode::from_string(&self.mode.as_ref().unwrap_or(&"outlier".to_string()))
+                .unwrap(),
         })
     }
 }
@@ -34,6 +41,7 @@ pub struct CliParsed {
     pub pattern: String,
     pub temp_dir: Option<PathBuf>,
     pub output: PathBuf,
+    pub mode: SelectionMode,
 }
 
 /// Error type for failed parsing of `String`s to `enum`s.

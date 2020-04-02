@@ -11,8 +11,9 @@ impl TimeSlicer {
     pub fn write_time_slices(
         images: ImageStream,
         temp_dir: PathBuf,
-    ) -> Result<(Vec<PathBuf>, SampleLayout), TimeSliceError> {
+    ) -> Result<(Vec<PathBuf>, SampleLayout, usize), TimeSliceError> {
         assert!(temp_dir.is_dir());
+        let size_hint = images.len();
 
         let mut layout: Option<SampleLayout> = None;
         let mut count = 0;
@@ -76,6 +77,7 @@ impl TimeSlicer {
                     .map(|stream| stream.path().clone())
                     .collect(),
                 layout.unwrap(),
+                size_hint,
             ))
         }
     }

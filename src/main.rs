@@ -1,5 +1,5 @@
 use chrono_photo::chrono::ChronoProcessor;
-use chrono_photo::cli::{Cli, CliParsed};
+use chrono_photo::cli::Cli;
 use chrono_photo::img_stream::ImageStream;
 use chrono_photo::time_slice::{TimeSliceError, TimeSlicer};
 use image::flat::SampleLayout;
@@ -7,13 +7,13 @@ use std::path::PathBuf;
 use structopt::StructOpt;
 
 fn main() {
-    let mut args = CliParsed {
-        pattern: "test_data/*.png".to_string(),
+    /*let mut args = CliParsed {
+        pattern: "test_data/TestImage-*.png".to_string(),
         temp_dir: Some(PathBuf::from("test_data/temp")),
         output: PathBuf::from("test_data/out.png"),
-    };
+    };*/
 
-    //let mut args = Cli::from_args().parse().unwrap();
+    let mut args = Cli::from_args().parse().unwrap();
 
     // Determine temp directory
     if args.temp_dir.is_none() {
@@ -34,16 +34,20 @@ fn main() {
     println!("{:#?}", args);
 
     // Convert to time slices and save to temp files
-    let (temp_files, layout) = match to_time_slices(&args.pattern, &args.temp_dir.unwrap()) {
-        Ok(fl) => fl,
-        Err(err) => {
-            println!("{:?}", err.to_string());
-            return;
-        }
-    };
+    let (temp_files, layout, size_hint) =
+        match to_time_slices(&args.pattern, &args.temp_dir.unwrap()) {
+            Ok(fls) => fls,
+            Err(err) => {
+                println!("{:?}", err.to_string());
+                return;
+            }
+        };
 
     // Process time slices
-    let buff = ChronoProcessor::process(&layout, &temp_files[..]).unwrap();
+    let processor = ChronoProcessor::new(args.mode);
+    let buff = processor
+        .process(&layout, &temp_files[..], Some(size_hint))
+        .unwrap();
 
     image::save_buffer(
         &args.output,
@@ -70,8 +74,7 @@ fn main() {
 fn to_time_slices(
     image_pattern: &str,
     temp_path: &PathBuf,
-) -> Result<(Vec<PathBuf>, SampleLayout), TimeSliceError> {
+) -> Result<(Vec<PathBuf>, SampleLayout, usize), TimeSliceError> {
     let images = ImageStream::from_pattern(image_pattern).expect("Error processing pattern");
-
     TimeSlicer::write_time_slices(images, temp_path.clone())
 }

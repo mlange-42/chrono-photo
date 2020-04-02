@@ -1,4 +1,4 @@
-//! Provides an image stream from a list of files or a (TODO) video file.
+//! Provides an image stream from a list of files, or a (TODO) video file.
 use crate::flist::FileLister;
 use byteorder::{BigEndian, ReadBytesExt, WriteBytesExt};
 use flate2::read::GzDecoder;
@@ -31,6 +31,11 @@ impl Iterator for ImageStream {
             let path = self.files.pop_front().unwrap();
             Some(image::open(&path))
         }
+    }
+}
+impl ImageStream {
+    pub fn len(&self) -> usize {
+        self.files.len()
     }
 }
 
@@ -114,7 +119,7 @@ mod test {
     }
     #[test]
     fn pixel_stream() {
-        let mut stream = PixelOutputStream::new(PathBuf::from("test_data/temp.bin")).unwrap();
+        let mut stream = PixelOutputStream::new(&PathBuf::from("test_data/temp.bin")).unwrap();
 
         stream.write_chunk(&[0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10]);
         /*
