@@ -1,5 +1,5 @@
 //! Command-line interface for chrono-photo.
-use crate::chrono::SelectionMode;
+use crate::chrono::{BackgroundMode, SelectionMode};
 use crate::EnumFromString;
 use core::fmt;
 use std::path::PathBuf;
@@ -21,6 +21,9 @@ pub struct Cli {
     /// Pixel selection mode (lighter|darker|outlier-<threshold>). Optional, default 'outlier-3.0'.
     #[structopt(short, long)]
     mode: Option<String>,
+    /// Background pixel selection mode (first|random|average). Optional, default 'first'.
+    #[structopt(short, long)]
+    background: Option<String>,
 }
 
 impl Cli {
@@ -31,6 +34,10 @@ impl Cli {
             output: PathBuf::from(&self.output),
             mode: SelectionMode::from_string(
                 &self.mode.as_ref().unwrap_or(&"outlier-3.0".to_string()),
+            )
+            .unwrap(),
+            background: BackgroundMode::from_string(
+                &self.background.as_ref().unwrap_or(&"first".to_string()),
             )
             .unwrap(),
         })
@@ -44,6 +51,7 @@ pub struct CliParsed {
     pub temp_dir: Option<PathBuf>,
     pub output: PathBuf,
     pub mode: SelectionMode,
+    pub background: BackgroundMode,
 }
 
 /// Error type for failed parsing of `String`s to `enum`s.

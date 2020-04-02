@@ -41,17 +41,42 @@ impl EnumFromString for SelectionMode {
     }
 }
 
+#[derive(Debug, Clone)]
+pub enum BackgroundMode {
+    First,
+    Random,
+    Average,
+}
+impl EnumFromString for BackgroundMode {
+    fn from_string(str: &str) -> Result<Self, ParseEnumError>
+    where
+        Self: std::marker::Sized,
+    {
+        match str {
+            "first" => Ok(BackgroundMode::First),
+            "random" => Ok(BackgroundMode::Random),
+            "average" => Ok(BackgroundMode::Average),
+            _ => Err(ParseEnumError(format!(
+                        "Not a pixel selection mode: {}. Must be one of (lighter|darker|outlier-<threshold>)",
+                        str
+                    ))),
+        }
+    }
+}
+
 pub struct ChronoProcessor {
     mode: SelectionMode,
+    background: BackgroundMode,
     mean: [f32; 4],
     sd: [f32; 4],
     rng: ThreadRng,
 }
 
 impl ChronoProcessor {
-    pub fn new(mode: SelectionMode) -> Self {
+    pub fn new(mode: SelectionMode, bg_mode: BackgroundMode) -> Self {
         ChronoProcessor {
             mode,
+            background: bg_mode,
             mean: [0.0; 4],
             sd: [0.0; 4],
             rng: rand::thread_rng(),
@@ -193,14 +218,27 @@ impl ChronoProcessor {
                 max_index = sample_idx;
             }
         }
-        let is_outlier = max_dist_sq >= threshold * threshold;
-        if !is_outlier {
-            max_index = 0; //self.rng.gen_range(0, samples);
-        }
-        let sample = &pixel_data[(max_index * channels)..(max_index * channels + channels)];
+        match self.background {
+            BackgroundMode::Average => {
+                for ch in 0..channels {
+                    pixel[ch] = self.mean[ch].round() as u8;
+                }
+            }
+            BackgroundMode::First | BackgroundMode::Random => {
+                let is_outlier = max_dist_sq >= threshold * threshold;
+                if !is_outlier {
+                    max_index = match self.background {
+                        BackgroundMode::First => 0,
+                        BackgroundMode::Random => self.rng.gen_range(0, samples),
+                        _ => 0,
+                    }
+                }
+                let sample = &pixel_data[(max_index * channels)..(max_index * channels + channels)];
 
-        for ch in 0..channels {
-            pixel[ch] = sample[ch];
+                for ch in 0..channels {
+                    pixel[ch] = sample[ch];
+                }
+            }
         }
     }
 }
