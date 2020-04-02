@@ -7,10 +7,15 @@ use structopt::StructOpt;
 #[derive(StructOpt)]
 #[structopt(name = "chrono-photo command line application")]
 pub struct Cli {
+    /// File search pattern
     #[structopt(short, long)]
     pattern: String,
+    /// Temp directory. Optional, default system temp directory.
     #[structopt(short, long, name = "temp-dir")]
     temp_dir: Option<String>,
+    /// PAth to output file
+    #[structopt(short, long)]
+    output: String,
 }
 
 impl Cli {
@@ -18,14 +23,17 @@ impl Cli {
         Ok(CliParsed {
             pattern: self.pattern.clone(),
             temp_dir: self.temp_dir.as_ref().map(|d| PathBuf::from(d)),
+            output: PathBuf::from(&self.output),
         })
     }
 }
 
 #[allow(dead_code)]
+#[derive(Debug)]
 pub struct CliParsed {
     pub pattern: String,
     pub temp_dir: Option<PathBuf>,
+    pub output: PathBuf,
 }
 
 /// Error type for failed parsing of `String`s to `enum`s.

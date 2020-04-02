@@ -39,9 +39,12 @@ pub struct PixelOutputStream {
     stream: BufWriter<std::fs::File>,
 }
 impl PixelOutputStream {
-    pub fn new(path: PathBuf) -> std::io::Result<Self> {
-        let stream = BufWriter::new(File::create(&path)?);
-        let stream = PixelOutputStream { path, stream };
+    pub fn new(path: &PathBuf) -> std::io::Result<Self> {
+        let stream = BufWriter::new(File::create(path)?);
+        let stream = PixelOutputStream {
+            path: path.clone(),
+            stream,
+        };
         Ok(stream)
     }
     pub fn path(&self) -> &PathBuf {
@@ -65,7 +68,7 @@ pub struct PixelInputStream {
     stream: BufReader<File>,
 }
 impl PixelInputStream {
-    pub fn new(file: PathBuf) -> std::io::Result<Self> {
+    pub fn new(file: &PathBuf) -> std::io::Result<Self> {
         let f = File::open(file)?;
         //let d = GzDecoder::new(f);
         let stream = PixelInputStream {

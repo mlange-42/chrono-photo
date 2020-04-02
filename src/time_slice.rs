@@ -35,13 +35,15 @@ impl TimeSlicer {
                     pix.layout
                 }
             };
+            // TODO: Change to one file per X rows instead of one per row?
+            // E.g. 4K would produce 2160 files.
             if out_streams.is_none() {
                 out_streams = Some(
                     (0..lay.height)
                         .map(|i| {
                             let mut path = PathBuf::from(&temp_dir);
                             path.push(format!("temp-{:05}.gz", i));
-                            PixelOutputStream::new(path.clone())
+                            PixelOutputStream::new(&path)
                                 .expect(&format!("Unable to create file {:?}", path))
                         })
                         .collect(),

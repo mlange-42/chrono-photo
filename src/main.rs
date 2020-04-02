@@ -1,3 +1,4 @@
+use chrono_photo::chrono::ChronoProcessor;
 use chrono_photo::cli::{Cli, CliParsed};
 use chrono_photo::img_stream::ImageStream;
 use chrono_photo::time_slice::{TimeSliceError, TimeSlicer};
@@ -9,11 +10,12 @@ fn main() {
     let mut args = CliParsed {
         pattern: "test_data/*.png".to_string(),
         temp_dir: Some(PathBuf::from("test_data/temp")),
+        output: PathBuf::from("test_data/out.png"),
     };
 
-    let mut args = Cli::from_args().parse().unwrap();
+    //let mut args = Cli::from_args().parse().unwrap();
 
-    // Determine tem directory
+    // Determine temp directory
     if args.temp_dir.is_none() {
         let mut dir = std::env::temp_dir();
         dir.push("chrono-photo");
@@ -21,13 +23,17 @@ fn main() {
     }
     let temp_dir = args.temp_dir.as_ref().unwrap();
     println!("Temp directory: {:?}", temp_dir);
+
+    // Create temp dir (only 1 level of creation depth)
     if !temp_dir.is_dir() {
         std::fs::create_dir(temp_dir)
             .expect(&format!("Unable to create temp directory {:?}", temp_dir));
         println!("  ... created.");
     }
 
-    // Convert to time slices
+    println!("{:#?}", args);
+
+    // Convert to time slices and save to temp files
     let (temp_files, layout) = match to_time_slices(&args.pattern, &args.temp_dir.unwrap()) {
         Ok(fl) => fl,
         Err(err) => {
@@ -37,12 +43,28 @@ fn main() {
     };
 
     // Process time slices
+    let buff = ChronoProcessor::process(&layout, &temp_files[..]).unwrap();
 
-    println!(
-        "Created {:?} temp files. Layout: {:?}",
-        temp_files.len(),
-        layout
-    );
+    image::save_buffer(
+        &args.output,
+        &buff,
+        layout.width,
+        layout.height,
+        if layout.width_stride == 4 {
+            image::ColorType::Rgba8
+        } else {
+            image::ColorType::Rgb8
+        },
+    )
+    .expect(&format!("Unable to save output file {:?}", &args.output));
+
+    // Delete temp file
+    for file in &temp_files {
+        match std::fs::remove_file(file) {
+            Ok(()) => {}
+            Err(err) => println!("Unable to delete file {:?}: {}", file, err.to_string()),
+        }
+    }
 }
 
 fn to_time_slices(
