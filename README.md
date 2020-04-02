@@ -18,7 +18,7 @@ which is based on outlier detection (see section [How it works](#how-it-works) f
 
 ### Installation
 
-* Download the [latest binaries](https://github.com/mlange-42/chrono-photo/releases/latest).
+* Download the [latest binaries](https://github.com/mlange-42/chrono-photo/releases).
 * Unzip somewhere with write privileges (only required for running examples in place).
 
 ### Usage

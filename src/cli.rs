@@ -18,7 +18,7 @@ pub struct Cli {
     /// Path to output file
     #[structopt(short, long)]
     output: String,
-    /// Pixel selection mode (lighter|darker|outlier). Optional, default 'outlier'.
+    /// Pixel selection mode (lighter|darker|outlier-<threshold>). Optional, default 'outlier-3.0'.
     #[structopt(short, long)]
     mode: Option<String>,
 }
@@ -29,8 +29,10 @@ impl Cli {
             pattern: self.pattern.clone(),
             temp_dir: self.temp_dir.as_ref().map(|d| PathBuf::from(d)),
             output: PathBuf::from(&self.output),
-            mode: SelectionMode::from_string(&self.mode.as_ref().unwrap_or(&"outlier".to_string()))
-                .unwrap(),
+            mode: SelectionMode::from_string(
+                &self.mode.as_ref().unwrap_or(&"outlier-3.0".to_string()),
+            )
+            .unwrap(),
         })
     }
 }
