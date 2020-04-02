@@ -195,7 +195,7 @@ impl ChronoProcessor {
         }
         let is_outlier = max_dist_sq >= threshold * threshold;
         if !is_outlier {
-            max_index = self.rng.gen_range(0, samples);
+            max_index = 0; //self.rng.gen_range(0, samples);
         }
         let sample = &pixel_data[(max_index * channels)..(max_index * channels + channels)];
 
