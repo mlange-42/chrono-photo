@@ -23,6 +23,7 @@ which is based on outlier detection (see section [How it works](#how-it-works) f
 
 ### Usage
 
+* Try the example batch files in sub-directory [`/cmd_examples`](/cmd_examples).
 * To view the full list of options, run `chrono-photo --help`
 
 ## Library / crate
