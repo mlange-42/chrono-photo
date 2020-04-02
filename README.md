@@ -10,9 +10,9 @@ This tool creates chrono-photos like
 from video footage or photo series.
 
 _Warning:_ This project is in a very experimental state.
-So far, only selection by lightest or darkest pixel are supported. 
-However, the image above shows a proof of concept for the intended default algorithm, 
-which is based on outlier detection (see section [How it works](#how-it-works) for details). 
+So far, only the most basic image processing is supported. 
+However, the image above shows a proof of concept for the algorithm,
+based on outlier detection (see section [How it works](#how-it-works) for details). 
 
 ## Command line tool
 
