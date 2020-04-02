@@ -1,2 +1,4 @@
 /target
+/test_data
 *.iml
+_build-release.bat
