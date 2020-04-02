@@ -10,7 +10,9 @@ This tool creates chrono-photos like
 from video footage or photo series.
 
 _Warning:_ This project is in a very experimental state.
-So far, only selection by lightest or darkest pixel are supported. However, the image above shows a proof of concept for the intended default algorithm, which is based on outlier detection. 
+So far, only selection by lightest or darkest pixel are supported. 
+However, the image above shows a proof of concept for the intended default algorithm, 
+which is based on outlier detection (see section [How it works](#how-it-works) for details). 
 
 ## Command line tool
 
@@ -30,7 +32,7 @@ To use this crate as a library, add the following to your `Cargo.toml` dependenc
 chrono-photo = { git = "https://github.com/mlange-42/chrono-photo.git" }
 ```
 
-## How is works
+## How it works
 
 The principle idea is to stack all images to be processes, and analyze them pixel by pixel.
 
