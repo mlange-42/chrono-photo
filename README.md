@@ -39,7 +39,8 @@ For the latest development version, see branch [`dev`](https://github.com/mlange
 
 ## How it works
 
-The principle idea is to stack all images to be processes, and analyze them pixel by pixel.
+The principle idea is to stack all images to be processes, and analyze the entire stack pixel by pixel
+(but see also section [Technical realization](#technical-realization)).
 
 Given a typical use case like a moving object in front of a static background, 
 a certain pixel will have very similar colors in most images. 
