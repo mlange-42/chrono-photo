@@ -1,9 +1,10 @@
 use chrono_photo::chrono::ChronoProcessor;
-use chrono_photo::cli::Cli;
+use chrono_photo::cli::{Cli, CliParsed};
 use chrono_photo::img_stream::{Compression, ImageStream};
 use chrono_photo::time_slice::{TimeSliceError, TimeSlicer};
 use image::flat::SampleLayout;
 use indicatif::ProgressBar;
+use std::fs::File;
 use std::path::PathBuf;
 use std::time::Instant;
 use structopt::StructOpt;
@@ -16,7 +17,7 @@ fn main() {
         output: PathBuf::from("test_data/out.png"),
     };*/
 
-    let mut args = Cli::from_args().parse().unwrap();
+    let mut args: CliParsed = Cli::from_args().parse().unwrap();
 
     // Determine temp directory
     if args.temp_dir.is_none() {
@@ -57,18 +58,44 @@ fn main() {
         .process(&layout, &temp_files[..], Some(size_hint))
         .unwrap();
 
-    image::save_buffer(
-        &args.output,
-        &buff,
-        layout.width,
-        layout.height,
-        if layout.width_stride == 4 {
-            image::ColorType::Rgba8
-        } else {
-            image::ColorType::Rgb8
-        },
-    )
-    .expect(&format!("Unable to save output file {:?}", &args.output));
+    let ext = args
+        .output
+        .extension()
+        .expect("Expects an extension for output file to determine image format.")
+        .to_str()
+        .expect("Expects Unicode encoding for output file.")
+        .to_lowercase();
+
+    println!("Saving output... ");
+    if ext == "jpg" || ext == "jpeg" {
+        let mut file = File::create(&args.output)
+            .expect(&format!("Unable to create output file {:?}.", &args.output));
+        let mut enc = image::jpeg::JPEGEncoder::new_with_quality(&mut file, args.quality);
+        enc.encode(
+            &buff,
+            layout.width,
+            layout.height,
+            if layout.width_stride == 4 {
+                image::ColorType::Rgba8
+            } else {
+                image::ColorType::Rgb8
+            },
+        )
+        .expect(&format!("Unable to write output file {:?}.", &args.output));
+    } else {
+        image::save_buffer(
+            &args.output,
+            &buff,
+            layout.width,
+            layout.height,
+            if layout.width_stride == 4 {
+                image::ColorType::Rgba8
+            } else {
+                image::ColorType::Rgb8
+            },
+        )
+        .expect(&format!("Unable to save output file {:?}", &args.output));
+    }
 
     // Delete temp file
     println!("Deleting {} time slices", temp_files.len());

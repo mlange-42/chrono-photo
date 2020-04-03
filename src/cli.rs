@@ -31,6 +31,9 @@ pub struct Cli {
     /// Compression mode for time slices (gzip|zlib|deflate). Optional, default 'gzip'.
     #[structopt(short, long)]
     compression: Option<String>,
+    /// Output image quality for JPG files, in percent. Optional, default '95'.
+    #[structopt(short, long)]
+    quality: Option<u8>,
     /// Print debug information (i.e. parsed cmd parameters).
     #[structopt(short, long)]
     debug: bool,
@@ -59,6 +62,19 @@ impl Cli {
                 &self.compression.as_ref().unwrap_or(&"gzip".to_string()),
             )
             .unwrap(),
+            quality: match self.quality {
+                Some(q) => {
+                    if q <= 100 && q > 0 {
+                        q
+                    } else {
+                        return Err(ParseCliError(format!(
+                            "Expected 0 < qualtiy <= 100. Got value {}",
+                            q
+                        )));
+                    }
+                }
+                None => 95,
+            },
             debug: self.debug,
         })
     }
@@ -82,6 +98,8 @@ pub struct CliParsed {
     pub background: BackgroundMode,
     /// Compression mode for time slices (gzip|zlib|deflate). Optional, default 'gzip'.
     pub compression: Compression,
+    /// Output image quality for JPG files, in percent. Optional, default '95'.
+    pub quality: u8,
     /// Print debug information (i.e. parsed cmd parameters).
     pub debug: bool,
 }

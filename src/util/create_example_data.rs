@@ -34,7 +34,7 @@ fn main() {
             }
         }
         let mut out_path = path.to_string();
-        out_path.push_str(&format!("/image-{:05}.png", img));
+        out_path.push_str(&format!("/image-{:05}.jpg", img));
         image::save_buffer(
             &out_path,
             &buffer,

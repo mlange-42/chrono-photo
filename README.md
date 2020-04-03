@@ -33,6 +33,10 @@ To use this crate as a library, add the following to your `Cargo.toml` dependenc
 chrono-photo = { git = "https://github.com/mlange-42/chrono-photo.git" }
 ```
 
+## Development version
+
+For the latest development version, see branch [`dev`](https://github.com/mlange-42/chrono-photo/tree/dev).
+
 ## How it works
 
 The principle idea is to stack all images to be processes, and analyze them pixel by pixel.
