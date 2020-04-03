@@ -48,7 +48,7 @@ fn main() {
         };
 
     // Process time slices
-    let mut processor = ChronoProcessor::new(args.mode, args.background);
+    let processor = ChronoProcessor::new(args.mode, args.background, args.outlier);
     let buff = processor
         .process(&layout, &temp_files[..], Some(size_hint))
         .unwrap();

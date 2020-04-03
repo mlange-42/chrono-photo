@@ -47,6 +47,36 @@ impl EnumFromString for SelectionMode {
     }
 }
 
+/// Selection mode if multiple outliers are found.
+#[derive(Debug, Clone, PartialEq)]
+pub enum OutlierSelectionMode {
+    /// Use the first outlier.
+    First,
+    /// Use the last outlier.
+    Last,
+    /// Use the most extreme outlier.
+    Extreme,
+    /// Use the most average of all outlier.
+    Average,
+}
+impl EnumFromString for OutlierSelectionMode {
+    fn from_string(str: &str) -> Result<Self, ParseEnumError>
+    where
+        Self: std::marker::Sized,
+    {
+        match str {
+            "first" => Ok(OutlierSelectionMode::First),
+            "last" => Ok(OutlierSelectionMode::Last),
+            "extreme" => Ok(OutlierSelectionMode::Extreme),
+            "average" => Ok(OutlierSelectionMode::Average),
+            _ => Err(ParseEnumError(format!(
+                "Not an outlier selection mode: {}. Must be one of (first|last|extreme|average)",
+                str
+            ))),
+        }
+    }
+}
+
 /// Background pixel selection mode, i.e. when no outliers are found.
 #[derive(Debug, Clone)]
 pub enum BackgroundMode {
@@ -67,7 +97,7 @@ impl EnumFromString for BackgroundMode {
             "random" => Ok(BackgroundMode::Random),
             "average" => Ok(BackgroundMode::Average),
             _ => Err(ParseEnumError(format!(
-                        "Not a pixel selection mode: {}. Must be one of (lighter|darker|outlier-<threshold>)",
+                        "Not a background pixel selection mode: {}. Must be one of (lighter|darker|outlier-<threshold>)",
                         str
                     ))),
         }
@@ -79,25 +109,33 @@ impl EnumFromString for BackgroundMode {
 pub struct ChronoProcessor {
     mode: SelectionMode,
     background: BackgroundMode,
+    outlier: OutlierSelectionMode,
     mean: [f32; 4],
     sd: [f32; 4],
+    outlier_indices: Vec<usize>,
     rng: ThreadRng,
 }
 
 impl ChronoProcessor {
     /// Creates a new image processor.
-    pub fn new(mode: SelectionMode, bg_mode: BackgroundMode) -> Self {
+    pub fn new(
+        mode: SelectionMode,
+        bg_mode: BackgroundMode,
+        outlier_mode: OutlierSelectionMode,
+    ) -> Self {
         ChronoProcessor {
             mode,
             background: bg_mode,
+            outlier: outlier_mode,
             mean: [0.0; 4],
             sd: [0.0; 4],
+            outlier_indices: vec![],
             rng: rand::thread_rng(),
         }
     }
     /// Processes images based on files as created by [`TimeSlicer`](./time_slice/struct.TimeSlicer.html).
     pub fn process(
-        &mut self,
+        mut self,
         layout: &SampleLayout,
         files: &[PathBuf],
         size_hint: Option<usize>,
@@ -123,8 +161,11 @@ impl ChronoProcessor {
             while let Some(_num_bytes) = stream.read_chunk(&mut data) {
                 num_rows += 1;
             }
-            if pixel_data.is_empty() {
+            if pixel_data.len() != num_rows * channels {
                 pixel_data = vec![0; num_rows * channels];
+            }
+            if self.outlier_indices.len() != num_rows {
+                self.outlier_indices = vec![0; num_rows];
             }
             for col in 0..layout.width {
                 let col_offset = col as usize * channels;
@@ -218,6 +259,8 @@ impl ChronoProcessor {
             *sd = 1.0 / (*sd / (samples - 1) as f32).sqrt();
         }
 
+        let threshold_sq = threshold * threshold;
+        let mut num_outliers = 0;
         let mut max_dist_sq = 0.0;
         let mut max_index = 0;
         for (sample_idx, pix) in pixel_data.chunks(channels).enumerate() {
@@ -230,30 +273,71 @@ impl ChronoProcessor {
                     (self.sd[i] * diff).powi(2)
                 }
             }
-            if dist_sq > max_dist_sq {
-                max_dist_sq = dist_sq;
-                max_index = sample_idx;
-            }
-        }
-        match self.background {
-            BackgroundMode::Average => {
-                for ch in 0..channels {
-                    pixel[ch] = self.mean[ch].round() as u8;
+            if dist_sq > threshold_sq {
+                self.outlier_indices[num_outliers] = sample_idx;
+                num_outliers += 1;
+                if dist_sq > max_dist_sq {
+                    max_dist_sq = dist_sq;
+                    max_index = sample_idx;
                 }
             }
-            BackgroundMode::First | BackgroundMode::Random => {
-                let is_outlier = max_dist_sq >= threshold * threshold;
-                if !is_outlier {
-                    max_index = match self.background {
+        }
+        let has_outliers = num_outliers > 0;
+        if has_outliers {
+            if self.outlier == OutlierSelectionMode::Average {
+                if num_outliers == 1 {
+                    let sample_idx = self.outlier_indices[0];
+                    let sample =
+                        &pixel_data[(sample_idx * channels)..(sample_idx * channels + channels)];
+                    for ch in 0..channels {
+                        pixel[ch] = sample[ch];
+                    }
+                } else {
+                    for ch in 0..channels {
+                        self.mean[ch] = 0.0;
+                    }
+                    for sample_idx in self.outlier_indices.iter().take(num_outliers) {
+                        let offset = sample_idx * channels;
+                        for ch in 0..channels {
+                            self.mean[ch] += pixel_data[offset + ch] as f32;
+                        }
+                    }
+                    for ch in 0..channels {
+                        pixel[ch] = (self.mean[ch] / num_outliers as f32).round() as u8;
+                    }
+                }
+            } else {
+                let sample_idx = match self.outlier {
+                    OutlierSelectionMode::First => self.outlier_indices[0],
+                    OutlierSelectionMode::Last => self.outlier_indices[num_outliers - 1],
+                    OutlierSelectionMode::Extreme => max_index,
+                    OutlierSelectionMode::Average => 0,
+                };
+                let sample =
+                    &pixel_data[(sample_idx * channels)..(sample_idx * channels + channels)];
+                for ch in 0..channels {
+                    pixel[ch] = sample[ch];
+                }
+            }
+        } else {
+            match self.background {
+                BackgroundMode::Average => {
+                    for ch in 0..channels {
+                        pixel[ch] = self.mean[ch].round() as u8;
+                    }
+                }
+                BackgroundMode::First | BackgroundMode::Random => {
+                    let sample_idx = match self.background {
                         BackgroundMode::First => 0,
                         BackgroundMode::Random => self.rng.gen_range(0, samples),
                         _ => 0,
-                    }
-                }
-                let sample = &pixel_data[(max_index * channels)..(max_index * channels + channels)];
+                    };
+                    let sample =
+                        &pixel_data[(sample_idx * channels)..(sample_idx * channels + channels)];
 
-                for ch in 0..channels {
-                    pixel[ch] = sample[ch];
+                    for ch in 0..channels {
+                        pixel[ch] = sample[ch];
+                    }
                 }
             }
         }

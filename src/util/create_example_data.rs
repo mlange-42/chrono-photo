@@ -24,7 +24,7 @@ fn main() {
         for xx in (cx - radius)..=(cx + radius) {
             for yy in (cy - radius)..=(cy + radius) {
                 let idx = xy_to_index(size, channels, xx, yy);
-                for ch in idx..(idx + 3) {
+                for ch in idx..(idx + 1) {
                     buffer[ch] = 0;
                 }
                 //println!("{:?}", &buffer[idx..(idx + 3)]);

@@ -47,7 +47,7 @@ or a non-outlier if they don't.
 
 ### Technical realization
 
-Loading a large number of high resolution images into memory at once is not feasible. 
+Holding a large number of high resolution images in memory at the same time is not feasible. 
 
 Therefore, before actual processing, the time-stack of images with (x, y) coordinates
 is converted into a number of temporary files, each containing data in (x, t) coordinates.

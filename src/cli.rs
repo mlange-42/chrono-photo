@@ -1,5 +1,5 @@
 //! Command-line interface for chrono-photo.
-use crate::chrono::{BackgroundMode, SelectionMode};
+use crate::chrono::{BackgroundMode, OutlierSelectionMode, SelectionMode};
 use crate::EnumFromString;
 use core::fmt;
 use std::path::PathBuf;
@@ -24,6 +24,9 @@ pub struct Cli {
     /// Background pixel selection mode (first|random|average). Optional, default 'first'.
     #[structopt(short, long)]
     background: Option<String>,
+    /// Outlier selection mode in case more than one outlier is found (first|last|extreme|average). Optional, default 'extreme'.
+    #[structopt(short = "l", long)]
+    outlier: Option<String>,
     /// Print debug information (i.e. parsed cmd parameters).
     #[structopt(short, long)]
     debug: bool,
@@ -44,6 +47,10 @@ impl Cli {
                 &self.background.as_ref().unwrap_or(&"first".to_string()),
             )
             .unwrap(),
+            outlier: OutlierSelectionMode::from_string(
+                &self.outlier.as_ref().unwrap_or(&"extreme".to_string()),
+            )
+            .unwrap(),
             debug: self.debug,
         })
     }
@@ -61,6 +68,8 @@ pub struct CliParsed {
     pub output: PathBuf,
     /// Pixel selection mode.
     pub mode: SelectionMode,
+    /// Outlier selection mode in case more than one outlier is found (first|last|extreme|average). Optional, default 'extreme'.
+    pub outlier: OutlierSelectionMode,
     /// Background pixel selection mode.
     pub background: BackgroundMode,
     /// Print debug information (i.e. parsed cmd parameters).
