@@ -5,9 +5,11 @@ use chrono_photo::time_slice::{TimeSliceError, TimeSlicer};
 use image::flat::SampleLayout;
 use indicatif::ProgressBar;
 use std::path::PathBuf;
+use std::time::Instant;
 use structopt::StructOpt;
 
 fn main() {
+    let start = Instant::now();
     /*let mut args = CliParsed {
         pattern: "test_data/TestImage-*.png".to_string(),
         temp_dir: Some(PathBuf::from("test_data/temp")),
@@ -78,6 +80,9 @@ fn main() {
             Err(err) => println!("Unable to delete file {:?}: {}", file, err.to_string()),
         }
     }
+    bar.finish_and_clear();
+
+    println!("Total time: {:?}", start.elapsed());
 }
 
 fn to_time_slices(

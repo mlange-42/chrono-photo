@@ -155,14 +155,16 @@ impl ChronoProcessor {
             bar.inc(1);
 
             let buff_row_start = out_row * layout.height_stride;
-            let mut stream = PixelInputStream::new(file, self.compression.clone())?;
             let mut data = match size_hint {
                 Some(hint) => Vec::with_capacity(hint * layout.height as usize),
                 None => Vec::new(),
             };
             let mut num_rows = 0;
-            while let Some(_num_bytes) = stream.read_chunk(&mut data) {
-                num_rows += 1;
+            {
+                let mut stream = PixelInputStream::new(file, self.compression.clone())?;
+                while let Some(_num_bytes) = stream.read_chunk(&mut data) {
+                    num_rows += 1;
+                }
             }
             if pixel_data.len() != num_rows * channels {
                 pixel_data = vec![0; num_rows * channels];
