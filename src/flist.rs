@@ -38,10 +38,6 @@ mod test {
         let pattern = "test_data/*.txt";
         let lister = FileLister::new(&pattern);
 
-        let list = lister.list_files().expect("Error processing pattern");
-
-        for entry in list {
-            //println!("{:?}", entry);
-        }
+        let _list = lister.list_files().expect("Error processing pattern");
     }
 }
