@@ -1,5 +1,5 @@
 //! Processes time-sliced data produced by [`TimeSlicer`](./time_slice/struct.TimeSlicer.html).
-use crate::img_stream::PixelInputStream;
+use crate::img_stream::{Compression, PixelInputStream};
 use crate::{EnumFromString, ParseEnumError};
 use image::flat::SampleLayout;
 use indicatif::ProgressBar;
@@ -110,6 +110,7 @@ pub struct ChronoProcessor {
     mode: SelectionMode,
     background: BackgroundMode,
     outlier: OutlierSelectionMode,
+    compression: Compression,
     mean: [f32; 4],
     sd: [f32; 4],
     outlier_indices: Vec<usize>,
@@ -122,11 +123,13 @@ impl ChronoProcessor {
         mode: SelectionMode,
         bg_mode: BackgroundMode,
         outlier_mode: OutlierSelectionMode,
+        compression: Compression,
     ) -> Self {
         ChronoProcessor {
             mode,
             background: bg_mode,
             outlier: outlier_mode,
+            compression,
             mean: [0.0; 4],
             sd: [0.0; 4],
             outlier_indices: vec![],
@@ -152,7 +155,7 @@ impl ChronoProcessor {
             bar.inc(1);
 
             let buff_row_start = out_row * layout.height_stride;
-            let mut stream = PixelInputStream::new(file)?;
+            let mut stream = PixelInputStream::new(file, self.compression.clone())?;
             let mut data = match size_hint {
                 Some(hint) => Vec::with_capacity(hint * layout.height as usize),
                 None => Vec::new(),

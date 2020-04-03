@@ -1,8 +1,11 @@
 extern crate image;
 
+use rand::Rng;
 use std::path::PathBuf;
 
 fn main() {
+    let mut rng = rand::thread_rng();
+
     let size = (1024, 768);
     let channels = 4;
     let num_images = 25;
@@ -18,7 +21,7 @@ fn main() {
     let mut buffer = vec![0_u8; buff_len];
     for img in 0..num_images {
         for i in 0..buff_len {
-            buffer[i] = 255;
+            buffer[i] = rng.gen_range(240, 255);
         }
         let (cx, cy) = (100 + img * 10, size.1 / 3 + img * 5);
         for xx in (cx - radius)..=(cx + radius) {

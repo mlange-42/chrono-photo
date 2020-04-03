@@ -1,5 +1,6 @@
 //! Command-line interface for chrono-photo.
 use crate::chrono::{BackgroundMode, OutlierSelectionMode, SelectionMode};
+use crate::img_stream::Compression;
 use crate::EnumFromString;
 use core::fmt;
 use std::path::PathBuf;
@@ -27,6 +28,9 @@ pub struct Cli {
     /// Outlier selection mode in case more than one outlier is found (first|last|extreme|average). Optional, default 'extreme'.
     #[structopt(short = "l", long)]
     outlier: Option<String>,
+    /// Compression mode for time slices (gzip|zlib|deflate). Optional, default 'gzip'.
+    #[structopt(short, long)]
+    compression: Option<String>,
     /// Print debug information (i.e. parsed cmd parameters).
     #[structopt(short, long)]
     debug: bool,
@@ -51,6 +55,10 @@ impl Cli {
                 &self.outlier.as_ref().unwrap_or(&"extreme".to_string()),
             )
             .unwrap(),
+            compression: Compression::from_string(
+                &self.compression.as_ref().unwrap_or(&"gzip".to_string()),
+            )
+            .unwrap(),
             debug: self.debug,
         })
     }
@@ -72,6 +80,8 @@ pub struct CliParsed {
     pub outlier: OutlierSelectionMode,
     /// Background pixel selection mode.
     pub background: BackgroundMode,
+    /// Compression mode for time slices (gzip|zlib|deflate). Optional, default 'gzip'.
+    pub compression: Compression,
     /// Print debug information (i.e. parsed cmd parameters).
     pub debug: bool,
 }

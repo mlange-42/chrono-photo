@@ -1,8 +1,9 @@
 use chrono_photo::chrono::ChronoProcessor;
 use chrono_photo::cli::Cli;
-use chrono_photo::img_stream::ImageStream;
+use chrono_photo::img_stream::{Compression, ImageStream};
 use chrono_photo::time_slice::{TimeSliceError, TimeSlicer};
 use image::flat::SampleLayout;
+use indicatif::ProgressBar;
 use std::path::PathBuf;
 use structopt::StructOpt;
 
@@ -39,7 +40,7 @@ fn main() {
 
     // Convert to time slices and save to temp files
     let (temp_files, layout, size_hint) =
-        match to_time_slices(&args.pattern, &args.temp_dir.unwrap()) {
+        match to_time_slices(&args.pattern, &args.temp_dir.unwrap(), &args.compression) {
             Ok(fls) => fls,
             Err(err) => {
                 println!("{:?}", err.to_string());
@@ -48,7 +49,8 @@ fn main() {
         };
 
     // Process time slices
-    let processor = ChronoProcessor::new(args.mode, args.background, args.outlier);
+    let processor =
+        ChronoProcessor::new(args.mode, args.background, args.outlier, args.compression);
     let buff = processor
         .process(&layout, &temp_files[..], Some(size_hint))
         .unwrap();
@@ -67,7 +69,10 @@ fn main() {
     .expect(&format!("Unable to save output file {:?}", &args.output));
 
     // Delete temp file
+    println!("Deleting {} time slices", temp_files.len());
+    let bar = ProgressBar::new(temp_files.len() as u64);
     for file in &temp_files {
+        bar.inc(1);
         match std::fs::remove_file(file) {
             Ok(()) => {}
             Err(err) => println!("Unable to delete file {:?}: {}", file, err.to_string()),
@@ -78,7 +83,8 @@ fn main() {
 fn to_time_slices(
     image_pattern: &str,
     temp_path: &PathBuf,
+    compression: &Compression,
 ) -> Result<(Vec<PathBuf>, SampleLayout, usize), TimeSliceError> {
     let images = ImageStream::from_pattern(image_pattern).expect("Error processing pattern");
-    TimeSlicer::write_time_slices(images, temp_path.clone())
+    TimeSlicer::write_time_slices(images, temp_path.clone(), compression.clone())
 }

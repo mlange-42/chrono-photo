@@ -4,4 +4,4 @@
 --output ..\test_data\out.png ^
 --mode outlier-3.0 ^
 --background first ^
---outlier average
+--outlier average ^

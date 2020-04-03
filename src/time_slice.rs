@@ -1,6 +1,6 @@
 //! Converts a series of images by time to images by row. I.e. transposes (x,y) in the cube in (x,y,t) to (x,t).
 
-use crate::img_stream::{ImageStream, PixelOutputStream};
+use crate::img_stream::{Compression, ImageStream, PixelOutputStream};
 use image::flat::SampleLayout;
 use indicatif::ProgressBar;
 use std::fmt;
@@ -11,10 +11,11 @@ pub struct TimeSlicer();
 
 impl TimeSlicer {
     /// Writes time slices for all images in the given stream, into the given temporary directory.
-    /// Files are named `temp-xxxxx.gz`.
+    /// Files are named `temp-xxxxx.bin`.
     pub fn write_time_slices(
         images: ImageStream,
         temp_dir: PathBuf,
+        compression: Compression,
     ) -> Result<(Vec<PathBuf>, SampleLayout, usize), TimeSliceError> {
         assert!(temp_dir.is_dir());
         let size_hint = images.len();
@@ -24,6 +25,7 @@ impl TimeSlicer {
 
         let mut out_streams: Option<Vec<PixelOutputStream>> = None;
 
+        let mut total_bytes = 0;
         println!("Time-slicing {} images", size_hint);
         let bar = ProgressBar::new(size_hint as u64);
         for img in images {
@@ -50,8 +52,8 @@ impl TimeSlicer {
                     (0..lay.height)
                         .map(|i| {
                             let mut path = PathBuf::from(&temp_dir);
-                            path.push(format!("temp-{:05}.gz", i));
-                            PixelOutputStream::new(&path)
+                            path.push(format!("temp-{:05}.bin", i));
+                            PixelOutputStream::new(&path, compression.clone())
                                 .expect(&format!("Unable to create file {:?}", path))
                         })
                         .collect(),
@@ -61,7 +63,7 @@ impl TimeSlicer {
             for (row, stream) in out_streams.as_mut().unwrap().iter_mut().enumerate() {
                 let start = row * stride;
                 let end = (row + 1) * stride;
-                stream
+                total_bytes += stream
                     .write_chunk(&pix.samples[start..end])
                     .expect(&format!(
                         "Unable to write chunk to file {:?}",
@@ -70,6 +72,8 @@ impl TimeSlicer {
             }
             count += 1;
         }
+        bar.finish_and_clear();
+        println!("Total: {} kb", total_bytes / 1024);
 
         for stream in out_streams.as_mut().unwrap().iter_mut() {
             stream.close().unwrap();
