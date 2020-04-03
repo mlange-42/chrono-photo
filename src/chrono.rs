@@ -10,7 +10,7 @@ use std::path::PathBuf;
 #[derive(Debug, Clone)]
 pub enum SelectionMode {
     /// Selects by outlier analysis (multi-dimensional z-score).
-    /// Parameter `threshold` determines the minimum distance from the mean, in multiples of standard deviation, to classify a pixel as outlier.
+    /// Parameter `threshold` determines the minimum distance from the median, in fractions of the total color range (i.e. [0, 1]), to classify a pixel as outlier.
     Outlier { threshold: f32 },
     /// Selects the lightest/brightest pixel (sum of red, green and blue).
     Lighter,
@@ -86,6 +86,8 @@ pub enum BackgroundMode {
     Random,
     /// Use the average of the pixel from all images (Warning: may result in banding!).
     Average,
+    /// Use the median of the pixel from all images (Warning: may result in banding!).
+    Median,
 }
 impl EnumFromString for BackgroundMode {
     fn from_string(str: &str) -> Result<Self, ParseEnumError>
@@ -96,8 +98,9 @@ impl EnumFromString for BackgroundMode {
             "first" => Ok(BackgroundMode::First),
             "random" => Ok(BackgroundMode::Random),
             "average" => Ok(BackgroundMode::Average),
+            "median" => Ok(BackgroundMode::Median),
             _ => Err(ParseEnumError(format!(
-                        "Not a background pixel selection mode: {}. Must be one of (lighter|darker|outlier-<threshold>)",
+                        "Not a background pixel selection mode: {}. Must be one of (first|random|average|median)",
                         str
                     ))),
         }
@@ -112,8 +115,10 @@ pub struct ChronoProcessor {
     outlier: OutlierSelectionMode,
     compression: Compression,
     mean: [f32; 4],
-    sd: [f32; 4],
+    //sd: [f32; 4],
+    median: [f32; 4],
     outlier_indices: Vec<usize>,
+    values: Vec<u8>,
     rng: ThreadRng,
 }
 
@@ -131,8 +136,10 @@ impl ChronoProcessor {
             outlier: outlier_mode,
             compression,
             mean: [0.0; 4],
-            sd: [0.0; 4],
+            median: [0.0; 4],
+            //sd: [0.0; 4],
             outlier_indices: vec![],
+            values: vec![],
             rng: rand::thread_rng(),
         }
     }
@@ -142,9 +149,10 @@ impl ChronoProcessor {
         layout: &SampleLayout,
         files: &[PathBuf],
         size_hint: Option<usize>,
-    ) -> std::io::Result<Vec<u8>> {
+    ) -> std::io::Result<(Vec<u8>, Vec<u8>)> {
         let channels = layout.width_stride;
         let mut buffer = vec![0; layout.height as usize * layout.height_stride];
+        let mut is_outlier = vec![0; layout.height as usize * layout.height_stride];
 
         let mut pixel_data = Vec::new();
         let mut pixel = vec![0; channels];
@@ -171,6 +179,7 @@ impl ChronoProcessor {
             }
             if self.outlier_indices.len() != num_rows {
                 self.outlier_indices = vec![0; num_rows];
+                self.values = vec![0; num_rows * channels];
             }
             for col in 0..layout.width {
                 let col_offset = col as usize * channels;
@@ -181,17 +190,24 @@ impl ChronoProcessor {
                         pixel_data[row * channels + ch] = v;
                     }
                 }
-                self.calc_pixel(&pixel_data, &mut pixel);
+                let is_out = self.calc_pixel(&pixel_data, &mut pixel);
                 for ch in 0..channels {
-                    buffer[buff_row_start + col as usize * channels + ch] = pixel[ch];
+                    let idx = buff_row_start + col as usize * channels + ch;
+                    buffer[idx] = pixel[ch];
+                    if ch < 3 {
+                        is_outlier[idx] = if is_out { 255 } else { 0 };
+                    } else {
+                        is_outlier[idx] = 255;
+                    }
                 }
             }
         }
+        bar.finish_and_clear();
 
-        Ok(buffer)
+        Ok((buffer, is_outlier))
     }
 
-    fn calc_pixel(&mut self, pixel_data: &[u8], pixel: &mut [u8]) {
+    fn calc_pixel(&mut self, pixel_data: &[u8], pixel: &mut [u8]) -> bool {
         let mode = &self.mode.clone(); // TODO find a way to avoid clone
         match mode {
             SelectionMode::Darker => self.calc_pixel_darker(pixel_data, pixel),
@@ -202,7 +218,7 @@ impl ChronoProcessor {
         }
     }
 
-    fn calc_pixel_darker(&self, pixel_data: &[u8], pixel: &mut [u8]) {
+    fn calc_pixel_darker(&self, pixel_data: &[u8], pixel: &mut [u8]) -> bool {
         let channels = pixel.len();
         let pixels = pixel_data.len() / channels;
 
@@ -219,8 +235,9 @@ impl ChronoProcessor {
         for ch in 0..channels {
             pixel[ch] = pixel_data[idx_min * channels + ch];
         }
+        false
     }
-    fn calc_pixel_lighter(&self, pixel_data: &[u8], pixel: &mut [u8]) {
+    fn calc_pixel_lighter(&self, pixel_data: &[u8], pixel: &mut [u8]) -> bool {
         let channels = pixel.len();
         let pixels = pixel_data.len() / channels;
 
@@ -237,48 +254,69 @@ impl ChronoProcessor {
         for ch in 0..channels {
             pixel[ch] = pixel_data[idx_max * channels + ch];
         }
+        false
     }
 
-    fn calc_pixel_z_score(&mut self, pixel_data: &[u8], pixel: &mut [u8], threshold: f32) {
+    fn calc_pixel_z_score(&mut self, pixel_data: &[u8], pixel: &mut [u8], threshold: f32) -> bool {
         let channels = pixel.len();
         let samples = pixel_data.len() / channels;
+        // Reset mean and SD
         for m in self.mean.iter_mut() {
             *m = 0.0;
         }
-        // Calculate mean of samples
-        for pix in pixel_data.chunks(channels) {
+        /*for sd in self.sd.iter_mut() {
+            *sd = 0.0;
+        }*/
+        // Calculate mean of samples, prepare medians
+        for (sample_idx, pix) in pixel_data.chunks(channels).enumerate() {
             for (i, p) in pix.iter().enumerate() {
                 self.mean[i] += *p as f32;
+                self.values[i * samples + sample_idx] = *p;
             }
         }
         for m in self.mean.iter_mut() {
             *m /= samples as f32;
         }
+        // Calculate medians
+        let is_odd = samples % 2 == 0;
+        for (i, m) in self.median.iter_mut().take(channels).enumerate() {
+            let slice = &mut self.values[(i * samples)..(i * samples + samples)];
+            slice.sort_unstable();
+            *m = if is_odd {
+                slice[(samples + 1) / 2] as f32
+            } else {
+                0.5 * (slice[samples / 2] as f32 + slice[(samples + 2) / 2] as f32)
+            };
+        }
+
         // Calculate SD of samples
+        /*
         for pix in pixel_data.chunks(channels) {
             for (i, p) in pix.iter().enumerate() {
                 self.sd[i] += (*p as f32 - self.mean[i]).powi(2);
             }
         }
         for sd in self.sd.iter_mut() {
-            *sd = 1.0 / (*sd / (samples - 1) as f32).sqrt();
-        }
+            *sd = 1.0 / ((*sd / (samples - 1) as f32).sqrt());
+        }*/
 
-        let threshold_sq = threshold * threshold;
+        let threshold_sq = (threshold * 255.0).powi(2);
         let mut num_outliers = 0;
         let mut max_dist_sq = 0.0;
         let mut max_index = 0;
+
         for (sample_idx, pix) in pixel_data.chunks(channels).enumerate() {
             let mut dist_sq = 0.0;
             for (i, p) in pix.iter().enumerate() {
-                let diff = self.mean[i] - *p as f32;
+                let diff = self.median[i] - *p as f32;
                 dist_sq += if diff == 0.0 {
                     0.0
                 } else {
-                    (self.sd[i] * diff).powi(2)
+                    //(self.sd[i] * diff).powi(2)
+                    (diff * diff)
                 }
             }
-            if dist_sq > threshold_sq {
+            if dist_sq >= threshold_sq {
                 self.outlier_indices[num_outliers] = sample_idx;
                 num_outliers += 1;
                 if dist_sq > max_dist_sq {
@@ -324,11 +362,17 @@ impl ChronoProcessor {
                     pixel[ch] = sample[ch];
                 }
             }
+            true
         } else {
             match self.background {
                 BackgroundMode::Average => {
                     for ch in 0..channels {
                         pixel[ch] = self.mean[ch].round() as u8;
+                    }
+                }
+                BackgroundMode::Median => {
+                    for ch in 0..channels {
+                        pixel[ch] = self.median[ch].round() as u8;
                     }
                 }
                 BackgroundMode::First | BackgroundMode::Random => {
@@ -345,6 +389,7 @@ impl ChronoProcessor {
                     }
                 }
             }
+            false
         }
     }
 }

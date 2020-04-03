@@ -1,6 +1,7 @@
 extern crate image;
 
 use rand::Rng;
+use std::fs::File;
 use std::path::PathBuf;
 
 fn main() {
@@ -21,7 +22,11 @@ fn main() {
     let mut buffer = vec![0_u8; buff_len];
     for img in 0..num_images {
         for i in 0..buff_len {
-            buffer[i] = rng.gen_range(240, 255);
+            buffer[i] = if i % channels == 2 {
+                rng.gen_range(145, 150)
+            } else {
+                rng.gen_range(245, 250)
+            };
         }
         let (cx, cy) = (100 + img * 10, size.1 / 3 + img * 5);
         for xx in (cx - radius)..=(cx + radius) {
@@ -35,6 +40,23 @@ fn main() {
         }
         let mut out_path = path.to_string();
         out_path.push_str(&format!("/image-{:05}.jpg", img));
+
+        let mut file = File::create(&out_path)
+            .expect(&format!("Unable to create output file {:?}.", &out_path));
+        let mut enc = image::jpeg::JPEGEncoder::new_with_quality(&mut file, 95);
+        enc.encode(
+            &buffer,
+            size.0 as u32,
+            size.1 as u32,
+            if channels == 4 {
+                image::ColorType::Rgba8
+            } else {
+                image::ColorType::Rgb8
+            },
+        )
+        .expect(&format!("Unable to write output file {:?}.", &out_path));
+
+        /*
         image::save_buffer(
             &out_path,
             &buffer,
@@ -46,7 +68,7 @@ fn main() {
                 image::ColorType::Rgb8
             },
         )
-        .unwrap();
+        .unwrap();*/
     }
 }
 

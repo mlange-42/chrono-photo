@@ -54,47 +54,14 @@ fn main() {
     // Process time slices
     let processor =
         ChronoProcessor::new(args.mode, args.background, args.outlier, args.compression);
-    let buff = processor
+    let (buff, is_outlier) = processor
         .process(&layout, &temp_files[..], Some(size_hint))
         .unwrap();
 
-    let ext = args
-        .output
-        .extension()
-        .expect("Expects an extension for output file to determine image format.")
-        .to_str()
-        .expect("Expects Unicode encoding for output file.")
-        .to_lowercase();
-
     println!("Saving output... ");
-    if ext == "jpg" || ext == "jpeg" {
-        let mut file = File::create(&args.output)
-            .expect(&format!("Unable to create output file {:?}.", &args.output));
-        let mut enc = image::jpeg::JPEGEncoder::new_with_quality(&mut file, args.quality);
-        enc.encode(
-            &buff,
-            layout.width,
-            layout.height,
-            if layout.width_stride == 4 {
-                image::ColorType::Rgba8
-            } else {
-                image::ColorType::Rgb8
-            },
-        )
-        .expect(&format!("Unable to write output file {:?}.", &args.output));
-    } else {
-        image::save_buffer(
-            &args.output,
-            &buff,
-            layout.width,
-            layout.height,
-            if layout.width_stride == 4 {
-                image::ColorType::Rgba8
-            } else {
-                image::ColorType::Rgb8
-            },
-        )
-        .expect(&format!("Unable to save output file {:?}", &args.output));
+    save_image(&buff, &layout, &args.output, args.quality);
+    if let Some(out) = &args.outlier_output {
+        save_image(&is_outlier, &layout, &out, args.quality);
     }
 
     // Delete temp file
@@ -110,6 +77,45 @@ fn main() {
     bar.finish_and_clear();
 
     println!("Total time: {:?}", start.elapsed());
+}
+
+fn save_image(buffer: &[u8], layout: &SampleLayout, out_path: &PathBuf, quality: u8) {
+    let ext = out_path
+        .extension()
+        .expect("Expects an extension for output file to determine image format.")
+        .to_str()
+        .expect("Expects Unicode encoding for output file.")
+        .to_lowercase();
+
+    if ext == "jpg" || ext == "jpeg" {
+        let mut file = File::create(&out_path)
+            .expect(&format!("Unable to create output file {:?}.", &out_path));
+        let mut enc = image::jpeg::JPEGEncoder::new_with_quality(&mut file, quality);
+        enc.encode(
+            &buffer,
+            layout.width,
+            layout.height,
+            if layout.width_stride == 4 {
+                image::ColorType::Rgba8
+            } else {
+                image::ColorType::Rgb8
+            },
+        )
+        .expect(&format!("Unable to write output file {:?}.", &out_path));
+    } else {
+        image::save_buffer(
+            &out_path,
+            &buffer,
+            layout.width,
+            layout.height,
+            if layout.width_stride == 4 {
+                image::ColorType::Rgba8
+            } else {
+                image::ColorType::Rgb8
+            },
+        )
+        .expect(&format!("Unable to save output file {:?}", &out_path));
+    }
 }
 
 fn to_time_slices(
