@@ -22,16 +22,20 @@ fn main() {
         args.temp_dir = Some(dir);
     }
     let temp_dir = args.temp_dir.as_ref().unwrap();
-    println!("Temp directory: {:?}", temp_dir);
+    print!("Temp directory: {:?}", temp_dir);
 
     // Create temp dir (only 1 level of creation depth)
     if !temp_dir.is_dir() {
         std::fs::create_dir(temp_dir)
             .expect(&format!("Unable to create temp directory {:?}", temp_dir));
-        println!("  ... created.");
+        println!(" -> created.");
+    } else {
+        println!();
     }
 
-    println!("{:#?}", args);
+    if args.debug {
+        println!("{:#?}", args);
+    }
 
     // Convert to time slices and save to temp files
     let (temp_files, layout, size_hint) =

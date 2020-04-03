@@ -24,9 +24,13 @@ pub struct Cli {
     /// Background pixel selection mode (first|random|average). Optional, default 'first'.
     #[structopt(short, long)]
     background: Option<String>,
+    /// Print debug information (i.e. parsed cmd parameters).
+    #[structopt(short, long)]
+    debug: bool,
 }
 
 impl Cli {
+    /// Parses this Cli into a [CliParsed](struct.CliParsed.html).
     pub fn parse(&self) -> Result<CliParsed, ParseCliError> {
         Ok(CliParsed {
             pattern: self.pattern.clone(),
@@ -40,18 +44,27 @@ impl Cli {
                 &self.background.as_ref().unwrap_or(&"first".to_string()),
             )
             .unwrap(),
+            debug: self.debug,
         })
     }
 }
 
+/// Parsed command line arguments.
 #[allow(dead_code)]
 #[derive(Debug)]
 pub struct CliParsed {
+    /// File search pattern
     pub pattern: String,
+    /// Temp directory. Uses system temp directory if `None`.
     pub temp_dir: Option<PathBuf>,
+    /// Path of the final output image.
     pub output: PathBuf,
+    /// Pixel selection mode.
     pub mode: SelectionMode,
+    /// Background pixel selection mode.
     pub background: BackgroundMode,
+    /// Print debug information (i.e. parsed cmd parameters).
+    pub debug: bool,
 }
 
 /// Error type for failed parsing of `String`s to `enum`s.

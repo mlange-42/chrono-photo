@@ -2,13 +2,19 @@
 use crate::img_stream::PixelInputStream;
 use crate::{EnumFromString, ParseEnumError};
 use image::flat::SampleLayout;
+use indicatif::ProgressBar;
 use rand::{Rng, ThreadRng};
 use std::path::PathBuf;
 
+/// Pixel selection mode.
 #[derive(Debug, Clone)]
 pub enum SelectionMode {
+    /// Selects by outlier analysis (multi-dimensional z-score).
+    /// Parameter `threshold` determines the minimum distance from the mean, in multiples of standard deviation, to classify a pixel as outlier.
     Outlier { threshold: f32 },
+    /// Selects the lightest/brightest pixel (sum of red, green and blue).
     Lighter,
+    /// Selects the darkest pixel (sum of red, green and blue).
     Darker,
 }
 impl EnumFromString for SelectionMode {
@@ -41,10 +47,14 @@ impl EnumFromString for SelectionMode {
     }
 }
 
+/// Background pixel selection mode, i.e. when no outliers are found.
 #[derive(Debug, Clone)]
 pub enum BackgroundMode {
+    /// Use the pixel from the first image.
     First,
+    /// Use the pixel from a randomly selected image.
     Random,
+    /// Use the average of the pixel from all images (Warning: may result in banding!).
     Average,
 }
 impl EnumFromString for BackgroundMode {
@@ -64,6 +74,8 @@ impl EnumFromString for BackgroundMode {
     }
 }
 
+/// Core processor for image analysis.
+/// Analysis is based on files as created by [`TimeSlicer`](./time_slice/struct.TimeSlicer.html).
 pub struct ChronoProcessor {
     mode: SelectionMode,
     background: BackgroundMode,
@@ -73,6 +85,7 @@ pub struct ChronoProcessor {
 }
 
 impl ChronoProcessor {
+    /// Creates a new image processor.
     pub fn new(mode: SelectionMode, bg_mode: BackgroundMode) -> Self {
         ChronoProcessor {
             mode,
@@ -82,7 +95,7 @@ impl ChronoProcessor {
             rng: rand::thread_rng(),
         }
     }
-
+    /// Processes images based on files as created by [`TimeSlicer`](./time_slice/struct.TimeSlicer.html).
     pub fn process(
         &mut self,
         layout: &SampleLayout,
@@ -95,7 +108,11 @@ impl ChronoProcessor {
         let mut pixel_data = Vec::new();
         let mut pixel = vec![0; channels];
 
+        println!("Processing {} time slices", files.len());
+        let bar = ProgressBar::new(files.len() as u64);
         for (out_row, file) in files.iter().enumerate() {
+            bar.inc(1);
+
             let buff_row_start = out_row * layout.height_stride;
             let mut stream = PixelInputStream::new(file)?;
             let mut data = match size_hint {
