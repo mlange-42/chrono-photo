@@ -1,5 +1,5 @@
 //! Command-line interface for chrono-photo.
-use crate::chrono::SelectionMode;
+use crate::chrono::{BackgroundMode, SelectionMode};
 use crate::EnumFromString;
 use core::fmt;
 use std::path::PathBuf;
@@ -18,30 +18,53 @@ pub struct Cli {
     /// Path to output file
     #[structopt(short, long)]
     output: String,
-    /// Pixel selection mode (lighter|darker|outlier). Optional, default 'outlier'.
+    /// Pixel selection mode (lighter|darker|outlier-<threshold>). Optional, default 'outlier-3.0'.
     #[structopt(short, long)]
     mode: Option<String>,
+    /// Background pixel selection mode (first|random|average). Optional, default 'first'.
+    #[structopt(short, long)]
+    background: Option<String>,
+    /// Print debug information (i.e. parsed cmd parameters).
+    #[structopt(short, long)]
+    debug: bool,
 }
 
 impl Cli {
+    /// Parses this Cli into a [CliParsed](struct.CliParsed.html).
     pub fn parse(&self) -> Result<CliParsed, ParseCliError> {
         Ok(CliParsed {
             pattern: self.pattern.clone(),
             temp_dir: self.temp_dir.as_ref().map(|d| PathBuf::from(d)),
             output: PathBuf::from(&self.output),
-            mode: SelectionMode::from_string(&self.mode.as_ref().unwrap_or(&"outlier".to_string()))
-                .unwrap(),
+            mode: SelectionMode::from_string(
+                &self.mode.as_ref().unwrap_or(&"outlier-3.0".to_string()),
+            )
+            .unwrap(),
+            background: BackgroundMode::from_string(
+                &self.background.as_ref().unwrap_or(&"first".to_string()),
+            )
+            .unwrap(),
+            debug: self.debug,
         })
     }
 }
 
+/// Parsed command line arguments.
 #[allow(dead_code)]
 #[derive(Debug)]
 pub struct CliParsed {
+    /// File search pattern
     pub pattern: String,
+    /// Temp directory. Uses system temp directory if `None`.
     pub temp_dir: Option<PathBuf>,
+    /// Path of the final output image.
     pub output: PathBuf,
+    /// Pixel selection mode.
     pub mode: SelectionMode,
+    /// Background pixel selection mode.
+    pub background: BackgroundMode,
+    /// Print debug information (i.e. parsed cmd parameters).
+    pub debug: bool,
 }
 
 /// Error type for failed parsing of `String`s to `enum`s.

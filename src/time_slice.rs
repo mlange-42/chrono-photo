@@ -2,12 +2,16 @@
 
 use crate::img_stream::{ImageStream, PixelOutputStream};
 use image::flat::SampleLayout;
+use indicatif::ProgressBar;
 use std::fmt;
 use std::path::PathBuf;
 
+/// Converts a series of images by time to images by row. I.e. transposes (x,y) in the cube in (x,y,t) to (x,t).
 pub struct TimeSlicer();
 
 impl TimeSlicer {
+    /// Writes time slices for all images in the given stream, into the given temporary directory.
+    /// Files are named `temp-xxxxx.gz`.
     pub fn write_time_slices(
         images: ImageStream,
         temp_dir: PathBuf,
@@ -20,8 +24,11 @@ impl TimeSlicer {
 
         let mut out_streams: Option<Vec<PixelOutputStream>> = None;
 
+        println!("Time-slicing {} images", size_hint);
+        let bar = ProgressBar::new(size_hint as u64);
         for img in images {
-            println!("Processing image {}", count + 1);
+            bar.inc(1);
+
             let dyn_img = img.unwrap();
             let pix = dyn_img.as_flat_samples_u8().unwrap();
             let lay = match layout {
@@ -63,6 +70,7 @@ impl TimeSlicer {
             }
             count += 1;
         }
+
         for stream in out_streams.as_mut().unwrap().iter_mut() {
             stream.close().unwrap();
         }

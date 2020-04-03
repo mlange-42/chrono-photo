@@ -11,10 +11,12 @@ use std::fs::File;
 use std::io::{BufReader, BufWriter, Read, Write};
 use std::path::PathBuf;
 
+/// Provides a stream of images from a file search pattern.
 pub struct ImageStream {
     files: VecDeque<PathBuf>,
 }
 impl ImageStream {
+    /// Creates an ImageStream from a file search pattern.
     pub fn from_pattern(pattern: &str) -> Result<Self, PatternError> {
         let lister = FileLister::new(&pattern);
         let files = lister.list_files()?;
@@ -34,6 +36,7 @@ impl Iterator for ImageStream {
     }
 }
 impl ImageStream {
+    /// The number of images in this stream
     pub fn len(&self) -> usize {
         self.files.len()
     }
@@ -62,7 +65,9 @@ impl PixelOutputStream {
         //println!("Compressed {} to {}", bytes.len(), compressed.len());
         self.stream
             .write_u32::<BigEndian>(compressed.len() as u32)?;
-        self.stream.write_all(compressed)
+        self.stream.write_all(compressed)?;
+        self.stream.flush()?;
+        Ok(())
     }
     pub fn close(&mut self) -> std::io::Result<()> {
         self.stream.flush()
