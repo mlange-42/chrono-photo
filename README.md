@@ -10,7 +10,7 @@ This tool creates chrono-photos like
 from video footage or photo series.
 
 _Warning:_ This project is in a very experimental state.
-So far, only the most basic image processing is supported. 
+So far, only most basic image processing is supported. 
 However, the image above shows a proof of concept for the algorithm,
 based on outlier detection (see section [How it works](#how-it-works) for details). 
 
@@ -52,11 +52,11 @@ or a non-outlier if they don't.
 
 ### Outlier detection
 
-Outlier detection in the current version uses multi-dimensional z-score,
-and a threshold provided via option `--mode` (default: 3.0; `--mode outlier-3.0`). 
-The threshold is relative to the standard deviation (SD) of pixel samples.
+Outlier detection in the current version uses multi-dimensional distance to the median,
+and a threshold provided via option `--mode` (default: 0.1; `--mode outlier-0.1`). 
+The threshold is relative to the per-band color range (i.e. fraction of range [0, 255] for 8 bits per bands).
 
-A pixel is categorized as an outlier if it's distance from the mean, normalized by SD in each dimension, is at least threshold.
+A pixel is categorized as an outlier if it's distance from the median is at least the threshold.
 
 #### Pixel selection among outliers
 
@@ -74,6 +74,7 @@ If no outliers are found for a pixel, different methods can be used to select th
 * `first`: Use the pixel value from the first image.
 * `random`: Use a randomly selected pixel value, selected among all images. May result in a noisy image.
 * `average`: Use the average pixel value of all images. Can be used for blurring, but may result in banding for low contrast backgrounds.
+* `median`: Use the median pixel value of all images. May result in banding for low contrast backgrounds.
 
 ### Technical realization
 
