@@ -307,7 +307,7 @@ impl ChronoProcessor {
         for m in self.mean.iter_mut() {
             *m /= samples as f32;
         }
-        // Calculate medians
+        // Calculate medians and inverse inter-quartile range
         for i in 0..channels {
             let slice = &mut self.values[(i * samples)..(i * samples + samples)];
             slice.sort_unstable();
@@ -421,6 +421,9 @@ impl ChronoProcessor {
         }
     }
 
+    /// Calculates quartiles from a sample (approximated).
+    ///
+    /// Return (Q1, Median, Q3)
     fn quartiles(data: &[u8]) -> (f32, f32, f32) {
         let len = data.len();
 
