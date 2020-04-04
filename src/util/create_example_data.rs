@@ -23,9 +23,9 @@ fn main() {
     for img in 0..num_images {
         for i in 0..buff_len {
             buffer[i] = if i % channels == 2 {
-                rng.gen_range(145, 150)
+                rng.gen_range(140, 150)
             } else {
-                rng.gen_range(245, 250)
+                rng.gen_range(240, 250)
             };
         }
         let (cx, cy) = (100 + img * 10, size.1 / 3 + img * 5);

@@ -1,5 +1,5 @@
 //! Command-line interface for chrono-photo.
-use crate::chrono::{BackgroundMode, OutlierSelectionMode, SelectionMode};
+use crate::chrono::{BackgroundMode, OutlierMode, OutlierSelectionMode, SelectionMode};
 use crate::img_stream::Compression;
 use crate::EnumFromString;
 use core::fmt;
@@ -15,7 +15,7 @@ pub struct Cli {
     pattern: String,
 
     /// Temp directory. Optional, default system temp directory.
-    #[structopt(short, long, name = "temp-dir")]
+    #[structopt(short = "d", long, name = "temp-dir")]
     temp_dir: Option<String>,
 
     /// Path to output file
@@ -24,11 +24,15 @@ pub struct Cli {
 
     /// Path of output image showing which pixels are outliers.
     #[structopt(long, name = "outlier-output")]
-    pub outlier_output: Option<String>,
+    outlier_output: Option<String>,
 
-    /// Pixel selection mode (lighter|darker|outlier-<threshold>). Optional, default 'outlier-0.1'.
+    /// Pixel selection mode (lighter|darker|outlier-<threshold>). Optional, default 'outlier'.
     #[structopt(short, long)]
     mode: Option<String>,
+
+    /// Outlier threshold mode (abs[olute]-<threshold>|rel[ative]-<threshold>). Optional, default 'relative-3.0'.
+    #[structopt(short, long)]
+    threshold: Option<String>,
 
     /// Background pixel selection mode (first|random|average|median). Optional, default 'first'.
     #[structopt(short, long)]
@@ -47,7 +51,7 @@ pub struct Cli {
     quality: Option<u8>,
 
     /// Print debug information (i.e. parsed cmd parameters).
-    #[structopt(short, long)]
+    #[structopt(long)]
     debug: bool,
 }
 
@@ -62,8 +66,13 @@ impl Cli {
                 Some(out) => Some(PathBuf::from(out)),
                 None => None,
             },
-            mode: SelectionMode::from_string(
-                &self.mode.as_ref().unwrap_or(&"outlier-0.1".to_string()),
+            mode: SelectionMode::from_string(&self.mode.as_ref().unwrap_or(&"outlier".to_string()))
+                .unwrap(),
+            threshold: OutlierMode::from_string(
+                &self
+                    .threshold
+                    .as_ref()
+                    .unwrap_or(&"relative-3.0".to_string()),
             )
             .unwrap(),
             background: BackgroundMode::from_string(
@@ -110,6 +119,8 @@ pub struct CliParsed {
     pub outlier_output: Option<PathBuf>,
     /// Pixel selection mode.
     pub mode: SelectionMode,
+    /// Outlier threshold mode.
+    pub threshold: OutlierMode,
     /// Outlier selection mode in case more than one outlier is found.
     pub outlier: OutlierSelectionMode,
     /// Background pixel selection mode.

@@ -3,7 +3,8 @@
 --temp-dir ..\test_data\temp ^
 --output ..\test_data\out.jpg ^
 --outlier-output ..\test_data\out-debug.png ^
---mode outlier-0.1 ^
+--mode outlier ^
+--threshold abs-0.1 ^
 --background first ^
 --outlier first ^
 --quality 98 ^

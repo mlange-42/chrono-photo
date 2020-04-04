@@ -52,8 +52,13 @@ fn main() {
         };
 
     // Process time slices
-    let processor =
-        ChronoProcessor::new(args.mode, args.background, args.outlier, args.compression);
+    let processor = ChronoProcessor::new(
+        args.mode,
+        args.threshold,
+        args.background,
+        args.outlier,
+        args.compression,
+    );
     let (buff, is_outlier) = processor
         .process(&layout, &temp_files[..], Some(size_hint))
         .unwrap();

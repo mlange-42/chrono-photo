@@ -95,7 +95,7 @@ impl TimeSlicer {
     }
 }
 
-/// Error type for failed parsing of `String`s to `enum`s.
+/// Error type for failed time-slicing due to wrong data layout.
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub struct TimeSliceError(String);
 
