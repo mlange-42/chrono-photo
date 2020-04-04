@@ -1,5 +1,6 @@
 pub mod chrono;
 pub mod cli;
+pub mod color;
 pub mod flist;
 pub mod img_stream;
 pub mod time_slice;
