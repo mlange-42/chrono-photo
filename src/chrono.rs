@@ -292,6 +292,12 @@ impl ChronoProcessor {
     ) -> bool {
         let channels = pixel.len();
         let samples = pixel_data.len() / channels;
+
+        let (is_rel, threshold_sq) = match threshold {
+            OutlierMode::Absolute { threshold: t } => (false, (t * 255.0).powi(2)),
+            OutlierMode::Relative { threshold: t } => (false, t * t),
+        };
+
         // Reset mean and SD
         for m in self.mean.iter_mut() {
             *m = 0.0;
@@ -311,20 +317,18 @@ impl ChronoProcessor {
         for i in 0..channels {
             let slice = &mut self.values[(i * samples)..(i * samples + samples)];
             slice.sort_unstable();
-            let (q1, med, q3) = Self::quartiles(slice);
-            self.median[i] = med;
-            self.iqr_inv[i] = q3 - q1;
-            if self.iqr_inv[i] == 0.0 {
-                self.iqr_inv[i] = 1.0;
+            if is_rel {
+                let (q1, med, q3) = Self::quartiles(slice);
+                self.median[i] = med;
+                self.iqr_inv[i] = q3 - q1;
+                if self.iqr_inv[i] == 0.0 {
+                    self.iqr_inv[i] = 1.0;
+                }
+                self.iqr_inv[i] = 1.0 / self.iqr_inv[i];
+            } else {
+                self.median[i] = Self::median(slice);
             }
-            self.iqr_inv[i] = 1.0 / self.iqr_inv[i];
         }
-
-        let (is_rel, threshold_sq) = match threshold {
-            OutlierMode::Absolute { threshold: t } => (false, (t * 255.0).powi(2)),
-            OutlierMode::Relative { threshold: t } => (false, t * t),
-        };
-        //let threshold_sq = (threshold * 255.0).powi(2);
 
         let mut num_outliers = 0;
         let mut max_dist_sq = 0.0;
@@ -448,5 +452,17 @@ impl ChronoProcessor {
             0.5 * (data[idx] as f32 + data[idx + 1] as f32)
         };
         (q1, med, q3)
+    }
+
+    /// Calculates the median of a sample.
+    fn median(data: &[u8]) -> f32 {
+        let len = data.len();
+
+        if len % 2 == 0 {
+            data[(len + 1) / 2] as f32
+        } else {
+            let idx = len / 2;
+            0.5 * (data[idx] as f32 + data[idx + 1] as f32)
+        }
     }
 }
