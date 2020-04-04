@@ -53,8 +53,9 @@ or a non-outlier if they don't.
 ### Outlier detection
 
 Outlier detection in the current version uses multi-dimensional distance to the median,
-and a threshold provided via option `--mode` (default: 0.1; `--mode outlier-0.1`). 
-The threshold is relative to the per-band color range (i.e. fraction of range [0, 255] for 8 bits per color band).
+and an absolute or relative threshold provided via option `--threshold` (default: abs. 0.1; `--threshold abs-0.1`). 
+The _absolute_ threshold (recommended, typically < 1) is relative to the per-band color range (i.e. fraction of range [0, 255] for 8 bits per color band),
+while the _relative_ threshold (typically > 1) is relative to the inter-quartile range in each band/dimension.
 
 A pixel value is categorized as an outlier if it's distance from the median is at least the threshold.
 
