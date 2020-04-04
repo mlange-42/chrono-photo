@@ -26,11 +26,11 @@ pub struct Cli {
     #[structopt(long, name = "outlier-output")]
     outlier_output: Option<String>,
 
-    /// Pixel selection mode (lighter|darker|outlier-<threshold>). Optional, default 'outlier'.
+    /// Pixel selection mode (lighter|darker|outlier/<threshold>). Optional, default 'outlier'.
     #[structopt(short, long)]
     mode: Option<String>,
 
-    /// Outlier threshold mode (abs[olute]-<threshold>|rel[ative]-<threshold>). Optional, default 'relative-3.0'.
+    /// Outlier threshold mode (abs[olute]/<threshold>|rel[ative]/<threshold>). Optional, default 'relative/3.0'.
     #[structopt(short, long)]
     threshold: Option<String>,
 
@@ -72,7 +72,7 @@ impl Cli {
                 &self
                     .threshold
                     .as_ref()
-                    .unwrap_or(&"relative-3.0".to_string()),
+                    .unwrap_or(&"relative/3.0".to_string()),
             )
             .unwrap(),
             background: BackgroundMode::from_string(

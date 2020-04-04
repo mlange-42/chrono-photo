@@ -47,7 +47,7 @@ impl EnumFromString for OutlierMode {
     where
         Self: std::marker::Sized,
     {
-        let parts: Vec<_> = str.split('-').collect();
+        let parts: Vec<_> = str.split('/').collect();
         let opt = parts
             .get(0)
             .expect(&format!("Unexpected format in {}", str));
@@ -62,7 +62,7 @@ impl EnumFromString for OutlierMode {
             "absolute" | "abs" => Ok(OutlierMode::Absolute{threshold: thresh}),
             "relative" | "rel" => Ok(OutlierMode::Relative{threshold: thresh}),
             _ => Err(ParseEnumError(format!(
-                "Not a pixel outlier detection mode: {}. Must be one of (abs[olute]-<threshold>|rel[ative]-<threshold>)",
+                "Not a pixel outlier detection mode: {}. Must be one of (abs[olute]/<threshold>|rel[ative]/<threshold>)",
                 str
             ))),
         }
