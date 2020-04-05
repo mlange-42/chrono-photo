@@ -1,5 +1,6 @@
 use chrono_photo::chrono::ChronoProcessor;
 use chrono_photo::cli::{Cli, CliParsed};
+use chrono_photo::flist::FrameRange;
 use chrono_photo::img_stream::{Compression, ImageStream};
 use chrono_photo::time_slice::{TimeSliceError, TimeSlicer};
 use image::flat::SampleLayout;
@@ -42,14 +43,18 @@ fn main() {
     }
 
     // Convert to time slices and save to temp files
-    let (temp_files, layout, size_hint) =
-        match to_time_slices(&args.pattern, &args.temp_dir.unwrap(), &args.compression) {
-            Ok(fls) => fls,
-            Err(err) => {
-                println!("{:?}", err.to_string());
-                return;
-            }
-        };
+    let (temp_files, layout, size_hint) = match to_time_slices(
+        &args.pattern,
+        args.frames,
+        &args.temp_dir.unwrap(),
+        &args.compression,
+    ) {
+        Ok(fls) => fls,
+        Err(err) => {
+            println!("{:?}", err.to_string());
+            return;
+        }
+    };
 
     // Process time slices
     let processor = ChronoProcessor::new(
@@ -125,9 +130,11 @@ fn save_image(buffer: &[u8], layout: &SampleLayout, out_path: &PathBuf, quality:
 
 fn to_time_slices(
     image_pattern: &str,
+    frames: Option<FrameRange>,
     temp_path: &PathBuf,
     compression: &Compression,
 ) -> Result<(Vec<PathBuf>, SampleLayout, usize), TimeSliceError> {
-    let images = ImageStream::from_pattern(image_pattern).expect("Error processing pattern");
+    let images =
+        ImageStream::from_pattern(image_pattern, frames).expect("Error processing pattern");
     TimeSlicer::write_time_slices(images, temp_path.clone(), compression.clone())
 }

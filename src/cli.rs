@@ -1,4 +1,5 @@
 //! Command-line interface for chrono-photo.
+use crate::flist::FrameRange;
 use crate::img_stream::Compression;
 use crate::options::{BackgroundMode, OutlierSelectionMode, SelectionMode, Threshold};
 use core::fmt;
@@ -12,6 +13,11 @@ pub struct Cli {
     /// File search pattern
     #[structopt(short, long)]
     pattern: String,
+
+    /// Frames to be used from those matching pattern: `start/end/step`. Optional.
+    /// For default values, use `.`, e.g. `././step`.
+    #[structopt(short, long)]
+    frames: Option<String>,
 
     /// Path to output file
     #[structopt(short, long)]
@@ -108,6 +114,10 @@ impl Cli {
                 }
                 None => 95,
             },
+            frames: self
+                .frames
+                .as_ref()
+                .and_then(|fr| Some(fr.parse().unwrap())),
             debug: self.debug,
         })
     }
@@ -119,6 +129,9 @@ impl Cli {
 pub struct CliParsed {
     /// File search pattern
     pub pattern: String,
+    /// Frames to be used from those matching pattern: `start/end/step`. Optional.
+    /// For default values, use `.`, e.g. `././step`.
+    pub frames: Option<FrameRange>,
     /// Temp directory. Uses system temp directory if `None`.
     pub temp_dir: Option<PathBuf>,
     /// Path of the final output image.

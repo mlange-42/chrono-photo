@@ -1,5 +1,5 @@
 //! Provides an image stream from a list of files, or a (TODO) video file.
-use crate::flist::FileLister;
+use crate::flist::{FileLister, FrameRange};
 use crate::ParseEnumError;
 use byteorder::{BigEndian, ReadBytesExt, WriteBytesExt};
 use flate2::read::{DeflateDecoder, GzDecoder, ZlibDecoder};
@@ -40,8 +40,8 @@ pub struct ImageStream {
 }
 impl ImageStream {
     /// Creates an ImageStream from a file search pattern.
-    pub fn from_pattern(pattern: &str) -> Result<Self, PatternError> {
-        let lister = FileLister::new(&pattern);
+    pub fn from_pattern(pattern: &str, frames: Option<FrameRange>) -> Result<Self, PatternError> {
+        let lister = FileLister::new(&pattern, frames);
         let files = lister.list_files()?;
         Ok(ImageStream { files })
     }
