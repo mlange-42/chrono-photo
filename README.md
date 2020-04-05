@@ -61,7 +61,7 @@ A pixel value is categorized as an outlier if it's distance from the median is a
 If multiple outliers are found, one is selected according the description in 
 [Pixel selection among outliers](#pixel-selection-among-outliers).
 
-If the distance of the outlier to the median is below the upper threshold (second number in `--threshold abs/0.05/0.2`),
+If the distance of the outlier to the median is between lower and upper threshold (the two numbers in `--threshold abs/0.05/0.2`),
 the pixel color is blended between background and outlier (linear). 
 If the distance is above the upper threshold, the outlier's color is used without blending.
 
