@@ -1,5 +1,5 @@
 //! Command-line interface for chrono-photo.
-use crate::chrono::{BackgroundMode, OutlierMode, OutlierSelectionMode, SelectionMode};
+use crate::chrono::{BackgroundMode, OutlierSelectionMode, SelectionMode, Threshold};
 use crate::img_stream::Compression;
 use crate::EnumFromString;
 use core::fmt;
@@ -22,19 +22,19 @@ pub struct Cli {
     #[structopt(short, long)]
     output: String,
 
-    /// Path of output image showing which pixels are outliers.
-    #[structopt(long, name = "outlier-output")]
-    outlier_output: Option<String>,
+    /// Path of output image showing which pixels are outliers (blend value).
+    #[structopt(long, name = "output-blend")]
+    output_blend: Option<String>,
 
-    /// Pixel selection mode (lighter|darker|outlier-<threshold>). Optional, default 'outlier'.
+    /// Pixel selection mode (lighter|darker|outlier/<threshold>). Optional, default 'outlier'.
     #[structopt(short, long)]
     mode: Option<String>,
 
-    /// Outlier threshold mode (abs[olute]-<threshold>|rel[ative]-<threshold>). Optional, default 'relative-3.0'.
+    /// Outlier threshold mode (abs[olute]/<lower>[/<upper>]|rel[ative]/<lower>[/<upper>]). Optional, default 'abs/0.05/0.2'.
     #[structopt(short, long)]
     threshold: Option<String>,
 
-    /// Background pixel selection mode (first|random|average|median). Optional, default 'first'.
+    /// Background pixel selection mode (first|random|average|median). Optional, default 'random'.
     #[structopt(short, long)]
     background: Option<String>,
 
@@ -62,21 +62,20 @@ impl Cli {
             pattern: self.pattern.clone(),
             temp_dir: self.temp_dir.as_ref().map(|d| PathBuf::from(d)),
             output: PathBuf::from(&self.output),
-            outlier_output: match &self.outlier_output {
+            output_blend: match &self.output_blend {
                 Some(out) => Some(PathBuf::from(out)),
                 None => None,
             },
             mode: SelectionMode::from_string(&self.mode.as_ref().unwrap_or(&"outlier".to_string()))
                 .unwrap(),
-            threshold: OutlierMode::from_string(
-                &self
-                    .threshold
-                    .as_ref()
-                    .unwrap_or(&"relative-3.0".to_string()),
-            )
-            .unwrap(),
+            threshold: self
+                .threshold
+                .as_ref()
+                .unwrap_or(&"abs/0.05/0.2".to_string())
+                .parse()
+                .unwrap(),
             background: BackgroundMode::from_string(
-                &self.background.as_ref().unwrap_or(&"first".to_string()),
+                &self.background.as_ref().unwrap_or(&"random".to_string()),
             )
             .unwrap(),
             outlier: OutlierSelectionMode::from_string(
@@ -115,12 +114,12 @@ pub struct CliParsed {
     pub temp_dir: Option<PathBuf>,
     /// Path of the final output image.
     pub output: PathBuf,
-    /// Path of output image showing which pixels are outliers.
-    pub outlier_output: Option<PathBuf>,
+    /// Path of output image showing which pixels are outliers (blend value).
+    pub output_blend: Option<PathBuf>,
     /// Pixel selection mode.
     pub mode: SelectionMode,
     /// Outlier threshold mode.
-    pub threshold: OutlierMode,
+    pub threshold: Threshold,
     /// Outlier selection mode in case more than one outlier is found.
     pub outlier: OutlierSelectionMode,
     /// Background pixel selection mode.
