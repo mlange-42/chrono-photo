@@ -25,6 +25,7 @@ based on outlier detection (see section [How it works](#how-it-works) for detail
 
 * Try the example batch files in sub-directory [`/cmd_examples`](/cmd_examples).
 * To view the full list of options, run `chrono-photo --help`
+* For a detailed explanation, see section [How it works](#how-it-works).
 
 ## Library / crate
 
@@ -69,17 +70,20 @@ If the distance is above the upper threshold, the outlier's color is used withou
 
 If only one outlier is found for a pixel, it is used as the pixel's value.
 
-If more than one outlier is found for a pixel, different methods can be used to select among them via option `--outlier`:
+If more than one outlier is found for a pixel, different methods can be used to select among them 
+via **option `--outlier`**:
+* `extreme`: use the most extreme outlier (the default value).
+* `average`: use the average of all outliers.
+* `forward`, `backward`: progressively blends all outliers over the background, starting with the first or last, respectively.
 * `first`: use the first outlier found.
 * `last`: use the last outlier found.
-* `extreme`: use the most extreme outlier (the default).
-* `average`: use the average of all outliers.
 
 #### Background pixel selection
 
-If no outliers are found for a pixel (or for blending), different methods can be used to select the pixel's value via option `--background`:
+If no outliers are found for a pixel (or for blending), different methods can be used to select the 
+pixel's value via **option `--background`**:
+* `random`: Use a randomly selected pixel value, selected among all images. The default value, but may result in a noisy image.
 * `first`: Use the pixel value from the first image.
-* `random`: Use a randomly selected pixel value, selected among all images. Recommended, but may result in a noisy image.
 * `average`: Use the average pixel value of all images. Can be used for blurring, but may result in banding for low contrast backgrounds.
 * `median`: Use the median pixel value of all images. May result in banding for low contrast backgrounds.
 
