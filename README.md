@@ -155,5 +155,5 @@ using it's 'Video Sequencer' view. The required settings are shown in the image 
 (particularly, see 'Output' in the bottom-left corner).
 
 ![Blender-VideoSequencer](https://user-images.githubusercontent.com/44003176/78508454-58a94500-7787-11ea-9e55-675e88cf14d7.PNG)
-<sup>_Blender with 'Video Sequencer' view (right part) and required output settings (bottom left).
-To start rendering, click 'Render Animation' in menu 'Render' (top-most menu bar) or press Ctrl+F12._</sup>
+_Blender with 'Video Sequencer' view (right part) and required output settings (bottom left).
+To start rendering, click 'Render Animation' in menu 'Render' (top-most menu bar) or press Ctrl+F12._
