@@ -2,45 +2,37 @@
 
 Chronophotography command line tool and library in [Rust](https://www.rust-lang.org/).
 
+This tool helps to create chrono-photos like 
+[Xavi Bou's "Ornithographies"](http://www.xavibou.com/) 
+from photo series or ([later](#how-to-prepare-videos)) video footage.
+
+* **[Download binaries](https://github.com/mlange-42/chrono-photo/releases/)**
+
+_Warning:_ This project is still in an experimental stage. However, the image below shows a proof of concept for the algorithm,
+based on outlier detection (see section [How it works](#how-it-works) for details). 
+
 ![A simple Chronophotography example](https://user-images.githubusercontent.com/44003176/77975353-236da480-72fa-11ea-9ff9-5c110895fe5d.jpg)
 <sup>_A simple Chronophotography example_</sup>
 
-This tool helps to create chrono-photos like 
-[Xavi Bou's "Ornithographies"](http://www.xavibou.com/) 
-from photo series or video footage.
-
-_Warning:_ This project is still in an experimental state. In the current version. However, the image above shows a proof of concept for the algorithm,
-based on outlier detection (see section [How it works](#how-it-works) for details). 
-
 **Content**
-* [Command line tool](#command-line-tool)
-* [Library / crate](#library--crate)
+* [Installation](#installation)
+* [Getting started](#getting-started)
 * [How it works](#how-it-works)
 * [Command line options](#command-line-options)
 * [How to prepare videos](#how-to-prepare-videos)
+* [Library / crate](#library--crate)
 
-## Command line tool
-
-### Installation
+## Installation
 
 * Download the [latest binaries](https://github.com/mlange-42/chrono-photo/releases).
 * Unzip somewhere with write privileges (only required for running examples in place).
 
-### Usage
+## Getting started
 
-* Try the example batch files in sub-directory [`/cmd_examples`](/cmd_examples).
+* Try the example batch files in sub-directory [/cmd_examples](/cmd_examples).
 * To view the full list of options, run `chrono-photo --help`
-* For a detailed explanation of all options, see [Command line options](#command-line-options)
-* For an explanation of the algorithm, see section [How it works](#how-it-works).
-
-## Library / crate
-
-To use this crate as a library, add the following to your `Cargo.toml` dependencies section:
-```
-chrono-photo = { git = "https://github.com/mlange-42/chrono-photo.git" }
-```
-
-For the latest development version, see branch [`dev`](https://github.com/mlange-42/chrono-photo/tree/dev).
+* For a detailed explanation of all options see section [Command line options](#command-line-options)
+* For an explanation of the algorithm see next section, [How it works](#how-it-works).
 
 ## How it works
 
@@ -157,3 +149,11 @@ using it's 'Video Sequencer' view. The required settings are shown in the image 
 ![Blender-VideoSequencer](https://user-images.githubusercontent.com/44003176/78508454-58a94500-7787-11ea-9e55-675e88cf14d7.PNG)
 _Blender with 'Video Sequencer' view (right part) and required output settings (bottom left).
 To start rendering, click 'Render Animation' in menu 'Render' (top-most menu bar) or press Ctrl+F12._
+
+## Library / crate
+
+To use this crate as a library, add the following to your `Cargo.toml` dependencies section:
+```
+chrono-photo = { git = "https://github.com/mlange-42/chrono-photo.git" }
+```
+For the latest development version, see branch [`dev`](https://github.com/mlange-42/chrono-photo/tree/dev).
