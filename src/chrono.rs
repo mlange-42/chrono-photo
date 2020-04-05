@@ -461,7 +461,7 @@ impl ChronoProcessor {
             };
             // Blend outlier into background
             let blend = threshold.blend_value(dist);
-            color::blend_into(&mut pixel, &sample, blend);
+            color::blend_into_u8(&mut pixel, &sample, blend);
             (blend * 255.0).round() as u8
         } else {
             0
