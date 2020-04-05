@@ -25,6 +25,7 @@ based on outlier detection (see section [How it works](#how-it-works) for detail
 
 * Try the example batch files in sub-directory [`/cmd_examples`](/cmd_examples).
 * To view the full list of options, run `chrono-photo --help`
+* For a detailed explanation, see section [How it works](#how-it-works).
 
 ## Library / crate
 
@@ -74,6 +75,7 @@ If more than one outlier is found for a pixel, different methods can be used to 
 * `last`: use the last outlier found.
 * `extreme`: use the most extreme outlier (the default).
 * `average`: use the average of all outliers.
+* `forward`, `backward`: progressively blend all outliers over the background, starting with the first or last, respectively.
 
 #### Background pixel selection
 

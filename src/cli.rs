@@ -14,13 +14,13 @@ pub struct Cli {
     #[structopt(short, long)]
     pattern: String,
 
-    /// Temp directory. Optional, default system temp directory.
-    #[structopt(short = "d", long, name = "temp-dir")]
-    temp_dir: Option<String>,
-
     /// Path to output file
     #[structopt(short, long)]
     output: String,
+
+    /// Temp directory. Optional, default system temp directory.
+    #[structopt(short = "d", long, name = "temp-dir")]
+    temp_dir: Option<String>,
 
     /// Path of output image showing which pixels are outliers (blend value).
     #[structopt(long, name = "output-blend")]
