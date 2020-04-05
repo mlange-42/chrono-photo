@@ -59,7 +59,7 @@ while the _relative_ threshold (typically > 1) is relative to the inter-quartile
 
 A pixel value is categorized as an outlier if it's distance from the median is at least the threshold.
 If multiple outliers are found, one is selected according the description in 
-[Pixel selection among outliers](pixel-selection-among-outliers).
+[Pixel selection among outliers](#pixel-selection-among-outliers).
 
 If the distance of the outlier to the median is below the upper threshold (second number in `--threshold abs/0.05/0.2`),
 the pixel color is blended between background and outlier (linear). 
