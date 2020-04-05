@@ -88,7 +88,7 @@ If no outliers are found for a pixel (or for blending), different methods can be
 Finding the best options for pixel selection, as well as an outlier threshold that fits the noise in the input images,
 may require some trial and error.
 
-In addition to inspection of the produced image, use option `--blend-output <path>` to write a greyscale
+In addition to inspection of the produced image, use option `--output-blend <path>` to write a greyscale
 image showing which pixels were filled based on outliers (greyscale blend value), and which were not (black).
 
 If there are black pixels inside the moving object(s), the outlier threshold(s) should be decreased. 

@@ -23,14 +23,14 @@ pub struct Cli {
     output: String,
 
     /// Path of output image showing which pixels are outliers (blend value).
-    #[structopt(long, name = "blend-output")]
-    blend_output: Option<String>,
+    #[structopt(long, name = "output-blend")]
+    output_blend: Option<String>,
 
     /// Pixel selection mode (lighter|darker|outlier/<threshold>). Optional, default 'outlier'.
     #[structopt(short, long)]
     mode: Option<String>,
 
-    /// Outlier threshold mode (abs[olute]/<threshold>|rel[ative]/<threshold>). Optional, default 'abs/0.05/0.2'.
+    /// Outlier threshold mode (abs[olute]/<lower>[/<upper>]|rel[ative]/<lower>[/<upper>]). Optional, default 'abs/0.05/0.2'.
     #[structopt(short, long)]
     threshold: Option<String>,
 
@@ -62,7 +62,7 @@ impl Cli {
             pattern: self.pattern.clone(),
             temp_dir: self.temp_dir.as_ref().map(|d| PathBuf::from(d)),
             output: PathBuf::from(&self.output),
-            blend_output: match &self.blend_output {
+            output_blend: match &self.output_blend {
                 Some(out) => Some(PathBuf::from(out)),
                 None => None,
             },
@@ -115,7 +115,7 @@ pub struct CliParsed {
     /// Path of the final output image.
     pub output: PathBuf,
     /// Path of output image showing which pixels are outliers (blend value).
-    pub blend_output: Option<PathBuf>,
+    pub output_blend: Option<PathBuf>,
     /// Pixel selection mode.
     pub mode: SelectionMode,
     /// Outlier threshold mode.
