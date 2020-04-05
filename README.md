@@ -5,11 +5,11 @@ Chronophotography command line tool and library in [Rust](https://www.rust-lang.
 ![A simple Chronophotography example](https://user-images.githubusercontent.com/44003176/77975353-236da480-72fa-11ea-9ff9-5c110895fe5d.jpg)
 <sup>_A simple Chronophotography example_</sup>
 
-This tool creates chrono-photos like 
+This tool helps to create chrono-photos like 
 [Xavi Bou's "Ornithographies"](http://www.xavibou.com/) 
-from video footage or photo series.
+from photo series or video footage.
 
-_Warning:_ This project is still in an experimental state. However, the image above shows a proof of concept for the algorithm,
+_Warning:_ This project is still in an experimental state. In the current version. However, the image above shows a proof of concept for the algorithm,
 based on outlier detection (see section [How it works](#how-it-works) for details). 
 
 **Content**
@@ -17,6 +17,7 @@ based on outlier detection (see section [How it works](#how-it-works) for detail
 * [Library / crate](#library--crate)
 * [How it works](#how-it-works)
 * [Command line options](#command-line-options)
+* [How to prepare videos](#how-to-prepare-videos)
 
 ## Command line tool
 
@@ -143,3 +144,16 @@ OPTIONS:
     -t, --threshold <threshold>          Outlier threshold mode (abs|rel)/<lower>[/<upper>]. Optional, default
                                          'abs/0.05/0.2'
 ```
+
+## How to prepare videos
+
+There is no support for direct video file processing yet.
+
+To process videos, they have to be converted into a sequence of images by a third party tool.
+E.g. with the open source software [Blender](https://www.blender.org/),
+using it's 'Video Sequencer' view. The required settings are shown in the image below
+(particularly, see 'Output' in the bottom-left corner).
+
+![Blender-VideoSequencer](https://user-images.githubusercontent.com/44003176/78508454-58a94500-7787-11ea-9e55-675e88cf14d7.PNG)
+<sup>_Blender with 'Video Sequencer' view (right part) and required output settings (bottom left).
+To start rendering, click 'Render Animation' in menu 'Render' (top-most menu bar) or press Ctrl+F12._</sup>
