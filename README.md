@@ -9,10 +9,14 @@ This tool creates chrono-photos like
 [Xavi Bou's "Ornithographies"](http://www.xavibou.com/) 
 from video footage or photo series.
 
-_Warning:_ This project is in a very experimental state.
-Supports only basic image processing so far.
-However, the image above shows a proof of concept for the algorithm,
+_Warning:_ This project is still in an experimental state. However, the image above shows a proof of concept for the algorithm,
 based on outlier detection (see section [How it works](#how-it-works) for details). 
+
+**Content**
+* [Command line tool](#command-line-tool)
+* [Library / crate](#library--crate)
+* [How it works](#how-it-works)
+* [Command line options](#command-line-options)
 
 ## Command line tool
 
@@ -25,7 +29,8 @@ based on outlier detection (see section [How it works](#how-it-works) for detail
 
 * Try the example batch files in sub-directory [`/cmd_examples`](/cmd_examples).
 * To view the full list of options, run `chrono-photo --help`
-* For a detailed explanation, see section [How it works](#how-it-works).
+* For a detailed explanation of all options, see [Command line options](#command-line-options)
+* For an explanation of the algorithm, see section [How it works](#how-it-works).
 
 ## Library / crate
 
@@ -33,8 +38,6 @@ To use this crate as a library, add the following to your `Cargo.toml` dependenc
 ```
 chrono-photo = { git = "https://github.com/mlange-42/chrono-photo.git" }
 ```
-
-## Development version
 
 For the latest development version, see branch [`dev`](https://github.com/mlange-42/chrono-photo/tree/dev).
 
@@ -109,3 +112,34 @@ is converted into a number of temporary files, each containing data in (x, t) co
 For example, the first temporary file contains the first row of pixels from each image.
 
 Using these temporary files, all images can be processes row by row, without overloading memory, as explained above.
+
+## Command line options
+
+**TODO**
+
+```
+USAGE:
+    chrono-photo [FLAGS] [OPTIONS] --output <output> --pattern <pattern>
+
+FLAGS:
+        --debug      Print debug information (i.e. parsed cmd parameters)
+    -h, --help       Prints help information
+    -V, --version    Prints version information
+
+OPTIONS:
+    -b, --background <background>        Background pixel selection mode (first|random|average|median). Optional,
+                                         default 'random'
+    -c, --compression <compression>      Compression mode for time slices (gzip|zlib|deflate). Optional, default 'gzip'
+    -f, --frames <frames>                Frames to be used from those matching pattern: `start/end/step`. Optional. For
+                                         default values, use `.`, e.g. `././step`
+    -m, --mode <mode>                    Pixel selection mode (lighter|darker|outlier). Optional, default 'outlier'
+    -l, --outlier <outlier>              Outlier selection mode in case more than one outlier is found
+                                         (first|last|extreme|average|forward|backward). Optional, default 'extreme'
+    -o, --output <output>                Path to output file
+        --output-blend <output-blend>    Path of output image showing which pixels are outliers (blend value)
+    -p, --pattern <pattern>              File search pattern
+    -q, --quality <quality>              Output image quality for JPG files, in percent. Optional, default '95'
+    -d, --temp-dir <temp-dir>            Temp directory. Optional, default system temp directory
+    -t, --threshold <threshold>          Outlier threshold mode (abs|rel)/<lower>[/<upper>]. Optional, default
+                                         'abs/0.05/0.2'
+```
