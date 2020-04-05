@@ -115,6 +115,10 @@ pub enum OutlierSelectionMode {
     Extreme,
     /// Use the most average of all outlier.
     Average,
+    /// Progressively blend all outliers into background, forward.
+    AllForward,
+    /// Progressively blend all outliers into background, backward.
+    AllBackward,
 }
 impl EnumFromString for OutlierSelectionMode {
     fn from_string(str: &str) -> Result<Self, ParseEnumError>
@@ -126,8 +130,10 @@ impl EnumFromString for OutlierSelectionMode {
             "last" => Ok(OutlierSelectionMode::Last),
             "extreme" => Ok(OutlierSelectionMode::Extreme),
             "average" => Ok(OutlierSelectionMode::Average),
+            "forward" => Ok(OutlierSelectionMode::AllForward),
+            "backward" => Ok(OutlierSelectionMode::AllBackward),
             _ => Err(ParseEnumError(format!(
-                "Not an outlier selection mode: {}. Must be one of (first|last|extreme|average)",
+                "Not an outlier selection mode: {}. Must be one of (first|last|extreme|average|forward|backward)",
                 str
             ))),
         }
@@ -422,47 +428,100 @@ impl ChronoProcessor {
         let has_outliers = num_outliers > 0;
         if has_outliers {
             // Get outlier
-            let (sample, dist) = if self.outlier == OutlierSelectionMode::Average {
-                if num_outliers == 1 {
-                    let (sample_idx, dist_sq) = self.outlier_indices[0];
-                    let sample =
-                        &pixel_data[(sample_idx * channels)..(sample_idx * channels + channels)];
-                    (sample, dist_sq.sqrt())
-                } else {
-                    for ch in 0..channels {
-                        self.mean[ch] = 0.0;
-                    }
-                    let mut mean_dist = 0.0;
-                    for (sample_idx, dist_sq) in self.outlier_indices.iter().take(num_outliers) {
-                        let offset = sample_idx * channels;
-                        for ch in 0..channels {
-                            self.mean[ch] += pixel_data[offset + ch] as f32;
-                        }
-                        mean_dist += dist_sq.sqrt();
-                    }
-                    for ch in 0..channels {
-                        self.sample[ch] = (self.mean[ch] / num_outliers as f32).round() as u8;
-                    }
-                    /*for ch in 0..channels {
-                        pixel[ch] = (self.mean[ch] / num_outliers as f32).round() as u8;
-                    }*/
-                    (&self.sample[..], mean_dist / num_outliers as f32)
-                }
-            } else {
-                let (sample_idx, dist_sq) = match self.outlier {
-                    OutlierSelectionMode::First => self.outlier_indices[0],
-                    OutlierSelectionMode::Last => self.outlier_indices[num_outliers - 1],
-                    OutlierSelectionMode::Extreme => (max_index, max_dist_sq),
-                    OutlierSelectionMode::Average => (0, 0.0),
-                };
+            if num_outliers == 1 {
+                // Only one outlier
+                let (sample_idx, dist_sq) = self.outlier_indices[0];
                 let sample =
                     &pixel_data[(sample_idx * channels)..(sample_idx * channels + channels)];
-                (sample, dist_sq.sqrt())
-            };
-            // Blend outlier into background
-            let blend = threshold.blend_value(dist);
-            color::blend_into_u8(&mut pixel, &sample, blend);
-            (blend * 255.0).round() as u8
+
+                let blend = threshold.blend_value(dist_sq.sqrt());
+                color::blend_into_u8(&mut pixel, &sample, blend);
+                (blend * 255.0).round() as u8
+            } else {
+                // More outliers
+                if self.outlier == OutlierSelectionMode::AllForward
+                    || self.outlier == OutlierSelectionMode::AllBackward
+                {
+                    let mut pix_new = [0.0; 4];
+                    let mut blend_inv = 1.0;
+                    for ch in 0..channels {
+                        pix_new[ch] = pixel[ch] as f32;
+                    }
+                    if self.outlier == OutlierSelectionMode::AllForward {
+                        for (sample_idx, dist_sq) in self.outlier_indices.iter().take(num_outliers)
+                        {
+                            let offset = sample_idx * channels;
+                            let sample = &pixel_data[offset..(offset + channels)];
+                            // Blend outlier into background
+                            let blend = threshold.blend_value(dist_sq.sqrt());
+                            color::blend_into_f32_u8(&mut pix_new, &sample, blend);
+                            blend_inv *= 1.0 - blend;
+                        }
+                    } else {
+                        for (sample_idx, dist_sq) in
+                            self.outlier_indices.iter().take(num_outliers).rev()
+                        {
+                            let offset = sample_idx * channels;
+                            let sample = &pixel_data[offset..(offset + channels)];
+                            // Blend outlier into background
+                            let blend = threshold.blend_value(dist_sq.sqrt());
+                            color::blend_into_f32_u8(&mut pix_new, &sample, blend);
+                            blend_inv *= 1.0 - blend;
+                        }
+                    }
+                    for ch in 0..channels {
+                        pixel[ch] = pix_new[ch].round() as u8;
+                    }
+                    ((1.0 - blend_inv) * 255.0).round() as u8
+                } else {
+                    let (sample, dist) = if self.outlier == OutlierSelectionMode::Average {
+                        if num_outliers == 1 {
+                            let (sample_idx, dist_sq) = self.outlier_indices[0];
+                            let sample = &pixel_data
+                                [(sample_idx * channels)..(sample_idx * channels + channels)];
+                            (sample, dist_sq.sqrt())
+                        } else {
+                            for ch in 0..channels {
+                                self.mean[ch] = 0.0;
+                            }
+                            let mut mean_dist = 0.0;
+                            for (sample_idx, dist_sq) in
+                                self.outlier_indices.iter().take(num_outliers)
+                            {
+                                let offset = sample_idx * channels;
+                                for ch in 0..channels {
+                                    self.mean[ch] += pixel_data[offset + ch] as f32;
+                                }
+                                mean_dist += dist_sq.sqrt();
+                            }
+                            for ch in 0..channels {
+                                self.sample[ch] =
+                                    (self.mean[ch] / num_outliers as f32).round() as u8;
+                            }
+                            /*for ch in 0..channels {
+                                pixel[ch] = (self.mean[ch] / num_outliers as f32).round() as u8;
+                            }*/
+                            (&self.sample[..], mean_dist / num_outliers as f32)
+                        }
+                    } else {
+                        let (sample_idx, dist_sq) = match self.outlier {
+                            OutlierSelectionMode::First => self.outlier_indices[0],
+                            OutlierSelectionMode::Last => self.outlier_indices[num_outliers - 1],
+                            OutlierSelectionMode::Extreme => (max_index, max_dist_sq),
+                            OutlierSelectionMode::Average
+                            | OutlierSelectionMode::AllForward
+                            | OutlierSelectionMode::AllBackward => (0, 0.0),
+                        };
+                        let sample = &pixel_data
+                            [(sample_idx * channels)..(sample_idx * channels + channels)];
+                        (sample, dist_sq.sqrt())
+                    };
+                    // Blend outlier into background
+                    let blend = threshold.blend_value(dist);
+                    color::blend_into_u8(&mut pixel, &sample, blend);
+                    (blend * 255.0).round() as u8
+                }
+            }
         } else {
             0
         }

@@ -38,7 +38,7 @@ pub struct Cli {
     #[structopt(short, long)]
     background: Option<String>,
 
-    /// Outlier selection mode in case more than one outlier is found (first|last|extreme|average). Optional, default 'extreme'.
+    /// Outlier selection mode in case more than one outlier is found (first|last|extreme|average|forward|backward). Optional, default 'extreme'.
     #[structopt(short = "l", long)]
     outlier: Option<String>,
 
