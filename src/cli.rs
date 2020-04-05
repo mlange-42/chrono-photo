@@ -26,11 +26,11 @@ pub struct Cli {
     #[structopt(long, name = "output-blend")]
     output_blend: Option<String>,
 
-    /// Pixel selection mode (lighter|darker|outlier/<threshold>). Optional, default 'outlier'.
+    /// Pixel selection mode (lighter|darker|outlier). Optional, default 'outlier'.
     #[structopt(short, long)]
     mode: Option<String>,
 
-    /// Outlier threshold mode (abs[olute]/<lower>[/<upper>]|rel[ative]/<lower>[/<upper>]). Optional, default 'abs/0.05/0.2'.
+    /// Outlier threshold mode (abs|rel)/<lower>[/<upper>]. Optional, default 'abs/0.05/0.2'.
     #[structopt(short, long)]
     threshold: Option<String>,
 
