@@ -47,17 +47,23 @@ a certain pixel will have very similar colors in most images.
 In one or a few images, the pixel's value may be different, as it shows the object rather than the background.
 I.e. among the pixel's color from all images, these images would be outliers.
 
-The idea now is to use these outliers for the output image, if they exist for a certain pixel, 
-or a non-outlier if they don't.
+The idea now is to use these outliers for the output image, if they exist for a certain pixel,
+or a non-outlier if they don't. Actually, the algorithm blends the outlier into the background depending on "how much of an outlier" it is.
 
 ### Outlier detection
 
 Outlier detection in the current version uses multi-dimensional distance to the median,
-and an absolute or relative threshold provided via option `--threshold` (default: abs. 0.1; `--threshold abs/0.1`). 
+and an absolute or relative (lower) threshold provided via option `--threshold` (default: abs. 0.05; `--threshold abs/0.05/0.2`). 
 The _absolute_ threshold (recommended, typically < 1) is relative to the per-band color range (i.e. fraction of range [0, 255] for 8 bits per color band),
 while the _relative_ threshold (typically > 1) is relative to the inter-quartile range in each band/dimension.
 
 A pixel value is categorized as an outlier if it's distance from the median is at least the threshold.
+If multiple outliers are found, one is selected according the description in 
+[Pixel selection among outliers](pixel-selection-among-outliers).
+
+If the distance of the outlier to the median is below the upper threshold (second number in `--threshold abs/0.05/0.2`),
+the pixel color is blended between background and outlier (linear). 
+If the distance is above the upper threshold, the outlier's color is used without blending.
 
 #### Pixel selection among outliers
 
@@ -69,11 +75,11 @@ If more than one outlier is found for a pixel, different methods can be used to 
 * `extreme`: use the most extreme outlier (the default).
 * `average`: use the average of all outliers.
 
-#### Pixel selection in absence of outliers
+#### Background pixel selection
 
-If no outliers are found for a pixel, different methods can be used to select the pixel's value via option `--background`:
+If no outliers are found for a pixel (or for blending), different methods can be used to select the pixel's value via option `--background`:
 * `first`: Use the pixel value from the first image.
-* `random`: Use a randomly selected pixel value, selected among all images. May result in a noisy image.
+* `random`: Use a randomly selected pixel value, selected among all images. Recommended, but may result in a noisy image.
 * `average`: Use the average pixel value of all images. Can be used for blurring, but may result in banding for low contrast backgrounds.
 * `median`: Use the median pixel value of all images. May result in banding for low contrast backgrounds.
 
@@ -82,11 +88,11 @@ If no outliers are found for a pixel, different methods can be used to select th
 Finding the best options for pixel selection, as well as an outlier threshold that fits the noise in the input images,
 may require some trial and error.
 
-In addition to inspection of the produced image, use option `--outlier-output <path>` to write a black-and-white
-image showing which pixels were filled based on outliers (white), and which were not (black).
+In addition to inspection of the produced image, use option `--blend-output <path>` to write a greyscale
+image showing which pixels were filled based on outliers (greyscale blend value), and which were not (black).
 
-If there are black pixels inside the moving object(s), the outlier threshold should be decreased. 
-On the other hand, if there are white pixels outside the moving object(s), the threshold should be increased
+If there are black pixels inside the moving object(s), the outlier threshold(s) should be decreased. 
+On the other hand, if there are white or grey pixels outside the moving object(s), the threshold(s) should be increased
 (may happen due to too much image noise, an insufficiently steady camera, or due to motion in the background).
 
 ### Technical realization
