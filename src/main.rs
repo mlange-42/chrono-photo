@@ -65,7 +65,7 @@ fn main() {
 
     println!("Saving output... ");
     save_image(&buff, &layout, &args.output, args.quality);
-    if let Some(out) = &args.outlier_output {
+    if let Some(out) = &args.blend_output {
         save_image(&is_outlier, &layout, &out, args.quality);
     }
 
