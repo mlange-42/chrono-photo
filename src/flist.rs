@@ -99,7 +99,7 @@ mod test {
     #[test]
     fn parse_pattern() {
         let pattern = "test_data/*.txt";
-        let lister = FileLister::new(&pattern);
+        let lister = FileLister::new(&pattern, None);
 
         let _list = lister.list_files().expect("Error processing pattern");
     }

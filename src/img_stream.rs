@@ -179,7 +179,7 @@ mod test {
     #[test]
     fn iterate() {
         let pattern = "test_data/*.png";
-        let _stream = ImageStream::from_pattern(&pattern).expect("Error processing pattern");
+        let _stream = ImageStream::from_pattern(&pattern, None).expect("Error processing pattern");
         /*
         for img in stream {
             println!("{:?}", img.unwrap().color());
