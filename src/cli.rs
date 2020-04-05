@@ -1,7 +1,7 @@
 //! Command-line interface for chrono-photo.
-use crate::chrono::{BackgroundMode, OutlierSelectionMode, SelectionMode};
+use crate::flist::FrameRange;
 use crate::img_stream::Compression;
-use crate::EnumFromString;
+use crate::options::{BackgroundMode, OutlierSelectionMode, SelectionMode, Threshold};
 use core::fmt;
 use std::path::PathBuf;
 use structopt::StructOpt;
@@ -14,27 +14,36 @@ pub struct Cli {
     #[structopt(short, long)]
     pattern: String,
 
-    /// Temp directory. Optional, default system temp directory.
-    #[structopt(short, long, name = "temp-dir")]
-    temp_dir: Option<String>,
+    /// Frames to be used from those matching pattern: `start/end/step`. Optional.
+    /// For default values, use `.`, e.g. `././step`.
+    #[structopt(short, long)]
+    frames: Option<String>,
 
     /// Path to output file
     #[structopt(short, long)]
     output: String,
 
-    /// Path of output image showing which pixels are outliers.
-    #[structopt(long, name = "outlier-output")]
-    pub outlier_output: Option<String>,
+    /// Temp directory. Optional, default system temp directory.
+    #[structopt(short = "d", long, name = "temp-dir")]
+    temp_dir: Option<String>,
 
-    /// Pixel selection mode (lighter|darker|outlier-<threshold>). Optional, default 'outlier-0.1'.
+    /// Path of output image showing which pixels are outliers (blend value).
+    #[structopt(long, name = "output-blend")]
+    output_blend: Option<String>,
+
+    /// Pixel selection mode (lighter|darker|outlier). Optional, default 'outlier'.
     #[structopt(short, long)]
     mode: Option<String>,
 
-    /// Background pixel selection mode (first|random|average|median). Optional, default 'first'.
+    /// Outlier threshold mode (abs|rel)/<lower>[/<upper>]. Optional, default 'abs/0.05/0.2'.
+    #[structopt(short, long)]
+    threshold: Option<String>,
+
+    /// Background pixel selection mode (first|random|average|median). Optional, default 'random'.
     #[structopt(short, long)]
     background: Option<String>,
 
-    /// Outlier selection mode in case more than one outlier is found (first|last|extreme|average). Optional, default 'extreme'.
+    /// Outlier selection mode in case more than one outlier is found (first|last|extreme|average|forward|backward). Optional, default 'extreme'.
     #[structopt(short = "l", long)]
     outlier: Option<String>,
 
@@ -47,7 +56,7 @@ pub struct Cli {
     quality: Option<u8>,
 
     /// Print debug information (i.e. parsed cmd parameters).
-    #[structopt(short, long)]
+    #[structopt(long)]
     debug: bool,
 }
 
@@ -58,26 +67,40 @@ impl Cli {
             pattern: self.pattern.clone(),
             temp_dir: self.temp_dir.as_ref().map(|d| PathBuf::from(d)),
             output: PathBuf::from(&self.output),
-            outlier_output: match &self.outlier_output {
+            output_blend: match &self.output_blend {
                 Some(out) => Some(PathBuf::from(out)),
                 None => None,
             },
-            mode: SelectionMode::from_string(
-                &self.mode.as_ref().unwrap_or(&"outlier-0.1".to_string()),
-            )
-            .unwrap(),
-            background: BackgroundMode::from_string(
-                &self.background.as_ref().unwrap_or(&"first".to_string()),
-            )
-            .unwrap(),
-            outlier: OutlierSelectionMode::from_string(
-                &self.outlier.as_ref().unwrap_or(&"extreme".to_string()),
-            )
-            .unwrap(),
-            compression: Compression::from_string(
-                &self.compression.as_ref().unwrap_or(&"gzip".to_string()),
-            )
-            .unwrap(),
+            mode: self
+                .mode
+                .as_ref()
+                .unwrap_or(&"outlier".to_string())
+                .parse()
+                .unwrap(),
+            threshold: self
+                .threshold
+                .as_ref()
+                .unwrap_or(&"abs/0.05/0.2".to_string())
+                .parse()
+                .unwrap(),
+            background: self
+                .background
+                .as_ref()
+                .unwrap_or(&"random".to_string())
+                .parse()
+                .unwrap(),
+            outlier: self
+                .outlier
+                .as_ref()
+                .unwrap_or(&"extreme".to_string())
+                .parse()
+                .unwrap(),
+            compression: self
+                .compression
+                .as_ref()
+                .unwrap_or(&"gzip".to_string())
+                .parse()
+                .unwrap(),
             quality: match self.quality {
                 Some(q) => {
                     if q <= 100 && q > 0 {
@@ -91,6 +114,10 @@ impl Cli {
                 }
                 None => 95,
             },
+            frames: self
+                .frames
+                .as_ref()
+                .and_then(|fr| Some(fr.parse().unwrap())),
             debug: self.debug,
         })
     }
@@ -102,14 +129,19 @@ impl Cli {
 pub struct CliParsed {
     /// File search pattern
     pub pattern: String,
+    /// Frames to be used from those matching pattern: `start/end/step`. Optional.
+    /// For default values, use `.`, e.g. `././step`.
+    pub frames: Option<FrameRange>,
     /// Temp directory. Uses system temp directory if `None`.
     pub temp_dir: Option<PathBuf>,
     /// Path of the final output image.
     pub output: PathBuf,
-    /// Path of output image showing which pixels are outliers.
-    pub outlier_output: Option<PathBuf>,
+    /// Path of output image showing which pixels are outliers (blend value).
+    pub output_blend: Option<PathBuf>,
     /// Pixel selection mode.
     pub mode: SelectionMode,
+    /// Outlier threshold mode.
+    pub threshold: Threshold,
     /// Outlier selection mode in case more than one outlier is found.
     pub outlier: OutlierSelectionMode,
     /// Background pixel selection mode.
