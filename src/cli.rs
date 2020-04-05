@@ -1,7 +1,7 @@
 //! Command-line interface for chrono-photo.
-use crate::chrono::{BackgroundMode, OutlierSelectionMode, SelectionMode, Threshold};
+use crate::flist::FrameRange;
 use crate::img_stream::Compression;
-use crate::EnumFromString;
+use crate::options::{BackgroundMode, OutlierSelectionMode, SelectionMode, Threshold};
 use core::fmt;
 use std::path::PathBuf;
 use structopt::StructOpt;
@@ -13,6 +13,11 @@ pub struct Cli {
     /// File search pattern
     #[structopt(short, long)]
     pattern: String,
+
+    /// Frames to be used from those matching pattern: `start/end/step`. Optional.
+    /// For default values, use `.`, e.g. `././step`.
+    #[structopt(short, long)]
+    frames: Option<String>,
 
     /// Path to output file
     #[structopt(short, long)]
@@ -66,7 +71,11 @@ impl Cli {
                 Some(out) => Some(PathBuf::from(out)),
                 None => None,
             },
-            mode: SelectionMode::from_string(&self.mode.as_ref().unwrap_or(&"outlier".to_string()))
+            mode: self
+                .mode
+                .as_ref()
+                .unwrap_or(&"outlier".to_string())
+                .parse()
                 .unwrap(),
             threshold: self
                 .threshold
@@ -74,18 +83,24 @@ impl Cli {
                 .unwrap_or(&"abs/0.05/0.2".to_string())
                 .parse()
                 .unwrap(),
-            background: BackgroundMode::from_string(
-                &self.background.as_ref().unwrap_or(&"random".to_string()),
-            )
-            .unwrap(),
-            outlier: OutlierSelectionMode::from_string(
-                &self.outlier.as_ref().unwrap_or(&"extreme".to_string()),
-            )
-            .unwrap(),
-            compression: Compression::from_string(
-                &self.compression.as_ref().unwrap_or(&"gzip".to_string()),
-            )
-            .unwrap(),
+            background: self
+                .background
+                .as_ref()
+                .unwrap_or(&"random".to_string())
+                .parse()
+                .unwrap(),
+            outlier: self
+                .outlier
+                .as_ref()
+                .unwrap_or(&"extreme".to_string())
+                .parse()
+                .unwrap(),
+            compression: self
+                .compression
+                .as_ref()
+                .unwrap_or(&"gzip".to_string())
+                .parse()
+                .unwrap(),
             quality: match self.quality {
                 Some(q) => {
                     if q <= 100 && q > 0 {
@@ -99,6 +114,10 @@ impl Cli {
                 }
                 None => 95,
             },
+            frames: self
+                .frames
+                .as_ref()
+                .and_then(|fr| Some(fr.parse().unwrap())),
             debug: self.debug,
         })
     }
@@ -110,6 +129,9 @@ impl Cli {
 pub struct CliParsed {
     /// File search pattern
     pub pattern: String,
+    /// Frames to be used from those matching pattern: `start/end/step`. Optional.
+    /// For default values, use `.`, e.g. `././step`.
+    pub frames: Option<FrameRange>,
     /// Temp directory. Uses system temp directory if `None`.
     pub temp_dir: Option<PathBuf>,
     /// Path of the final output image.
