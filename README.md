@@ -74,7 +74,7 @@ If more than one outlier is found for a pixel, different methods can be used to 
 via **option `--outlier`**:
 * `extreme`: use the most extreme outlier (the default value).
 * `average`: use the average of all outliers.
-* `forward`, `backward`: progressively blend all outliers over the background, starting with the first or last, respectively.
+* `forward`, `backward`: progressively blends all outliers over the background, starting with the first or last, respectively.
 * `first`: use the first outlier found.
 * `last`: use the last outlier found.
 
