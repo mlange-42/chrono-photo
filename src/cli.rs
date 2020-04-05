@@ -1,7 +1,6 @@
 //! Command-line interface for chrono-photo.
-use crate::chrono::{BackgroundMode, OutlierSelectionMode, SelectionMode, Threshold};
 use crate::img_stream::Compression;
-use crate::EnumFromString;
+use crate::options::{BackgroundMode, OutlierSelectionMode, SelectionMode, Threshold};
 use core::fmt;
 use std::path::PathBuf;
 use structopt::StructOpt;
@@ -66,7 +65,11 @@ impl Cli {
                 Some(out) => Some(PathBuf::from(out)),
                 None => None,
             },
-            mode: SelectionMode::from_string(&self.mode.as_ref().unwrap_or(&"outlier".to_string()))
+            mode: self
+                .mode
+                .as_ref()
+                .unwrap_or(&"outlier".to_string())
+                .parse()
                 .unwrap(),
             threshold: self
                 .threshold
@@ -74,18 +77,24 @@ impl Cli {
                 .unwrap_or(&"abs/0.05/0.2".to_string())
                 .parse()
                 .unwrap(),
-            background: BackgroundMode::from_string(
-                &self.background.as_ref().unwrap_or(&"random".to_string()),
-            )
-            .unwrap(),
-            outlier: OutlierSelectionMode::from_string(
-                &self.outlier.as_ref().unwrap_or(&"extreme".to_string()),
-            )
-            .unwrap(),
-            compression: Compression::from_string(
-                &self.compression.as_ref().unwrap_or(&"gzip".to_string()),
-            )
-            .unwrap(),
+            background: self
+                .background
+                .as_ref()
+                .unwrap_or(&"random".to_string())
+                .parse()
+                .unwrap(),
+            outlier: self
+                .outlier
+                .as_ref()
+                .unwrap_or(&"extreme".to_string())
+                .parse()
+                .unwrap(),
+            compression: self
+                .compression
+                .as_ref()
+                .unwrap_or(&"gzip".to_string())
+                .parse()
+                .unwrap(),
             quality: match self.quality {
                 Some(q) => {
                     if q <= 100 && q > 0 {

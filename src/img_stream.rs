@@ -1,6 +1,6 @@
 //! Provides an image stream from a list of files, or a (TODO) video file.
 use crate::flist::FileLister;
-use crate::{EnumFromString, ParseEnumError};
+use crate::ParseEnumError;
 use byteorder::{BigEndian, ReadBytesExt, WriteBytesExt};
 use flate2::read::{DeflateDecoder, GzDecoder, ZlibDecoder};
 use flate2::write::{DeflateEncoder, GzEncoder, ZlibEncoder};
@@ -10,6 +10,7 @@ use std::collections::VecDeque;
 use std::fs::File;
 use std::io::{BufReader, BufWriter, Read, Write};
 use std::path::PathBuf;
+use std::str::FromStr;
 
 #[derive(Clone, Debug)]
 pub enum Compression {
@@ -17,11 +18,10 @@ pub enum Compression {
     ZLib,
     Deflate,
 }
-impl EnumFromString for Compression {
-    fn from_string(str: &str) -> Result<Self, ParseEnumError>
-    where
-        Self: std::marker::Sized,
-    {
+impl FromStr for Compression {
+    type Err = ParseEnumError;
+
+    fn from_str(str: &str) -> Result<Self, Self::Err> {
         match str {
             "gzip" => Ok(Compression::GZip),
             "zlib" => Ok(Compression::ZLib),
