@@ -18,6 +18,13 @@ impl fmt::Display for PixelSelectionError {
     }
 }
 
+struct ThreadData {
+    outlier_indices: Vec<(usize, f32)>,
+    non_outlier_indices: Vec<usize>,
+    values: Vec<u8>,
+    rng: ThreadRng,
+}
+
 /// Core processor for image analysis.
 /// Analysis is based on files as created by [`TimeSlicer`](./time_slice/struct.TimeSlicer.html).
 pub struct ChronoProcessor {
@@ -26,15 +33,7 @@ pub struct ChronoProcessor {
     background: BackgroundMode,
     outlier: OutlierSelectionMode,
     compression: Compression,
-    sample: [u8; 4],
-    mean: [f32; 4],
-    //sd: [f32; 4],
-    median: [f32; 4],
-    iqr_inv: [f32; 4],
-    outlier_indices: Vec<(usize, f32)>,
-    non_outlier_indices: Vec<usize>,
-    values: Vec<u8>,
-    rng: ThreadRng,
+    data: ThreadData,
 }
 
 impl ChronoProcessor {
@@ -52,15 +51,12 @@ impl ChronoProcessor {
             background: bg_mode,
             outlier: outlier_mode,
             compression,
-            sample: [0; 4],
-            mean: [0.0; 4],
-            median: [0.0; 4],
-            iqr_inv: [0.0; 4],
-            //sd: [0.0; 4],
-            outlier_indices: vec![],
-            non_outlier_indices: vec![],
-            values: vec![],
-            rng: rand::thread_rng(),
+            data: ThreadData {
+                outlier_indices: vec![],
+                non_outlier_indices: vec![],
+                values: vec![],
+                rng: rand::thread_rng(),
+            },
         }
     }
     /// Processes images based on files as created by [`TimeSlicer`](./time_slice/struct.TimeSlicer.html).
@@ -97,10 +93,10 @@ impl ChronoProcessor {
             if pixel_data.len() != num_rows * channels {
                 pixel_data = vec![0; num_rows * channels];
             }
-            if self.outlier_indices.len() != num_rows {
-                self.outlier_indices = vec![(0, 0.0); num_rows];
-                self.non_outlier_indices = vec![0; num_rows];
-                self.values = vec![0; num_rows * channels];
+            if self.data.outlier_indices.len() != num_rows {
+                self.data.outlier_indices = vec![(0, 0.0); num_rows];
+                self.data.non_outlier_indices = vec![0; num_rows];
+                self.data.values = vec![0; num_rows * channels];
             }
             for col in 0..layout.width {
                 let col_offset = col as usize * channels;
@@ -189,35 +185,38 @@ impl ChronoProcessor {
 
         let threshold_sq = threshold.min() * threshold.min();
 
+        let mut mean = [0.0; 4];
+        let mut median = [0.0; 4];
+        let mut iqr_inv = [0.0; 4];
         // Reset mean
-        for m in self.mean.iter_mut() {
+        for m in mean.iter_mut() {
             *m = 0.0;
         }
 
         // Calculate mean of samples, prepare medians
         for (sample_idx, pix) in pixel_data.chunks(channels).enumerate() {
             for (i, p) in pix.iter().enumerate() {
-                self.mean[i] += *p as f32;
-                self.values[i * samples + sample_idx] = *p;
+                mean[i] += *p as f32;
+                self.data.values[i * samples + sample_idx] = *p;
             }
         }
-        for m in self.mean.iter_mut() {
+        for m in mean.iter_mut() {
             *m /= samples as f32;
         }
         // Calculate medians and inverse inter-quartile range
         for i in 0..channels {
-            let slice = &mut self.values[(i * samples)..(i * samples + samples)];
+            let slice = &mut self.data.values[(i * samples)..(i * samples + samples)];
             slice.sort_unstable();
             if threshold.absolute() {
-                self.median[i] = Self::median(slice);
+                median[i] = Self::median(slice);
             } else {
                 let (q1, med, q3) = Self::quartiles(slice);
-                self.median[i] = med;
-                self.iqr_inv[i] = q3 - q1;
-                if self.iqr_inv[i] == 0.0 {
-                    self.iqr_inv[i] = 1.0;
+                median[i] = med;
+                iqr_inv[i] = q3 - q1;
+                if iqr_inv[i] == 0.0 {
+                    iqr_inv[i] = 1.0;
                 }
-                self.iqr_inv[i] = 1.0 / self.iqr_inv[i];
+                iqr_inv[i] = 1.0 / iqr_inv[i];
             }
         }
 
@@ -228,19 +227,19 @@ impl ChronoProcessor {
         for (sample_idx, pix) in pixel_data.chunks(channels).enumerate() {
             let mut dist_sq = 0.0;
             for (i, p) in pix.iter().enumerate() {
-                let diff = self.median[i] - *p as f32;
+                let diff = median[i] - *p as f32;
                 dist_sq += if diff == 0.0 {
                     0.0
                 } else {
                     if threshold.absolute() {
                         (diff * diff)
                     } else {
-                        (self.iqr_inv[i] * diff).powi(2)
+                        (iqr_inv[i] * diff).powi(2)
                     }
                 }
             }
             if dist_sq >= threshold_sq {
-                self.outlier_indices[num_outliers] = (sample_idx, dist_sq);
+                self.data.outlier_indices[num_outliers] = (sample_idx, dist_sq);
                 num_outliers += 1;
                 if dist_sq > max_dist_sq {
                     max_dist_sq = dist_sq;
@@ -256,16 +255,17 @@ impl ChronoProcessor {
             BackgroundMode::Average => {
                 if has_outliers {
                     if num_outliers == 1 {
-                        let offset = self.outlier_indices[0].0 * channels;
+                        let offset = self.data.outlier_indices[0].0 * channels;
                         let sample = &pixel_data[offset..(offset + channels)];
                         for ch in 0..channels {
-                            pixel[ch] = (self.mean[ch] * (samples as f32 / (samples - 1) as f32)
+                            pixel[ch] = (mean[ch] * (samples as f32 / (samples - 1) as f32)
                                 - sample[ch] as f32 / samples as f32)
                                 .round() as u8;
                         }
                     } else {
                         let mut outlier_sum = [0.0; 4];
-                        for (sample_idx, _dist_sq) in self.outlier_indices.iter().take(num_outliers)
+                        for (sample_idx, _dist_sq) in
+                            self.data.outlier_indices.iter().take(num_outliers)
                         {
                             let offset = sample_idx * channels;
                             for ch in 0..channels {
@@ -275,21 +275,21 @@ impl ChronoProcessor {
                         // TODO: check the equation again!
                         let num_non_outliers = samples - num_outliers;
                         for ch in 0..channels {
-                            pixel[ch] = (self.mean[ch] * (samples as f32 / num_non_outliers as f32)
+                            pixel[ch] = (mean[ch] * (samples as f32 / num_non_outliers as f32)
                                 - outlier_sum[ch] / samples as f32)
                                 .round() as u8;
                         }
                     }
                 } else {
                     for ch in 0..channels {
-                        pixel[ch] = self.mean[ch].round() as u8;
+                        pixel[ch] = mean[ch].round() as u8;
                     }
                 }
             }
             BackgroundMode::Median => {
                 // In case of median, we don't remove the outliers!
                 for ch in 0..channels {
-                    pixel[ch] = self.median[ch].round() as u8;
+                    pixel[ch] = median[ch].round() as u8;
                 }
             }
             BackgroundMode::First | BackgroundMode::Random => {
@@ -303,7 +303,7 @@ impl ChronoProcessor {
                     }
                     BackgroundMode::Random => {
                         if !has_outliers {
-                            self.rng.gen_range(0, samples)
+                            self.data.rng.gen_range(0, samples)
                         } else {
                             self.sample_excluded(samples, num_outliers).unwrap()
                         }
@@ -323,7 +323,7 @@ impl ChronoProcessor {
             // Get outlier
             if num_outliers == 1 {
                 // Only one outlier
-                let (sample_idx, dist_sq) = self.outlier_indices[0];
+                let (sample_idx, dist_sq) = self.data.outlier_indices[0];
                 let sample =
                     &pixel_data[(sample_idx * channels)..(sample_idx * channels + channels)];
 
@@ -341,7 +341,8 @@ impl ChronoProcessor {
                         pix_new[ch] = pixel[ch] as f32;
                     }
                     if self.outlier == OutlierSelectionMode::AllForward {
-                        for (sample_idx, dist_sq) in self.outlier_indices.iter().take(num_outliers)
+                        for (sample_idx, dist_sq) in
+                            self.data.outlier_indices.iter().take(num_outliers)
                         {
                             let offset = sample_idx * channels;
                             let sample = &pixel_data[offset..(offset + channels)];
@@ -352,7 +353,7 @@ impl ChronoProcessor {
                         }
                     } else {
                         for (sample_idx, dist_sq) in
-                            self.outlier_indices.iter().take(num_outliers).rev()
+                            self.data.outlier_indices.iter().take(num_outliers).rev()
                         {
                             let offset = sample_idx * channels;
                             let sample = &pixel_data[offset..(offset + channels)];
@@ -367,39 +368,38 @@ impl ChronoProcessor {
                     }
                     ((1.0 - blend_inv) * 255.0).round() as u8
                 } else {
+                    let mut temp_sample = [0; 4];
                     let (sample, dist) = if self.outlier == OutlierSelectionMode::Average {
                         if num_outliers == 1 {
-                            let (sample_idx, dist_sq) = self.outlier_indices[0];
+                            let (sample_idx, dist_sq) = self.data.outlier_indices[0];
                             let sample = &pixel_data
                                 [(sample_idx * channels)..(sample_idx * channels + channels)];
                             (sample, dist_sq.sqrt())
                         } else {
                             for ch in 0..channels {
-                                self.mean[ch] = 0.0;
+                                mean[ch] = 0.0;
                             }
                             let mut mean_dist = 0.0;
                             for (sample_idx, dist_sq) in
-                                self.outlier_indices.iter().take(num_outliers)
+                                self.data.outlier_indices.iter().take(num_outliers)
                             {
                                 let offset = sample_idx * channels;
                                 for ch in 0..channels {
-                                    self.mean[ch] += pixel_data[offset + ch] as f32;
+                                    mean[ch] += pixel_data[offset + ch] as f32;
                                 }
                                 mean_dist += dist_sq.sqrt();
                             }
                             for ch in 0..channels {
-                                self.sample[ch] =
-                                    (self.mean[ch] / num_outliers as f32).round() as u8;
+                                temp_sample[ch] = (mean[ch] / num_outliers as f32).round() as u8;
                             }
-                            /*for ch in 0..channels {
-                                pixel[ch] = (self.mean[ch] / num_outliers as f32).round() as u8;
-                            }*/
-                            (&self.sample[..], mean_dist / num_outliers as f32)
+                            (&temp_sample[..], mean_dist / num_outliers as f32)
                         }
                     } else {
                         let (sample_idx, dist_sq) = match self.outlier {
-                            OutlierSelectionMode::First => self.outlier_indices[0],
-                            OutlierSelectionMode::Last => self.outlier_indices[num_outliers - 1],
+                            OutlierSelectionMode::First => self.data.outlier_indices[0],
+                            OutlierSelectionMode::Last => {
+                                self.data.outlier_indices[num_outliers - 1]
+                            }
                             OutlierSelectionMode::Extreme => (max_index, max_dist_sq),
                             OutlierSelectionMode::Average
                             | OutlierSelectionMode::AllForward
@@ -432,7 +432,7 @@ impl ChronoProcessor {
                     .to_string(),
             ));
         }
-        let excluded = &self.outlier_indices[..num_outliers];
+        let excluded = &self.data.outlier_indices[..num_outliers];
         let len = excluded.len();
         let mut excl_index = 0;
         for i in 0..samples {
@@ -458,17 +458,17 @@ impl ChronoProcessor {
                     .to_string(),
             ));
         }
-        let excluded = &self.outlier_indices[..num_outliers];
-        for (i, idx) in self.non_outlier_indices.iter_mut().enumerate() {
+        let excluded = &self.data.outlier_indices[..num_outliers];
+        for (i, idx) in self.data.non_outlier_indices.iter_mut().enumerate() {
             *idx = i;
         }
         let mut candidates = samples;
         for idx in excluded {
-            self.non_outlier_indices.swap(idx.0, candidates - 1);
+            self.data.non_outlier_indices.swap(idx.0, candidates - 1);
             candidates -= 1;
         }
-        let idx = self.rng.gen_range(0_usize, candidates);
-        Ok(self.non_outlier_indices[idx])
+        let idx = self.data.rng.gen_range(0_usize, candidates);
+        Ok(self.data.non_outlier_indices[idx])
     }
 
     /// Calculates quartiles from a sample (approximated).
