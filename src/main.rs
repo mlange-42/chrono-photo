@@ -1,7 +1,7 @@
 use chrono_photo::chrono::ChronoProcessor;
 use chrono_photo::cli::{Cli, CliParsed};
 use chrono_photo::flist::FrameRange;
-use chrono_photo::slicer::{TimeSliceError, TimeSlicer};
+use chrono_photo::slicer::{SliceLength, TimeSliceError, TimeSlicer};
 use chrono_photo::streams::{Compression, ImageStream};
 use image::flat::SampleLayout;
 use indicatif::ProgressBar;
@@ -48,6 +48,7 @@ fn main() {
         args.frames,
         &args.temp_dir.unwrap(),
         &args.compression,
+        &args.slice,
     ) {
         Ok(fls) => fls,
         Err(err) => {
@@ -133,8 +134,9 @@ fn to_time_slices(
     frames: Option<FrameRange>,
     temp_path: &PathBuf,
     compression: &Compression,
+    slices: &SliceLength,
 ) -> Result<(Vec<PathBuf>, SampleLayout, usize), TimeSliceError> {
     let images =
         ImageStream::from_pattern(image_pattern, frames).expect("Error processing pattern");
-    TimeSlicer::write_time_slices(images, temp_path.clone(), compression.clone())
+    TimeSlicer::write_time_slices(images, temp_path.clone(), compression, slices)
 }

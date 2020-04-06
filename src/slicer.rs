@@ -15,6 +15,26 @@ pub enum SliceLength {
     Pixels(usize),
     Count(usize),
 }
+impl SliceLength {
+    pub fn bytes(&self, layout: &SampleLayout) -> usize {
+        match self {
+            Pixels(n) => *n,
+            Count(n) => {
+                ((layout.height_stride as u32 * layout.height) as f32 / *n as f32).ceil() as usize
+            }
+            Rows(n) => *n * layout.height_stride,
+        }
+    }
+    pub fn count(&self, layout: &SampleLayout) -> usize {
+        match self {
+            Pixels(n) => {
+                ((layout.height_stride as u32 * layout.height) as f32 / *n as f32).ceil() as usize
+            }
+            Count(n) => *n,
+            Rows(n) => (layout.height as f32 / *n as f32).ceil() as usize,
+        }
+    }
+}
 impl FromStr for SliceLength {
     type Err = ParseEnumError;
 
@@ -55,7 +75,8 @@ impl TimeSlicer {
     pub fn write_time_slices(
         images: ImageStream,
         temp_dir: PathBuf,
-        compression: Compression,
+        compression: &Compression,
+        slices: &SliceLength,
     ) -> Result<(Vec<PathBuf>, SampleLayout, usize), TimeSliceError> {
         assert!(temp_dir.is_dir());
         let size_hint = images.len();
