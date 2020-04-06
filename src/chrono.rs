@@ -18,6 +18,7 @@ impl fmt::Display for PixelSelectionError {
     }
 }
 
+/// Per-thread data structures to avoid vector allocations.
 struct ThreadData {
     outlier_indices: Vec<(usize, f32)>,
     non_outlier_indices: Vec<usize>,
