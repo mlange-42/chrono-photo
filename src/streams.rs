@@ -173,7 +173,7 @@ impl PixelInputStream {
 
 #[cfg(test)]
 mod test {
-    use crate::img_stream::{Compression, ImageStream, PixelOutputStream};
+    use crate::streams::{Compression, ImageStream, PixelOutputStream};
     use std::path::PathBuf;
 
     #[test]

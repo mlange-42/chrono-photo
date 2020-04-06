@@ -1,7 +1,7 @@
 //! Command-line interface for chrono-photo.
 use crate::flist::FrameRange;
-use crate::img_stream::Compression;
 use crate::options::{BackgroundMode, OutlierSelectionMode, SelectionMode, Threshold};
+use crate::streams::Compression;
 use core::fmt;
 use std::path::PathBuf;
 use structopt::StructOpt;

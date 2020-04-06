@@ -2,9 +2,9 @@ pub mod chrono;
 pub mod cli;
 pub mod color;
 pub mod flist;
-pub mod img_stream;
 pub mod options;
-pub mod time_slice;
+pub mod slicer;
+pub mod streams;
 
 use std::fmt;
 

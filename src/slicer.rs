@@ -1,6 +1,6 @@
 //! Converts a series of images by time to images by row. I.e. transposes (x,y) in the cube in (x,y,t) to (x,t).
 
-use crate::img_stream::{Compression, ImageStream, PixelOutputStream};
+use crate::streams::{Compression, ImageStream, PixelOutputStream};
 use image::flat::SampleLayout;
 use indicatif::ProgressBar;
 use std::fmt;
