@@ -1,6 +1,7 @@
 use chrono_photo::chrono::ChronoProcessor;
 use chrono_photo::cli::{Cli, CliParsed};
 use chrono_photo::flist::FrameRange;
+//use chrono_photo::options::{BackgroundMode, OutlierSelectionMode, SelectionMode, Threshold};
 use chrono_photo::slicer::{SliceLength, TimeSliceError, TimeSlicer};
 use chrono_photo::streams::{Compression, ImageStream};
 use image::flat::SampleLayout;
@@ -12,10 +13,21 @@ use structopt::StructOpt;
 
 fn main() {
     let start = Instant::now();
+
     /*let mut args = CliParsed {
-        pattern: "test_data/TestImage-*.png".to_string(),
+        pattern: "test_data/generated/image-*.jpg".to_string(),
+        frames: Some(FrameRange::new(None, None, Some(2))),
         temp_dir: Some(PathBuf::from("test_data/temp")),
-        output: PathBuf::from("test_data/out.png"),
+        output: PathBuf::from("test_data/out.jpg"),
+        output_blend: Some(PathBuf::from("test_data/out-debug.png")),
+        mode: SelectionMode::Outlier,
+        threshold: Threshold::abs(0.05, 0.2),
+        outlier: OutlierSelectionMode::Extreme,
+        background: BackgroundMode::Random,
+        compression: Compression::GZip(6),
+        quality: 98,
+        slice: SliceLength::Count(100),
+        debug: true,
     };*/
 
     let mut args: CliParsed = Cli::from_args().parse().unwrap();
@@ -66,7 +78,7 @@ fn main() {
         args.compression,
     );
     let (buff, is_outlier) = processor
-        .process(&layout, &temp_files[..], Some(size_hint))
+        .process(&layout, &temp_files[..], &args.slice, Some(size_hint))
         .unwrap();
 
     println!("Saving output... ");

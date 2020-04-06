@@ -1,6 +1,7 @@
 //! Processes time-sliced data produced by [`TimeSlicer`](./time_slice/struct.TimeSlicer.html).
 use crate::color;
 use crate::options::{BackgroundMode, OutlierSelectionMode, SelectionMode, Threshold};
+use crate::slicer::SliceLength;
 use crate::streams::{Compression, PixelInputStream};
 use image::flat::SampleLayout;
 use indicatif::ProgressBar;
@@ -65,6 +66,7 @@ impl ChronoProcessor {
         mut self,
         layout: &SampleLayout,
         files: &[PathBuf],
+        slices: &SliceLength,
         size_hint: Option<usize>,
     ) -> std::io::Result<(Vec<u8>, Vec<u8>)> {
         let channels = layout.width_stride;
@@ -74,21 +76,31 @@ impl ChronoProcessor {
         let mut pixel_data = Vec::new();
         let mut pixel = vec![0; channels];
 
+        let slice_bytes = slices.bytes(&layout);
+        //let slice_count = slices.count(&layout);
+
         println!("Processing {} time slices", files.len());
         let bar = ProgressBar::new(files.len() as u64);
         for (out_row, file) in files.iter().enumerate() {
             bar.inc(1);
 
-            let buff_row_start = out_row * layout.height_stride;
+            let buff_row_start = out_row * slice_bytes; //layout.height_stride;
             let mut data = match size_hint {
-                Some(hint) => Vec::with_capacity(hint * layout.height as usize),
+                //Some(hint) => Vec::with_capacity(hint * layout.height as usize),
+                Some(hint) => Vec::with_capacity(hint * slice_bytes),
                 None => Vec::new(),
             };
             let mut num_rows = 0;
+            let mut num_bytes = 0;
             {
                 let mut stream = PixelInputStream::new(file, self.compression.clone())?;
-                while let Some(_num_bytes) = stream.read_chunk(&mut data) {
+                while let Some(n_bytes) = stream.read_chunk(&mut data) {
                     num_rows += 1;
+                    if num_bytes == 0 {
+                        num_bytes = n_bytes;
+                    } else if num_bytes != n_bytes {
+                        panic!("Unexpected data alignment in slice file {:?}", file);
+                    }
                 }
             }
             if pixel_data.len() != num_rows * channels {
@@ -99,10 +111,12 @@ impl ChronoProcessor {
                 self.data.non_outlier_indices = vec![0; num_rows];
                 self.data.values = vec![0; num_rows * channels];
             }
-            for col in 0..layout.width {
+            //for col in 0..layout.width {
+            for col in 0..(num_bytes / channels) {
                 let col_offset = col as usize * channels;
                 for row in 0..num_rows {
-                    let pix_start = row * layout.height_stride + col_offset;
+                    //let pix_start = row * layout.height_stride + col_offset;
+                    let pix_start = row * num_bytes + col_offset;
                     for ch in 0..channels {
                         let v = data[pix_start + ch];
                         pixel_data[row * channels + ch] = v;

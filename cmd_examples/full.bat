@@ -10,4 +10,5 @@
 --outlier extreme ^
 --quality 98 ^
 --compression gzip/6 ^
+--slice rows/2 ^
 --debug

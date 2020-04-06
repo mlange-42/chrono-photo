@@ -18,7 +18,7 @@ pub enum SliceLength {
 impl SliceLength {
     pub fn bytes(&self, layout: &SampleLayout) -> usize {
         match self {
-            Pixels(n) => *n,
+            Pixels(n) => *n * layout.width_stride,
             Count(n) => {
                 ((layout.height_stride as u32 * layout.height) as f32 / *n as f32).ceil() as usize
             }
@@ -27,9 +27,7 @@ impl SliceLength {
     }
     pub fn count(&self, layout: &SampleLayout) -> usize {
         match self {
-            Pixels(n) => {
-                ((layout.height_stride as u32 * layout.height) as f32 / *n as f32).ceil() as usize
-            }
+            Pixels(n) => ((layout.height * layout.width) as f32 / *n as f32).ceil() as usize,
             Count(n) => *n,
             Rows(n) => (layout.height as f32 / *n as f32).ceil() as usize,
         }
@@ -82,6 +80,7 @@ impl TimeSlicer {
         let size_hint = images.len();
 
         let mut layout: Option<SampleLayout> = None;
+        let mut slicing: Option<(usize, usize)> = None;
         let mut count = 0;
 
         let mut out_streams: Option<Vec<PixelOutputStream>> = None;
@@ -106,11 +105,21 @@ impl TimeSlicer {
                     pix.layout
                 }
             };
-            // TODO: Change to one file per X rows instead of one per row?
-            // E.g. 4K would produce 2160 files.
+
+            let sli = match slicing {
+                Some(sl) => sl,
+                None => {
+                    let sl = (slices.bytes(&lay), slices.count(&lay));
+                    slicing = Some(sl);
+                    sl
+                }
+            };
+            let slice_bytes = sli.0;
+            let slice_count = sli.1;
+
             if out_streams.is_none() {
                 out_streams = Some(
-                    (0..lay.height)
+                    (0..slice_count)
                         .map(|i| {
                             let mut path = PathBuf::from(&temp_dir);
                             path.push(format!("temp-{:05}.bin", i));
@@ -120,10 +129,12 @@ impl TimeSlicer {
                         .collect(),
                 );
             }
-            let stride = lay.height_stride;
+            let stride = slice_bytes; //lay.height_stride;
+            let num_sample = pix.samples.len();
             for (row, stream) in out_streams.as_mut().unwrap().iter_mut().enumerate() {
                 let start = row * stride;
-                let end = (row + 1) * stride;
+                let end = std::cmp::min((row + 1) * stride, num_sample);
+                //println!("{} - {}, ({}) by {}", start, end, pix.samples.len(), stride);
                 total_bytes += stream
                     .write_chunk(&pix.samples[start..end])
                     .expect(&format!(
@@ -134,7 +145,11 @@ impl TimeSlicer {
             count += 1;
         }
         bar.finish_and_clear();
-        println!("Total: {} kb", total_bytes / 1024);
+        println!(
+            "Total: {} kb in {} files",
+            total_bytes / 1024,
+            out_streams.as_mut().unwrap().len()
+        );
 
         for stream in out_streams.as_mut().unwrap().iter_mut() {
             stream.close().unwrap();
