@@ -14,18 +14,29 @@ use std::str::FromStr;
 
 #[derive(Clone, Debug)]
 pub enum Compression {
-    GZip,
-    ZLib,
-    Deflate,
+    GZip(flate2::Compression),
+    ZLib(flate2::Compression),
+    Deflate(flate2::Compression),
 }
 impl FromStr for Compression {
     type Err = ParseEnumError;
 
     fn from_str(str: &str) -> Result<Self, Self::Err> {
+        let parts: Vec<_> = str.split('/').collect();
+        let str = parts
+            .get(0)
+            .expect(&format!("Unexpected format in compression {}", str));
+        let level = if let Some(num) = parts.get(1) {
+            num.parse()
+                .expect(&format!("Unable to parse compression level in {}", num))
+        } else {
+            6
+        };
+
         match str {
-            "gzip" => Ok(Compression::GZip),
-            "zlib" => Ok(Compression::ZLib),
-            "deflate" => Ok(Compression::Deflate),
+            &"gzip" => Ok(Compression::GZip(flate2::Compression::new(level))),
+            &"zlib" => Ok(Compression::ZLib(flate2::Compression::new(level))),
+            &"deflate" => Ok(Compression::Deflate(flate2::Compression::new(level))),
             _ => Err(ParseEnumError(format!(
                 "Not a compression: {}. Must be one of (gzip|zlib|deflate)",
                 str
@@ -84,9 +95,10 @@ impl PixelOutputStream {
         &self.path
     }
     pub fn write_chunk(&mut self, bytes: &[u8]) -> std::io::Result<usize> {
+        // TODO: make generic
         match self.compression {
-            Compression::GZip => {
-                let mut e = GzEncoder::new(Vec::new(), flate2::Compression::default());
+            Compression::GZip(level) => {
+                let mut e = GzEncoder::new(Vec::new(), level);
                 e.write_all(bytes)?;
                 let compressed = &e.finish()?;
                 self.stream
@@ -95,8 +107,8 @@ impl PixelOutputStream {
                 self.stream.flush()?;
                 Ok(compressed.len())
             }
-            Compression::ZLib => {
-                let mut e = ZlibEncoder::new(Vec::new(), flate2::Compression::default());
+            Compression::ZLib(level) => {
+                let mut e = ZlibEncoder::new(Vec::new(), level);
                 e.write_all(bytes)?;
                 let compressed = &e.finish()?;
                 self.stream
@@ -105,8 +117,8 @@ impl PixelOutputStream {
                 self.stream.flush()?;
                 Ok(compressed.len())
             }
-            Compression::Deflate => {
-                let mut e = DeflateEncoder::new(Vec::new(), flate2::Compression::default());
+            Compression::Deflate(level) => {
+                let mut e = DeflateEncoder::new(Vec::new(), level);
                 e.write_all(bytes)?;
                 let compressed = &e.finish()?;
                 self.stream
@@ -151,18 +163,19 @@ impl PixelInputStream {
                 _ => {}
             }
         }
+        // TODO: Make generic
         match self.compression {
-            Compression::GZip => {
+            Compression::GZip(_) => {
                 let mut d = GzDecoder::new(&compressed[..]);
                 let size = d.read_to_end(out).unwrap();
                 Some(size)
             }
-            Compression::ZLib => {
+            Compression::ZLib(_) => {
                 let mut d = ZlibDecoder::new(&compressed[..]);
                 let size = d.read_to_end(out).unwrap();
                 Some(size)
             }
-            Compression::Deflate => {
+            Compression::Deflate(_) => {
                 let mut d = DeflateDecoder::new(&compressed[..]);
                 let size = d.read_to_end(out).unwrap();
                 Some(size)
@@ -173,7 +186,7 @@ impl PixelInputStream {
 
 #[cfg(test)]
 mod test {
-    use crate::img_stream::{Compression, ImageStream, PixelOutputStream};
+    use crate::streams::{Compression, ImageStream, PixelOutputStream};
     use std::path::PathBuf;
 
     #[test]
@@ -187,9 +200,11 @@ mod test {
     }
     #[test]
     fn pixel_stream() {
-        let mut _stream =
-            PixelOutputStream::new(&PathBuf::from("test_data/temp.bin"), Compression::GZip)
-                .unwrap();
+        let mut _stream = PixelOutputStream::new(
+            &PathBuf::from("test_data/temp.bin"),
+            Compression::GZip(flate2::Compression::default()),
+        )
+        .unwrap();
 
         //stream.write_chunk(&[0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10]);
         /*

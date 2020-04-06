@@ -1,8 +1,8 @@
 use chrono_photo::chrono::ChronoProcessor;
 use chrono_photo::cli::{Cli, CliParsed};
 use chrono_photo::flist::FrameRange;
-use chrono_photo::img_stream::{Compression, ImageStream};
-use chrono_photo::time_slice::{TimeSliceError, TimeSlicer};
+use chrono_photo::slicer::{TimeSliceError, TimeSlicer};
+use chrono_photo::streams::{Compression, ImageStream};
 use image::flat::SampleLayout;
 use indicatif::ProgressBar;
 use std::fs::File;

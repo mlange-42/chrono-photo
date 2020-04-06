@@ -1,7 +1,7 @@
 //! Processes time-sliced data produced by [`TimeSlicer`](./time_slice/struct.TimeSlicer.html).
 use crate::color;
-use crate::img_stream::{Compression, PixelInputStream};
 use crate::options::{BackgroundMode, OutlierSelectionMode, SelectionMode, Threshold};
+use crate::streams::{Compression, PixelInputStream};
 use image::flat::SampleLayout;
 use indicatif::ProgressBar;
 use rand::{Rng, ThreadRng};
@@ -18,6 +18,7 @@ impl fmt::Display for PixelSelectionError {
     }
 }
 
+/// Per-thread data structures to avoid vector allocations.
 struct ThreadData {
     outlier_indices: Vec<(usize, f32)>,
     non_outlier_indices: Vec<usize>,

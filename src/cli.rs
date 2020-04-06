@@ -1,7 +1,7 @@
 //! Command-line interface for chrono-photo.
 use crate::flist::FrameRange;
-use crate::img_stream::Compression;
 use crate::options::{BackgroundMode, OutlierSelectionMode, SelectionMode, Threshold};
+use crate::streams::Compression;
 use core::fmt;
 use std::path::PathBuf;
 use structopt::StructOpt;
@@ -47,7 +47,7 @@ pub struct Cli {
     #[structopt(short = "l", long)]
     outlier: Option<String>,
 
-    /// Compression mode for time slices (gzip|zlib|deflate). Optional, default 'gzip'.
+    /// Compression mode and level (0 to 9) for time slices (gzip|zlib|deflate)[/<level>]. Optional, default 'gzip/6'.
     #[structopt(short, long)]
     compression: Option<String>,
 
