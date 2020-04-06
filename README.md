@@ -124,7 +124,7 @@ OPTIONS:
                                          default 'random'
     -c, --compression <compression>      Compression mode for time slices (gzip|zlib|deflate). Optional, default 'gzip'
     -f, --frames <frames>                Frames to be used from those matching pattern: `start/end/step`. Optional. For
-                                         default values, use `.`, e.g. `././step`
+                                         default values, use `.`, e.g. `././2`
     -m, --mode <mode>                    Pixel selection mode (lighter|darker|outlier). Optional, default 'outlier'
     -l, --outlier <outlier>              Outlier selection mode in case more than one outlier is found
                                          (first|last|extreme|average|forward|backward). Optional, default 'extreme'
