@@ -255,19 +255,30 @@ impl ChronoProcessor {
         match self.background {
             BackgroundMode::Average => {
                 if has_outliers {
-                    let mut outlier_sum = [0.0; 4];
-                    for (sample_idx, _dist_sq) in self.outlier_indices.iter().take(num_outliers) {
-                        let offset = sample_idx * channels;
+                    if num_outliers == 1 {
+                        let offset = self.outlier_indices[0].0 * channels;
+                        let sample = &pixel_data[offset..(offset + channels)];
                         for ch in 0..channels {
-                            outlier_sum[ch] += pixel_data[offset + ch] as f32;
+                            pixel[ch] = (self.mean[ch] * (samples as f32 / (samples - 1) as f32)
+                                - sample[ch] as f32 / samples as f32)
+                                .round() as u8;
                         }
-                    }
-                    // TODO: check the equation again!
-                    let num_non_outliers = samples - num_outliers;
-                    for ch in 0..channels {
-                        pixel[ch] = (self.mean[ch] * (samples as f32 / num_non_outliers as f32)
-                            - outlier_sum[ch] / samples as f32)
-                            .round() as u8;
+                    } else {
+                        let mut outlier_sum = [0.0; 4];
+                        for (sample_idx, _dist_sq) in self.outlier_indices.iter().take(num_outliers)
+                        {
+                            let offset = sample_idx * channels;
+                            for ch in 0..channels {
+                                outlier_sum[ch] += pixel_data[offset + ch] as f32;
+                            }
+                        }
+                        // TODO: check the equation again!
+                        let num_non_outliers = samples - num_outliers;
+                        for ch in 0..channels {
+                            pixel[ch] = (self.mean[ch] * (samples as f32 / num_non_outliers as f32)
+                                - outlier_sum[ch] / samples as f32)
+                                .round() as u8;
+                        }
                     }
                 } else {
                     for ch in 0..channels {
