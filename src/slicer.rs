@@ -1,10 +1,50 @@
 //! Converts a series of images by time to images by row. I.e. transposes (x,y) in the cube in (x,y,t) to (x,t).
 
+use crate::slicer::SliceLength::{Count, Pixels, Rows};
 use crate::streams::{Compression, ImageStream, PixelOutputStream};
+use crate::ParseEnumError;
 use image::flat::SampleLayout;
 use indicatif::ProgressBar;
 use std::fmt;
 use std::path::PathBuf;
+use std::str::FromStr;
+
+#[derive(Debug)]
+pub enum SliceLength {
+    Rows(usize),
+    Pixels(usize),
+    Count(usize),
+}
+impl FromStr for SliceLength {
+    type Err = ParseEnumError;
+
+    fn from_str(str: &str) -> Result<Self, Self::Err> {
+        let parts: Vec<_> = str.split('/').collect();
+        let opt_str = parts
+            .get(0)
+            .expect(&format!("Unexpected format in {}.", str));
+
+        let number = parts
+            .get(1)
+            .expect(&format!("Unexpected format in {}", str));
+        let value = number
+            .parse()
+            .expect(&format!("Unable to parse slicing numeric part: {}", str));
+
+        let s = match opt_str {
+            &"rows" => Rows(value),
+            &"pixels" => Pixels(value),
+            &"count" => Count(value),
+            _ => {
+                return Err(ParseEnumError(format!(
+                    "Not a valid slicing mode: {}. Must be one of (rows|pixels|count)/<number>",
+                    str
+                )))
+            }
+        };
+        Ok(s)
+    }
+}
 
 /// Converts a series of images by time to images by row. I.e. transposes (x,y) in the cube in (x,y,t) to (x,t).
 pub struct TimeSlicer();

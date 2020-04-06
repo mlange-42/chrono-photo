@@ -82,7 +82,7 @@ impl FromStr for Threshold {
             "absolute" | "abs" => true,
             "relative" | "rel" => false,
             _ => return Err(ParseOptionError(format!(
-                "Not a pixel outlier detection mode: {}. Must be one of (abs[olute]/<threshold>|rel[ative]/<threshold>)",
+                "Not a pixel outlier detection mode: {}. Must be one of (abs[olute]|rel[ative])/<min>[/<max>]",
                 str
             ))),
         };

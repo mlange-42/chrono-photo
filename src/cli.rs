@@ -1,6 +1,7 @@
 //! Command-line interface for chrono-photo.
 use crate::flist::FrameRange;
 use crate::options::{BackgroundMode, OutlierSelectionMode, SelectionMode, Threshold};
+use crate::slicer::SliceLength;
 use crate::streams::Compression;
 use core::fmt;
 use std::path::PathBuf;
@@ -54,6 +55,10 @@ pub struct Cli {
     /// Output image quality for JPG files, in percent. Optional, default '95'.
     #[structopt(short, long)]
     quality: Option<u8>,
+
+    /// Controls slicing to temp files (rows|pixels|count)/<number>. Optional, default 'rows/1'
+    #[structopt(short, long)]
+    slice: Option<String>,
 
     /// Print debug information (i.e. parsed cmd parameters).
     #[structopt(long)]
@@ -118,6 +123,12 @@ impl Cli {
                 .frames
                 .as_ref()
                 .and_then(|fr| Some(fr.parse().unwrap())),
+            slice: self
+                .slice
+                .as_ref()
+                .unwrap_or(&"rows/1".to_string())
+                .parse()
+                .unwrap(),
             debug: self.debug,
         })
     }
@@ -150,6 +161,8 @@ pub struct CliParsed {
     pub compression: Compression,
     /// Output image quality for JPG files, in percent.
     pub quality: u8,
+    /// Controls slicing to temp files (rows|pixels|count)/<number>. Optional, default 'rows/1'
+    pub slice: SliceLength,
     /// Print debug information (i.e. parsed cmd parameters).
     pub debug: bool,
 }
