@@ -38,11 +38,20 @@ pub struct Threshold {
 }
 impl Threshold {
     pub fn new(absolute: bool, min: f32, max: f32) -> Self {
-        Threshold {
-            absolute,
-            min,
-            max,
-            scale: 1.0 / (max - min),
+        if absolute {
+            Threshold {
+                absolute,
+                min: min * 255.0,
+                max: max * 255.0,
+                scale: 1.0 / ((max - min) * 255.0),
+            }
+        } else {
+            Threshold {
+                absolute,
+                min,
+                max,
+                scale: 1.0 / (max - min),
+            }
         }
     }
     pub fn abs(min: f32, max: f32) -> Self {
@@ -82,7 +91,7 @@ impl FromStr for Threshold {
             "absolute" | "abs" => true,
             "relative" | "rel" => false,
             _ => return Err(ParseOptionError(format!(
-                "Not a pixel outlier detection mode: {}. Must be one of (abs[olute]/<threshold>|rel[ative]/<threshold>)",
+                "Not a pixel outlier detection mode: {}. Must be one of (abs[olute]|rel[ative])/<min>[/<max>]",
                 str
             ))),
         };
@@ -90,22 +99,18 @@ impl FromStr for Threshold {
         let thresh_min_str = parts
             .get(1)
             .expect(&format!("Unexpected format in {}", str));
-        let mut min = thresh_min_str.parse().expect(&format!(
+        let min = thresh_min_str.parse().expect(&format!(
             "Unable to parse lower threshold for outlier detection: {}",
             str
         ));
         let thresh_max_str = parts.get(2);
-        let mut max = match thresh_max_str {
+        let max = match thresh_max_str {
             Some(str) => str.parse().expect(&format!(
                 "Unable to parse upper threshold for outlier detection: {}",
                 str
             )),
             None => min,
         };
-        if absolute {
-            min *= 255.0;
-            max *= 255.0;
-        }
 
         Ok(Threshold::new(absolute, min, max))
     }
