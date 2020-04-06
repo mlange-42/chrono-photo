@@ -9,5 +9,5 @@
 --background first ^
 --outlier extreme ^
 --quality 98 ^
---compression deflate ^
+--compression gzip/6 ^
 --debug
