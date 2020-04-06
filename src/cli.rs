@@ -15,7 +15,7 @@ pub struct Cli {
     pattern: String,
 
     /// Frames to be used from those matching pattern: `start/end/step`. Optional.
-    /// For default values, use `.`, e.g. `././step`.
+    /// For default values, use `.`, e.g. `././2`.
     #[structopt(short, long)]
     frames: Option<String>,
 

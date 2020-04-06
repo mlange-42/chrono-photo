@@ -78,10 +78,10 @@ via **option `--outlier`**:
 
 If no outliers are found for a pixel (or for blending), different methods can be used to select the 
 pixel's value via **option `--background`**:
-* `random`: Use a randomly selected pixel value, selected among all images. The default value, but may result in a noisy image.
-* `first`: Use the pixel value from the first image.
-* `average`: Use the average pixel value of all images. Can be used for blurring, but may result in banding for low contrast backgrounds.
-* `median`: Use the median pixel value of all images. May result in banding for low contrast backgrounds.
+* `random`: Use a randomly selected pixel value, selected among all non-outlier images. The default value, but may result in a noisy image.
+* `first`: Use the pixel value from the first non-outlier image.
+* `average`: Use the average pixel value of all non-outlier images. Can be used for blurring, but may result in banding for low contrast backgrounds.
+* `median`: Use the median pixel value of all images (including outliers!). May result in banding for low contrast backgrounds.
 
 #### Parameter selection
 
@@ -124,7 +124,7 @@ OPTIONS:
                                          default 'random'
     -c, --compression <compression>      Compression mode for time slices (gzip|zlib|deflate). Optional, default 'gzip'
     -f, --frames <frames>                Frames to be used from those matching pattern: `start/end/step`. Optional. For
-                                         default values, use `.`, e.g. `././step`
+                                         default values, use `.`, e.g. `././2`
     -m, --mode <mode>                    Pixel selection mode (lighter|darker|outlier). Optional, default 'outlier'
     -l, --outlier <outlier>              Outlier selection mode in case more than one outlier is found
                                          (first|last|extreme|average|forward|backward). Optional, default 'extreme'
