@@ -101,14 +101,32 @@ Holding a large number of high resolution images in memory at the same time is n
 
 Therefore, before actual processing, the time-stack of images with (x, y) coordinates
 is converted into a number of temporary files, each containing data in (x, t) coordinates.
-
 For example, the first temporary file contains the first row of pixels from each image.
 
 Using these temporary files, all images can be processes row by row, without overloading memory, as explained above.
 
+Actually, the above description is a simplification. Option `--slice` provides control
+over how much data from each image goes into each temporary file. The option accepts different forms.
+Examples:
+* `--slice rows/4`: Writes 4 rows of each image into each time slice.
+* `--slice pixels/1000`: Writes 1000 pixels of each image into each time slice.
+* `--slice count/100`: Internally determines the amount of data written, in order to create a total of 100 time slices.
+
+The default (`rows/4`) should be sufficient for most scenarios. 
+
+**Higher values** can however be used to reduce the number of temporary files created, 
+and to slightly increate the efficiently of compression of these files.
+
+**Lower values** may be necesary when processing really huge numbers of images.
+During the actual processing, one entire time slice file is loaded into memory at a time.
+As an example, processing 100'000 frames in Full HD resolution with `--slice rows/1` requires loading
+`frames * width` pixels (200 megapixels) into memory, which are approximately 600 MB. 
+By writing, e.g., only half a row per file (`--slice pixels/960` for Full HD),
+memory usage can also be reduces to the half, while producing twice as many temporary files.
+
 ## Command line options
 
-**TODO**
+_TODO: Detailed explanation._
 
 ```
 USAGE:
