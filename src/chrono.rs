@@ -502,16 +502,11 @@ impl ChronoProcessor {
     ///
     /// Return (Q1, Median, Q3)
     fn quartiles(data: &[u8]) -> (f32, f32, f32) {
-        let len = data.len();
-
-        let med = if (len + 1) % 2 == 0 {
-            data[(len + 1) / 2 - 1] as f32
-        } else {
-            let idx = len / 2;
-            0.5 * (data[idx - 1] as f32 + data[idx] as f32)
-        };
-
-        (Self::quantile(data, 0.25), med, Self::quantile(data, 0.75))
+        (
+            Self::quantile(data, 0.25),
+            Self::median(data),
+            Self::quantile(data, 0.75),
+        )
     }
 
     fn quantile(data: &[u8], q: f32) -> f32 {
@@ -531,11 +526,11 @@ impl ChronoProcessor {
     fn median(data: &[u8]) -> f32 {
         let len = data.len();
 
-        if len % 2 == 0 {
-            data[(len + 1) / 2] as f32
+        if (len + 1) % 2 == 0 {
+            data[(len + 1) / 2 - 1] as f32
         } else {
             let idx = len / 2;
-            0.5 * (data[idx] as f32 + data[idx + 1] as f32)
+            0.5 * (data[idx - 1] as f32 + data[idx] as f32)
         }
     }
 }
