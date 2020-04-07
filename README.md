@@ -178,7 +178,7 @@ To use this crate as a library, add the following to your `Cargo.toml` dependenc
 chrono-photo = { git = "https://github.com/mlange-42/chrono-photo.git" }
 ```
 
-_Warning:_ The API is still incomplete highly unstable, so be prepared for frequent changes. 
+_Warning:_ The API is still incomplete and highly unstable, so be prepared for frequent changes. 
 Any help to stabilize the API is highly appreciated.
 
 For the latest development version, see branch [`dev`](https://github.com/mlange-42/chrono-photo/tree/dev).

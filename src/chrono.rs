@@ -543,8 +543,7 @@ impl ChronoProcessor {
         Ok((self.data.non_outlier_indices[idx], false))
     }
 
-    /// Calculates quartiles from a sample (approximated).
-    ///
+    /// Calculates quartiles from a sample.
     /// Return (Q1, Median, Q3)
     fn quartiles(data: &[u8]) -> (f32, f32, f32) {
         (
@@ -554,6 +553,7 @@ impl ChronoProcessor {
         )
     }
 
+    /// Calculates a quantile a sample.
     fn quantile(data: &[u8], q: f32) -> f32 {
         let pos = (data.len() + 1) as f32 * q;
         let p1 = pos as usize - 1;
