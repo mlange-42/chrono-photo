@@ -76,6 +76,7 @@ impl ChronoProcessor {
         let mut pixel_data = Vec::new();
         let mut pixel = vec![0; channels];
 
+        let mut warnings = 0;
         let slice_bytes = slices.bytes(&layout);
         //let slice_count = slices.count(&layout);
 
@@ -122,9 +123,20 @@ impl ChronoProcessor {
                         pixel_data[row * channels + ch] = v;
                     }
                 }
-                let blend = self.calc_pixel(&pixel_data, &mut pixel);
+
+                let pix_offset = buff_row_start + col as usize * channels;
+
+                /*let coord = (
+                    (pix_offset % layout.height_stride) as usize / channels,
+                    (pix_offset / layout.height_stride) as usize,
+                );*/
+
+                let (blend, warning) = self.calc_pixel(&pixel_data, &mut pixel);
+                if warning {
+                    warnings += 1;
+                }
                 for ch in 0..channels {
-                    let idx = buff_row_start + col as usize * channels + ch;
+                    let idx = pix_offset + ch;
                     buffer[idx] = pixel[ch];
                     if ch < 3 {
                         is_outlier[idx] = blend;
@@ -136,10 +148,17 @@ impl ChronoProcessor {
         }
         bar.finish_and_clear();
 
+        if warnings > 0 {
+            println!(
+                "Warning: {:?} pixels seem to consist of only outliers",
+                warnings
+            );
+        }
+
         Ok((buffer, is_outlier))
     }
 
-    fn calc_pixel(&mut self, pixel_data: &[u8], pixel: &mut [u8]) -> u8 {
+    fn calc_pixel(&mut self, pixel_data: &[u8], pixel: &mut [u8]) -> (u8, bool) {
         let mode = &self.mode.clone(); // TODO find a way to avoid clone
         match mode {
             SelectionMode::Darker => self.calc_pixel_darker(pixel_data, pixel),
@@ -150,7 +169,7 @@ impl ChronoProcessor {
         }
     }
 
-    fn calc_pixel_darker(&self, pixel_data: &[u8], pixel: &mut [u8]) -> u8 {
+    fn calc_pixel_darker(&self, pixel_data: &[u8], pixel: &mut [u8]) -> (u8, bool) {
         let channels = pixel.len();
         let pixels = pixel_data.len() / channels;
 
@@ -167,9 +186,9 @@ impl ChronoProcessor {
         for ch in 0..channels {
             pixel[ch] = pixel_data[idx_min * channels + ch];
         }
-        0
+        (0, false)
     }
-    fn calc_pixel_lighter(&self, pixel_data: &[u8], pixel: &mut [u8]) -> u8 {
+    fn calc_pixel_lighter(&self, pixel_data: &[u8], pixel: &mut [u8]) -> (u8, bool) {
         let channels = pixel.len();
         let pixels = pixel_data.len() / channels;
 
@@ -186,7 +205,7 @@ impl ChronoProcessor {
         for ch in 0..channels {
             pixel[ch] = pixel_data[idx_max * channels + ch];
         }
-        0
+        (0, false)
     }
 
     fn calc_pixel_z_score(
@@ -194,7 +213,7 @@ impl ChronoProcessor {
         pixel_data: &[u8],
         mut pixel: &mut [u8],
         threshold: Threshold,
-    ) -> u8 {
+    ) -> (u8, bool) {
         let channels = pixel.len();
         let samples = pixel_data.len() / channels;
 
@@ -244,8 +263,9 @@ impl ChronoProcessor {
                     } else {
                         (iqr_inv[i] * diff).powi(2)
                     }
-                }
+                };
             }
+            //println!("{:?}, {:?}", dist_sq.sqrt(), threshold_sq.sqrt());
             if dist_sq >= threshold_sq {
                 self.data.outlier_indices[num_outliers] = (sample_idx, dist_sq);
                 num_outliers += 1;
@@ -257,6 +277,7 @@ impl ChronoProcessor {
         }
 
         let has_outliers = num_outliers > 0;
+        let mut has_warning = false;
 
         // Fill pixel with background
         match self.background {
@@ -310,28 +331,50 @@ impl ChronoProcessor {
                 }
             }
             BackgroundMode::First | BackgroundMode::Random => {
-                let sample_idx = match self.background {
+                let (sample_idx, warning) = match self.background {
                     BackgroundMode::First => {
                         if !has_outliers {
-                            0
+                            (0, false)
                         } else {
                             self.first_excluded(samples, num_outliers).unwrap()
                         }
                     }
                     BackgroundMode::Random => {
                         if !has_outliers {
-                            self.data.rng.gen_range(0, samples)
+                            (self.data.rng.gen_range(0, samples), false)
                         } else {
                             self.sample_excluded(samples, num_outliers).unwrap()
+                            /*
+                            match self.sample_excluded(samples, num_outliers) {
+                                Ok(value) => value,
+                                Err(err) => {
+                                    println!(
+                                        "{:?}",
+                                        &self.data.outlier_indices[..num_outliers]
+                                            .iter()
+                                            .map(|v| v.1.sqrt())
+                                            .collect::<Vec<_>>()
+                                    );
+                                    for pix in pixel_data.chunks(channels) {
+                                        println!("{:?}", pix);
+                                    }
+                                    println!("Median: {:?}", median);
+                                    panic!("Problem at pixel {:?}: {:?}", coord, err)
+                                }
+                            }*/
                         }
                     }
-                    _ => 0,
+                    _ => (0, false),
                 };
                 let sample =
                     &pixel_data[(sample_idx * channels)..(sample_idx * channels + channels)];
 
                 for ch in 0..channels {
                     pixel[ch] = sample[ch];
+                }
+
+                if warning {
+                    has_warning = true;
                 }
             }
         }
@@ -346,7 +389,7 @@ impl ChronoProcessor {
 
                 let blend = threshold.blend_value(dist_sq.sqrt());
                 color::blend_into_u8(&mut pixel, &sample, blend);
-                (blend * 255.0).round() as u8
+                ((blend * 255.0).round() as u8, has_warning)
             } else {
                 // More outliers
                 if self.outlier == OutlierSelectionMode::AllForward
@@ -383,7 +426,7 @@ impl ChronoProcessor {
                     for ch in 0..channels {
                         pixel[ch] = pix_new[ch].round() as u8;
                     }
-                    ((1.0 - blend_inv) * 255.0).round() as u8
+                    (((1.0 - blend_inv) * 255.0).round() as u8, has_warning)
                 } else {
                     let mut temp_sample = [0; 4];
                     let (sample, dist) = if self.outlier == OutlierSelectionMode::Average {
@@ -439,11 +482,11 @@ impl ChronoProcessor {
                     // Blend outlier into background
                     let blend = threshold.blend_value(dist);
                     color::blend_into_u8(&mut pixel, &sample, blend);
-                    (blend * 255.0).round() as u8
+                    ((blend * 255.0).round() as u8, has_warning)
                 }
             }
         } else {
-            0
+            (0, has_warning)
         }
     }
 
@@ -452,12 +495,13 @@ impl ChronoProcessor {
         &self,
         samples: usize,
         num_outliers: usize,
-    ) -> Result<usize, PixelSelectionError> {
+    ) -> Result<(usize, bool), PixelSelectionError> {
         if num_outliers == samples {
-            return Err(PixelSelectionError(
+            /*return Err(PixelSelectionError(
                 "Unable to select random background pixel. All pixels seem to be outliers."
                     .to_string(),
-            ));
+            ));*/
+            return Ok((0, true));
         }
         let excluded = &self.data.outlier_indices[..num_outliers];
         let len = excluded.len();
@@ -466,7 +510,7 @@ impl ChronoProcessor {
             if excl_index < len && i == excluded[excl_index].0 {
                 excl_index += 1;
             } else {
-                return Ok(i);
+                return Ok((i, false));
             }
         }
         Err(PixelSelectionError(
@@ -478,12 +522,13 @@ impl ChronoProcessor {
         &mut self,
         samples: usize,
         num_outliers: usize,
-    ) -> Result<usize, PixelSelectionError> {
+    ) -> Result<(usize, bool), PixelSelectionError> {
         if num_outliers == samples {
-            return Err(PixelSelectionError(
+            /*return Err(PixelSelectionError(
                 "Unable to select random background pixel. All pixels seem to be outliers."
                     .to_string(),
-            ));
+            ));*/
+            return Ok((self.data.rng.gen_range(0_usize, samples), true));
         }
         let excluded = &self.data.outlier_indices[..num_outliers];
         for (i, idx) in self.data.non_outlier_indices.iter_mut().enumerate() {
@@ -495,7 +540,7 @@ impl ChronoProcessor {
             candidates -= 1;
         }
         let idx = self.data.rng.gen_range(0_usize, candidates);
-        Ok(self.data.non_outlier_indices[idx])
+        Ok((self.data.non_outlier_indices[idx], false))
     }
 
     /// Calculates quartiles from a sample (approximated).
@@ -529,7 +574,7 @@ impl ChronoProcessor {
         if (len + 1) % 2 == 0 {
             data[(len + 1) / 2 - 1] as f32
         } else {
-            let idx = len / 2;
+            let idx = (len + 1) / 2;
             0.5 * (data[idx - 1] as f32 + data[idx] as f32)
         }
     }
