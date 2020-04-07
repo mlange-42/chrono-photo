@@ -200,24 +200,17 @@ impl ChronoProcessor {
 
         let threshold_sq = threshold.min() * threshold.min();
 
-        let mut mean = [0.0; 4];
         let mut median = [0.0; 4];
         let mut iqr_inv = [0.0; 4];
-        // Reset mean
-        for m in mean.iter_mut() {
-            *m = 0.0;
-        }
 
-        // Calculate mean of samples, prepare medians
+        // Prepare medians
+        // TODO: allow restriction to a sample
         for (sample_idx, pix) in pixel_data.chunks(channels).enumerate() {
             for (i, p) in pix.iter().enumerate() {
-                mean[i] += *p as f32;
                 self.data.values[i * samples + sample_idx] = *p;
             }
         }
-        for m in mean.iter_mut() {
-            *m /= samples as f32;
-        }
+
         // Calculate medians and inverse inter-quartile range
         for i in 0..channels {
             let slice = &mut self.data.values[(i * samples)..(i * samples + samples)];
@@ -268,6 +261,15 @@ impl ChronoProcessor {
         // Fill pixel with background
         match self.background {
             BackgroundMode::Average => {
+                let mut mean = [0.0; 4];
+                for pix in pixel_data.chunks(channels) {
+                    for (i, p) in pix.iter().enumerate() {
+                        mean[i] += *p as f32;
+                    }
+                }
+                for m in mean.iter_mut() {
+                    *m /= samples as f32;
+                }
                 if has_outliers {
                     if num_outliers == 1 {
                         let offset = self.data.outlier_indices[0].0 * channels;
@@ -391,6 +393,16 @@ impl ChronoProcessor {
                                 [(sample_idx * channels)..(sample_idx * channels + channels)];
                             (sample, dist_sq.sqrt())
                         } else {
+                            let mut mean = [0.0; 4];
+                            for pix in pixel_data.chunks(channels) {
+                                for (i, p) in pix.iter().enumerate() {
+                                    mean[i] += *p as f32;
+                                }
+                            }
+                            for m in mean.iter_mut() {
+                                *m /= samples as f32;
+                            }
+
                             for ch in 0..channels {
                                 mean[ch] = 0.0;
                             }
@@ -492,27 +504,27 @@ impl ChronoProcessor {
     fn quartiles(data: &[u8]) -> (f32, f32, f32) {
         let len = data.len();
 
-        let med = if len % 2 == 0 {
-            data[(len + 1) / 2] as f32
+        let med = if (len + 1) % 2 == 0 {
+            data[(len + 1) / 2 - 1] as f32
         } else {
             let idx = len / 2;
-            0.5 * (data[idx] as f32 + data[idx + 1] as f32)
+            0.5 * (data[idx - 1] as f32 + data[idx] as f32)
         };
 
-        let q1 = if (len + 1) % 4 == 0 {
-            data[(len + 1) / 4] as f32
-        } else {
-            let idx = len / 4;
-            0.5 * (data[idx] as f32 + data[idx + 1] as f32)
-        };
+        (Self::quantile(data, 0.25), med, Self::quantile(data, 0.75))
+    }
 
-        let q3 = if (3 * (len + 1)) % 4 == 0 {
-            data[(3 * (len + 1)) / 4] as f32
+    fn quantile(data: &[u8], q: f32) -> f32 {
+        let pos = (data.len() + 1) as f32 * q;
+        let p1 = pos as usize - 1;
+        let frac = pos.fract();
+        if frac < 0.001 {
+            data[p1] as f32
+        } else if frac > 0.999 {
+            data[p1 + 1] as f32
         } else {
-            let idx = (3 * len) / 4;
-            0.5 * (data[idx] as f32 + data[idx + 1] as f32)
-        };
-        (q1, med, q3)
+            (1.0 - frac) * data[p1] as f32 + frac * data[p1 + 1] as f32
+        }
     }
 
     /// Calculates the median of a sample.
@@ -525,5 +537,18 @@ impl ChronoProcessor {
             let idx = len / 2;
             0.5 * (data[idx] as f32 + data[idx + 1] as f32)
         }
+    }
+}
+
+#[cfg(test)]
+mod test {
+    use crate::chrono::ChronoProcessor;
+
+    #[test]
+    fn quartiles_test() {
+        let values = [0, 1, 2, 3, 4, 5, 6];
+        println!("{:?}", ChronoProcessor::quartiles(&values));
+
+        assert_eq!(ChronoProcessor::quartiles(&values), (1.0, 3.0, 5.0))
     }
 }
