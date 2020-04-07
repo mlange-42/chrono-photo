@@ -9,5 +9,7 @@
 --background first ^
 --outlier extreme ^
 --quality 98 ^
---compression deflate ^
+--compression gzip/6 ^
+--slice rows/2 ^
 --debug
+pause

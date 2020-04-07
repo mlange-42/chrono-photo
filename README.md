@@ -101,14 +101,32 @@ Holding a large number of high resolution images in memory at the same time is n
 
 Therefore, before actual processing, the time-stack of images with (x, y) coordinates
 is converted into a number of temporary files, each containing data in (x, t) coordinates.
-
 For example, the first temporary file contains the first row of pixels from each image.
 
 Using these temporary files, all images can be processes row by row, without overloading memory, as explained above.
 
+Actually, the above description is a simplification. Option `--slice` provides control
+over how much data from each image goes into each temporary file. The option accepts different forms.
+Examples:
+* `--slice rows/4`: Writes 4 rows of each image into each time slice.
+* `--slice pixels/1000`: Writes 1000 pixels of each image into each time slice.
+* `--slice count/100`: Internally determines the amount of data written, in order to create a total of 100 time slices.
+
+The default (`rows/4`) should be sufficient for most scenarios. 
+
+**Higher values** can however be used to reduce the number of temporary files created, 
+and to slightly increase the efficiently of compression of these files.
+
+**Lower values** may be necessary when processing really huge numbers of images.
+During the actual processing, one entire time slice file is loaded into memory at a time.
+As an example, processing 100'000 frames in Full HD resolution with `--slice rows/1` requires loading
+`frames * width` pixels (200 megapixels) into memory, which are approximately 600 MB. 
+By writing, e.g., only half a row per file (`--slice pixels/960` for Full HD),
+memory usage can also be reduces to the half, while producing twice as many temporary files.
+
 ## Command line options
 
-**TODO**
+_TODO: Detailed explanation._
 
 ```
 USAGE:
@@ -122,7 +140,8 @@ FLAGS:
 OPTIONS:
     -b, --background <background>        Background pixel selection mode (first|random|average|median). Optional,
                                          default 'random'
-    -c, --compression <compression>      Compression mode for time slices (gzip|zlib|deflate). Optional, default 'gzip'
+    -c, --compression <compression>      Compression mode and level (0 to 9) for time slices
+                                         (gzip|zlib|deflate)[/<level>]. Optional, default 'gzip/6'
     -f, --frames <frames>                Frames to be used from those matching pattern: `start/end/step`. Optional. For
                                          default values, use `.`, e.g. `././2`
     -m, --mode <mode>                    Pixel selection mode (lighter|darker|outlier). Optional, default 'outlier'
@@ -132,6 +151,8 @@ OPTIONS:
         --output-blend <output-blend>    Path of output image showing which pixels are outliers (blend value)
     -p, --pattern <pattern>              File search pattern
     -q, --quality <quality>              Output image quality for JPG files, in percent. Optional, default '95'
+    -s, --slice <slice>                  Controls slicing to temp files (rows|pixels|count)/<number>. Optional, default
+                                         'rows/4'
     -d, --temp-dir <temp-dir>            Temp directory. Optional, default system temp directory
     -t, --threshold <threshold>          Outlier threshold mode (abs|rel)/<lower>[/<upper>]. Optional, default
                                          'abs/0.05/0.2'
@@ -156,4 +177,8 @@ To use this crate as a library, add the following to your `Cargo.toml` dependenc
 ```
 chrono-photo = { git = "https://github.com/mlange-42/chrono-photo.git" }
 ```
+
+_Warning:_ The API is still incomplete highly unstable, so be prepared for frequent changes. 
+Any help to stabilize the API is highly appreciated.
+
 For the latest development version, see branch [`dev`](https://github.com/mlange-42/chrono-photo/tree/dev).
