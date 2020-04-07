@@ -122,7 +122,8 @@ FLAGS:
 OPTIONS:
     -b, --background <background>        Background pixel selection mode (first|random|average|median). Optional,
                                          default 'random'
-    -c, --compression <compression>      Compression mode for time slices (gzip|zlib|deflate). Optional, default 'gzip'
+    -c, --compression <compression>      Compression mode and level (0 to 9) for time slices
+                                         (gzip|zlib|deflate)[/<level>]. Optional, default 'gzip/6'
     -f, --frames <frames>                Frames to be used from those matching pattern: `start/end/step`. Optional. For
                                          default values, use `.`, e.g. `././2`
     -m, --mode <mode>                    Pixel selection mode (lighter|darker|outlier). Optional, default 'outlier'
@@ -132,6 +133,8 @@ OPTIONS:
         --output-blend <output-blend>    Path of output image showing which pixels are outliers (blend value)
     -p, --pattern <pattern>              File search pattern
     -q, --quality <quality>              Output image quality for JPG files, in percent. Optional, default '95'
+    -s, --slice <slice>                  Controls slicing to temp files (rows|pixels|count)/<number>. Optional, default
+                                         'rows/4'
     -d, --temp-dir <temp-dir>            Temp directory. Optional, default system temp directory
     -t, --threshold <threshold>          Outlier threshold mode (abs|rel)/<lower>[/<upper>]. Optional, default
                                          'abs/0.05/0.2'
