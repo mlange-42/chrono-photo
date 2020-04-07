@@ -35,6 +35,8 @@ pub struct ChronoProcessor {
     background: BackgroundMode,
     outlier: OutlierSelectionMode,
     compression: Compression,
+    sample_count: Option<usize>,
+    sample_indices: Vec<usize>,
     data: ThreadData,
 }
 
@@ -46,6 +48,7 @@ impl ChronoProcessor {
         bg_mode: BackgroundMode,
         outlier_mode: OutlierSelectionMode,
         compression: Compression,
+        sample_count: Option<usize>,
     ) -> Self {
         ChronoProcessor {
             mode,
@@ -53,6 +56,8 @@ impl ChronoProcessor {
             background: bg_mode,
             outlier: outlier_mode,
             compression,
+            sample_count,
+            sample_indices: vec![],
             data: ThreadData {
                 outlier_indices: vec![],
                 non_outlier_indices: vec![],
@@ -107,10 +112,23 @@ impl ChronoProcessor {
             if pixel_data.len() != num_rows * channels {
                 pixel_data = vec![0; num_rows * channels];
             }
+            if self.sample_indices.is_empty() {
+                if let Some(cnt) = self.sample_count {
+                    if cnt >= num_rows {
+                        self.sample_indices = (0..num_rows).collect();
+                    } else {
+                        self.sample_indices =
+                            rand::seq::sample_indices(&mut self.data.rng, num_rows, cnt);
+                        self.sample_indices.sort_unstable();
+                    }
+                } else {
+                    self.sample_indices = (0..num_rows).collect();
+                }
+            }
             if self.data.outlier_indices.len() != num_rows {
                 self.data.outlier_indices = vec![(0, 0.0); num_rows];
                 self.data.non_outlier_indices = vec![0; num_rows];
-                self.data.values = vec![0; num_rows * channels];
+                self.data.values = vec![0; self.sample_indices.len() * channels];
             }
             //for col in 0..layout.width {
             for col in 0..(num_bytes / channels) {
@@ -216,6 +234,7 @@ impl ChronoProcessor {
     ) -> (u8, bool) {
         let channels = pixel.len();
         let samples = pixel_data.len() / channels;
+        let sub_samples = self.sample_indices.len();
 
         let threshold_sq = threshold.min() * threshold.min();
 
@@ -224,15 +243,22 @@ impl ChronoProcessor {
 
         // Prepare medians
         // TODO: allow restriction to a sample
-        for (sample_idx, pix) in pixel_data.chunks(channels).enumerate() {
+        for (sample_idx, data_idx) in self.sample_indices.iter().enumerate() {
+            let idx = data_idx * channels;
+            for ch in 0..channels {
+                let p = pixel_data[idx + ch];
+                self.data.values[ch * sub_samples + sample_idx] = p;
+            }
+        }
+        /*for (sample_idx, pix) in pixel_data.chunks(channels).enumerate() {
             for (i, p) in pix.iter().enumerate() {
                 self.data.values[i * samples + sample_idx] = *p;
             }
-        }
+        }*/
 
         // Calculate medians and inverse inter-quartile range
         for i in 0..channels {
-            let slice = &mut self.data.values[(i * samples)..(i * samples + samples)];
+            let slice = &mut self.data.values[(i * sub_samples)..(i * sub_samples + sub_samples)];
             slice.sort_unstable();
             if threshold.absolute() {
                 median[i] = Self::median(slice);

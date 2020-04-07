@@ -60,6 +60,10 @@ pub struct Cli {
     #[structopt(short, long)]
     slice: Option<String>,
 
+    /// Restricts calculation of median and inter-quartile range to a sub-sample of input images. Use for large amounts of images to speed up calculations. Optional.
+    #[structopt(long)]
+    sample: Option<usize>,
+
     /// Print debug information (i.e. parsed cmd parameters).
     #[structopt(long)]
     debug: bool,
@@ -129,6 +133,7 @@ impl Cli {
                 .unwrap_or(&"rows/4".to_string())
                 .parse()
                 .unwrap(),
+            sample: self.sample,
             debug: self.debug,
         })
     }
@@ -163,6 +168,8 @@ pub struct CliParsed {
     pub quality: u8,
     /// Controls slicing to temp files (rows|pixels|count)/<number>. Optional, default 'rows/1'
     pub slice: SliceLength,
+    /// Restricts calculation of median and inter-quartile range to a sub-sample of input images. Use for large amounts of images to speed up calculations. Optional.
+    pub sample: Option<usize>,
     /// Print debug information (i.e. parsed cmd parameters).
     pub debug: bool,
 }
