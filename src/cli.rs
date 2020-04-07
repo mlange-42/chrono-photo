@@ -126,7 +126,7 @@ impl Cli {
             slice: self
                 .slice
                 .as_ref()
-                .unwrap_or(&"rows/1".to_string())
+                .unwrap_or(&"rows/4".to_string())
                 .parse()
                 .unwrap(),
             debug: self.debug,
