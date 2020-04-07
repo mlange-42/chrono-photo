@@ -115,9 +115,9 @@ Examples:
 The default (`rows/4`) should be sufficient for most scenarios. 
 
 **Higher values** can however be used to reduce the number of temporary files created, 
-and to slightly increate the efficiently of compression of these files.
+and to slightly increase the efficiently of compression of these files.
 
-**Lower values** may be necesary when processing really huge numbers of images.
+**Lower values** may be necessary when processing really huge numbers of images.
 During the actual processing, one entire time slice file is loaded into memory at a time.
 As an example, processing 100'000 frames in Full HD resolution with `--slice rows/1` requires loading
 `frames * width` pixels (200 megapixels) into memory, which are approximately 600 MB. 
@@ -177,4 +177,8 @@ To use this crate as a library, add the following to your `Cargo.toml` dependenc
 ```
 chrono-photo = { git = "https://github.com/mlange-42/chrono-photo.git" }
 ```
+
+_Warning:_ The API is still incomplete highly unstable, so be prepared for frequent changes. 
+Any help to stabilize the API is highly appreciated.
+
 For the latest development version, see branch [`dev`](https://github.com/mlange-42/chrono-photo/tree/dev).
