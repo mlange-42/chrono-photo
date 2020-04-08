@@ -27,6 +27,14 @@ pub struct Cli {
     #[structopt(short, long)]
     frames: Option<String>,
 
+    /// Video input frames. Frames to be used per video frame: `start/end/step`. Optional.
+    #[structopt(long, name = "video-in")]
+    video_in: Option<String>,
+
+    /// Video output frames. Range and step width of video output frames: `start/end/step`. Optional.
+    #[structopt(long, name = "video-out")]
+    video_out: Option<String>,
+
     /// Path to output file
     #[structopt(short, long)]
     output: String,
@@ -79,7 +87,7 @@ pub struct Cli {
 impl Cli {
     /// Parses this Cli into a [CliParsed](struct.CliParsed.html).
     pub fn parse(&self) -> Result<CliParsed, ParseCliError> {
-        Ok(CliParsed {
+        let out = CliParsed {
             pattern: self.pattern.clone(),
             // is_16bit: self.is_16bit,
             temp_dir: self.temp_dir.as_ref().map(|d| PathBuf::from(d)),
@@ -135,6 +143,14 @@ impl Cli {
                 .frames
                 .as_ref()
                 .and_then(|fr| Some(fr.parse().unwrap())),
+            video_in: self
+                .video_in
+                .as_ref()
+                .and_then(|fr| Some(fr.parse().unwrap())),
+            video_out: self
+                .video_out
+                .as_ref()
+                .and_then(|fr| Some(fr.parse().unwrap())),
             slice: self
                 .slice
                 .as_ref()
@@ -143,7 +159,8 @@ impl Cli {
                 .unwrap(),
             sample: self.sample,
             debug: self.debug,
-        })
+        };
+        out.validate()
     }
 }
 
@@ -158,6 +175,10 @@ pub struct CliParsed {
     /// Frames to be used from those matching pattern: `start/end/step`. Optional.
     /// For default values, use `.`, e.g. `././step`.
     pub frames: Option<FrameRange>,
+    /// Video input frames. Frames to be used per video frame: `start/end/step`. Optional.
+    pub video_in: Option<FrameRange>,
+    /// Video output frames. Range and step width of video output frames: `start/end/step`. Optional.
+    pub video_out: Option<FrameRange>,
     /// Temp directory. Uses system temp directory if `None`.
     pub temp_dir: Option<PathBuf>,
     /// Path of the final output image.
@@ -182,6 +203,12 @@ pub struct CliParsed {
     pub sample: Option<usize>,
     /// Print debug information (i.e. parsed cmd parameters).
     pub debug: bool,
+}
+
+impl CliParsed {
+    pub fn validate(self) -> Result<Self, ParseCliError> {
+        Ok(self)
+    }
 }
 
 /// Error type for failed parsing of `String`s to `enum`s.

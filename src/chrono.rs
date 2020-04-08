@@ -73,6 +73,7 @@ impl ChronoProcessor {
         files: &[PathBuf],
         slices: &SliceLength,
         size_hint: Option<usize>,
+        image_indices: Option<&[usize]>,
     ) -> std::io::Result<(Vec<u8>, Vec<u8>)> {
         let channels = layout.width_stride;
         let mut buffer = vec![0; layout.height as usize * layout.height_stride];
@@ -91,21 +92,52 @@ impl ChronoProcessor {
             bar.inc(1);
 
             let buff_row_start = out_row * slice_bytes; //layout.height_stride;
-            let mut data = match size_hint {
-                //Some(hint) => Vec::with_capacity(hint * layout.height as usize),
-                Some(hint) => Vec::with_capacity(hint * slice_bytes),
-                None => Vec::new(),
+            let mut data = match image_indices {
+                Some(indices) => Vec::with_capacity(indices.len() * slice_bytes),
+                None => match size_hint {
+                    Some(hint) => Vec::with_capacity(hint * slice_bytes),
+                    None => Vec::new(),
+                },
             };
             let mut num_rows = 0;
             let mut num_bytes = 0;
             {
                 let mut stream = PixelInputStream::new(file, self.compression.clone())?;
-                while let Some(n_bytes) = stream.read_chunk(&mut data) {
-                    num_rows += 1;
-                    if num_bytes == 0 {
-                        num_bytes = n_bytes;
-                    } else if num_bytes != n_bytes {
-                        panic!("Unexpected data alignment in slice file {:?}", file);
+                if let Some(indices) = image_indices {
+                    let mut curr_row = 0;
+                    let mut curr_idx = 0;
+                    loop {
+                        if curr_idx >= indices.len() {
+                            break;
+                        }
+                        if curr_row == indices[curr_idx] {
+                            if let Some(n_bytes) = stream.read_chunk(&mut data) {
+                                num_rows += 1;
+                                if num_bytes == 0 {
+                                    num_bytes = n_bytes;
+                                } else if num_bytes != n_bytes {
+                                    panic!("Unexpected data alignment in slice file {:?}", file);
+                                }
+                            } else {
+                                break;
+                            }
+                            curr_idx += 1;
+                        } else {
+                            let result = stream.skip_chunk();
+                            if result.is_none() {
+                                break;
+                            }
+                        }
+                        curr_row += 1;
+                    }
+                } else {
+                    while let Some(n_bytes) = stream.read_chunk(&mut data) {
+                        num_rows += 1;
+                        if num_bytes == 0 {
+                            num_bytes = n_bytes;
+                        } else if num_bytes != n_bytes {
+                            panic!("Unexpected data alignment in slice file {:?}", file);
+                        }
                     }
                 }
             }
