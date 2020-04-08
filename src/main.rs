@@ -180,6 +180,11 @@ fn create_video(args: &CliParsed, files: &[PathBuf], layout: &SampleLayout, imag
             Some(output)
         });
 
+        print!(
+            "Processing frame {}/{} -> ",
+            frame - v_lower,
+            v_upper - v_lower
+        );
         create_frame(
             &args,
             &files,
