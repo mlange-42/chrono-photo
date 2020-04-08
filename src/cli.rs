@@ -7,8 +7,12 @@ use core::fmt;
 use std::path::PathBuf;
 use structopt::StructOpt;
 
-/// Raw command line arguments.
+/// A command-line tool for combining (potentially large amounts of) images into a single chrono-photography.
+///
+/// Use `chrono-photo -h`     for help, or
+///     `chrono-photo --help` even more comprehensive help.
 #[derive(StructOpt)]
+#[structopt(verbatim_doc_comment)]
 #[structopt(name = "chrono-photo command line application")]
 pub struct Cli {
     /// File search pattern
@@ -56,7 +60,7 @@ pub struct Cli {
     #[structopt(short, long)]
     quality: Option<u8>,
 
-    /// Controls slicing to temp files (rows|pixels|count)/<number>. Optional, default 'rows/1'
+    /// Controls slicing to temp files (rows|pixels|count)/<number>. Optional, default 'rows/4'.
     #[structopt(short, long)]
     slice: Option<String>,
 
