@@ -19,6 +19,9 @@ pub struct Cli {
     #[structopt(short, long)]
     pattern: String,
 
+    // /// Sets to 16 bit per color channel mode. Use for 16 bit TIFF files.
+    // #[structopt(long, name = "16-bit")]
+    // is_16bit: bool,
     /// Frames to be used from those matching pattern: `start/end/step`. Optional.
     /// For default values, use `.`, e.g. `././2`.
     #[structopt(short, long)]
@@ -78,6 +81,7 @@ impl Cli {
     pub fn parse(&self) -> Result<CliParsed, ParseCliError> {
         Ok(CliParsed {
             pattern: self.pattern.clone(),
+            // is_16bit: self.is_16bit,
             temp_dir: self.temp_dir.as_ref().map(|d| PathBuf::from(d)),
             output: PathBuf::from(&self.output),
             output_blend: match &self.output_blend {
@@ -149,6 +153,8 @@ impl Cli {
 pub struct CliParsed {
     /// File search pattern
     pub pattern: String,
+    // /// Sets to 16 bit per color channel mode. Use for 16 bit TIFF files.
+    //pub is_16bit: bool,
     /// Frames to be used from those matching pattern: `start/end/step`. Optional.
     /// For default values, use `.`, e.g. `././step`.
     pub frames: Option<FrameRange>,

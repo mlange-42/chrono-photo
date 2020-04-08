@@ -5,6 +5,7 @@ use crate::streams::{Compression, ImageStream, PixelOutputStream};
 use crate::ParseEnumError;
 use image::flat::SampleLayout;
 use indicatif::ProgressBar;
+use num_traits::PrimInt;
 use std::fmt;
 use std::path::PathBuf;
 use std::str::FromStr;
@@ -65,12 +66,40 @@ impl FromStr for SliceLength {
 }
 
 /// Converts a series of images by time to images by row. I.e. transposes (x,y) in the cube in (x,y,t) to (x,t).
-pub struct TimeSlicer();
+#[allow(dead_code)]
+pub struct TimeSlicer<T>
+where
+    T: PrimInt,
+{
+    is_16: bool,
+    dummy: T,
+}
 
-impl TimeSlicer {
+impl TimeSlicer<u8> {
+    pub fn new_8bit() -> Self {
+        TimeSlicer {
+            is_16: false,
+            dummy: 0_u8,
+        }
+    }
+}
+impl TimeSlicer<u16> {
+    pub fn new_16bit() -> Self {
+        TimeSlicer {
+            is_16: true,
+            dummy: 0_u16,
+        }
+    }
+}
+
+impl<T> TimeSlicer<T>
+where
+    T: PrimInt,
+{
     /// Writes time slices for all images in the given stream, into the given temporary directory.
     /// Files are named `temp-xxxxx.bin`.
     pub fn write_time_slices(
+        &self,
         images: ImageStream,
         temp_dir: PathBuf,
         compression: &Compression,
@@ -92,7 +121,10 @@ impl TimeSlicer {
             bar.inc(1);
 
             let dyn_img = img.unwrap();
-            let pix = dyn_img.as_flat_samples_u8().unwrap();
+            let pix = dyn_img
+                .as_flat_samples_u8()
+                .expect("Unexpected format. Not an 8 bit image.");
+
             let lay = match layout {
                 Some(lay) => {
                     if pix.layout != lay {
