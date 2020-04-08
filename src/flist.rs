@@ -10,11 +10,18 @@ use std::str::FromStr;
 pub struct FrameRange {
     start: Option<usize>,
     end: Option<usize>,
-    step: Option<usize>,
+    step: usize,
 }
 impl FrameRange {
-    pub fn new(start: Option<usize>, end: Option<usize>, step: Option<usize>) -> Self {
+    pub fn new(start: Option<usize>, end: Option<usize>, step: usize) -> Self {
         FrameRange { start, end, step }
+    }
+    pub fn empty() -> Self {
+        FrameRange {
+            start: None,
+            end: None,
+            step: 1,
+        }
     }
 }
 impl FromStr for FrameRange {
@@ -47,7 +54,7 @@ impl FromStr for FrameRange {
         Ok(FrameRange {
             start: values[0],
             end: values[1],
-            step: values[2],
+            step: values[2].unwrap_or(1),
         })
     }
 }
@@ -61,10 +68,10 @@ pub struct FileLister {
 
 impl FileLister {
     /// Creates a new lister from a pattern.
-    pub fn new(pattern: &str, frames: Option<FrameRange>) -> Self {
+    pub fn new(pattern: &str, frames: &Option<FrameRange>) -> Self {
         FileLister {
             pattern: pattern.to_string(),
-            frames,
+            frames: frames.clone(),
         }
     }
     /// Lists all files that match this lister's pattern.
@@ -79,13 +86,7 @@ impl FileLister {
                 .take(fr.end.unwrap_or(std::usize::MAX))
                 .skip(fr.start.unwrap_or(0))
                 .enumerate()
-                .filter_map(|(i, p)| {
-                    if i % fr.step.unwrap_or(1) == 0 {
-                        Some(p)
-                    } else {
-                        None
-                    }
-                })
+                .filter_map(|(i, p)| if i % fr.step == 0 { Some(p) } else { None })
                 .collect()),
             None => Ok(vec.collect()),
         }

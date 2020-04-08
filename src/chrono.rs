@@ -71,6 +71,7 @@ impl ChronoProcessor {
         mut self,
         layout: &SampleLayout,
         files: &[PathBuf],
+        file_indices: Option<&[usize]>,
         slices: &SliceLength,
         size_hint: Option<usize>,
     ) -> std::io::Result<(Vec<u8>, Vec<u8>)> {
@@ -85,9 +86,7 @@ impl ChronoProcessor {
         let slice_bytes = slices.bytes(&layout);
         //let slice_count = slices.count(&layout);
 
-        println!("Processing {} time slices", files.len());
-        let bar = ProgressBar::new(files.len() as u64);
-        for (out_row, file) in files.iter().enumerate() {
+        let mut fun = |out_row: usize, file: &PathBuf, bar: &ProgressBar| -> std::io::Result<()> {
             bar.inc(1);
 
             let buff_row_start = out_row * slice_bytes; //layout.height_stride;
@@ -163,8 +162,24 @@ impl ChronoProcessor {
                     }
                 }
             }
-        }
-        bar.finish_and_clear();
+            Ok(())
+        };
+
+        if let Some(indices) = file_indices {
+            println!("Processing {} time slices", indices.len());
+            let bar = ProgressBar::new(indices.len() as u64);
+            for (out_row, file) in indices.iter().map(|i| &files[*i]).enumerate() {
+                fun(out_row, &file, &bar)?;
+            }
+            bar.finish_and_clear();
+        } else {
+            println!("Processing {} time slices", files.len());
+            let bar = ProgressBar::new(files.len() as u64);
+            for (out_row, file) in files.iter().enumerate() {
+                fun(out_row, file, &bar)?;
+            }
+            bar.finish_and_clear();
+        };
 
         if warnings > 0 {
             println!(

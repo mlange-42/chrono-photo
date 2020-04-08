@@ -59,9 +59,9 @@ fn main() {
     // Convert to time slices and save to temp files
     let (temp_files, layout, size_hint) = match to_time_slices(
         &args.pattern,
-        false, // args.is_16bit,
-        args.frames,
-        &args.temp_dir.unwrap(),
+        false,
+        &args.frames,
+        &args.temp_dir.as_ref().unwrap(),
         &args.compression,
         &args.slice,
     ) {
@@ -72,23 +72,28 @@ fn main() {
         }
     };
 
-    // Process time slices
-    let processor = ChronoProcessor::new(
-        args.mode,
-        args.threshold,
-        args.background,
-        args.outlier,
-        args.compression,
-        args.sample,
-    );
-    let (buff, is_outlier) = processor
-        .process(&layout, &temp_files[..], &args.slice, Some(size_hint))
-        .unwrap();
-
-    println!("Saving output... ");
-    save_image(&buff, &layout, &args.output, args.quality);
-    if let Some(out) = &args.output_blend {
-        save_image(&is_outlier, &layout, &out, args.quality);
+    // Process to video or image
+    if args.video_in.is_some() || args.video_out.is_some() {
+        // Fill missing video range
+        if args.video_in.is_some() {
+            if args.video_out.is_none() {
+                args.video_out = Some(FrameRange::empty());
+            }
+        } else if args.video_out.is_some() {
+            args.video_in = Some(FrameRange::empty());
+        }
+        // Process to video
+        create_video(&args, &temp_files[..], &layout, size_hint);
+    } else {
+        // Process to image
+        create_frame(
+            &args,
+            &temp_files[..],
+            &layout,
+            size_hint,
+            &args.output,
+            &args.output_blend,
+        );
     }
 
     // Delete temp file
@@ -104,6 +109,35 @@ fn main() {
     bar.finish_and_clear();
 
     println!("Total time: {:?}", start.elapsed());
+}
+
+fn create_video(args: &CliParsed, files: &[PathBuf], layout: &SampleLayout, size_hint: usize) {}
+fn create_frame(
+    args: &CliParsed,
+    files: &[PathBuf],
+    layout: &SampleLayout,
+    size_hint: usize,
+    output: &PathBuf,
+    output_blend: &Option<PathBuf>,
+) {
+    // Process time slices
+    let processor = ChronoProcessor::new(
+        args.mode.clone(),
+        args.threshold.clone(),
+        args.background.clone(),
+        args.outlier.clone(),
+        args.compression.clone(),
+        args.sample.clone(),
+    );
+    let (buff, is_outlier) = processor
+        .process(&layout, &files, None, &args.slice, Some(size_hint))
+        .unwrap();
+
+    println!("Saving output... ");
+    save_image(&buff, &layout, &output, args.quality);
+    if let Some(out) = &output_blend {
+        save_image(&is_outlier, &layout, &out, args.quality);
+    }
 }
 
 fn save_image(buffer: &[u8], layout: &SampleLayout, out_path: &PathBuf, quality: u8) {
@@ -148,7 +182,7 @@ fn save_image(buffer: &[u8], layout: &SampleLayout, out_path: &PathBuf, quality:
 fn to_time_slices(
     image_pattern: &str,
     is_16bit: bool,
-    frames: Option<FrameRange>,
+    frames: &Option<FrameRange>,
     temp_path: &PathBuf,
     compression: &Compression,
     slices: &SliceLength,

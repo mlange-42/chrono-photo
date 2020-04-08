@@ -51,7 +51,7 @@ pub struct ImageStream {
 }
 impl ImageStream {
     /// Creates an ImageStream from a file search pattern.
-    pub fn from_pattern(pattern: &str, frames: Option<FrameRange>) -> Result<Self, PatternError> {
+    pub fn from_pattern(pattern: &str, frames: &Option<FrameRange>) -> Result<Self, PatternError> {
         let lister = FileLister::new(&pattern, frames);
         let files = lister.list_files()?;
         Ok(ImageStream { files })
