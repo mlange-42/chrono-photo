@@ -55,20 +55,6 @@ fn main() {
             },
         )
         .expect(&format!("Unable to write output file {:?}.", &out_path));
-
-        /*
-        image::save_buffer(
-            &out_path,
-            &buffer,
-            size.0 as u32,
-            size.1 as u32,
-            if channels == 4 {
-                image::ColorType::Rgba8
-            } else {
-                image::ColorType::Rgb8
-            },
-        )
-        .unwrap();*/
     }
 }
 

@@ -16,6 +16,7 @@ fn main() {
 
     /*let mut args = CliParsed {
         pattern: "test_data/generated/image-*.jpg".to_string(),
+        //is_16bit: true,
         frames: Some(FrameRange::new(None, None, Some(1))),
         temp_dir: Some(PathBuf::from("test_data/temp")),
         output: PathBuf::from("test_data/out.jpg"),
@@ -26,8 +27,8 @@ fn main() {
         background: BackgroundMode::Random,
         compression: Compression::GZip(6),
         quality: 98,
-        slice: SliceLength::Count(100),
-        sample: Some(12),
+        slice: SliceLength::Rows(1),
+        sample: None,
         debug: true,
     };*/
 
@@ -58,6 +59,7 @@ fn main() {
     // Convert to time slices and save to temp files
     let (temp_files, layout, size_hint) = match to_time_slices(
         &args.pattern,
+        false, // args.is_16bit,
         args.frames,
         &args.temp_dir.unwrap(),
         &args.compression,
@@ -145,6 +147,7 @@ fn save_image(buffer: &[u8], layout: &SampleLayout, out_path: &PathBuf, quality:
 
 fn to_time_slices(
     image_pattern: &str,
+    is_16bit: bool,
     frames: Option<FrameRange>,
     temp_path: &PathBuf,
     compression: &Compression,
@@ -152,5 +155,9 @@ fn to_time_slices(
 ) -> Result<(Vec<PathBuf>, SampleLayout, usize), TimeSliceError> {
     let images =
         ImageStream::from_pattern(image_pattern, frames).expect("Error processing pattern");
-    TimeSlicer::write_time_slices(images, temp_path.clone(), compression, slices)
+    if is_16bit {
+        TimeSlicer::new_16bit().write_time_slices(images, temp_path.clone(), compression, slices)
+    } else {
+        TimeSlicer::new_8bit().write_time_slices(images, temp_path.clone(), compression, slices)
+    }
 }
