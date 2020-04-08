@@ -20,4 +20,4 @@ flate2 = "1.0"
 bstr = "0.2.12"
 byteorder = "1.3.4"
 indicatif = "0.14.0"
-structopt = "0.3" # TODO put CLI in feature
+structopt = {version = "0.3", features = ["wrap_help"]} # TODO put CLI in feature

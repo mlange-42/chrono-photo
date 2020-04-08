@@ -16,7 +16,7 @@ fn main() {
 
     /*let mut args = CliParsed {
         pattern: "test_data/generated/image-*.jpg".to_string(),
-        frames: Some(FrameRange::new(None, None, Some(2))),
+        frames: Some(FrameRange::new(None, None, Some(1))),
         temp_dir: Some(PathBuf::from("test_data/temp")),
         output: PathBuf::from("test_data/out.jpg"),
         output_blend: Some(PathBuf::from("test_data/out-debug.png")),
@@ -27,6 +27,7 @@ fn main() {
         compression: Compression::GZip(6),
         quality: 98,
         slice: SliceLength::Count(100),
+        sample: Some(12),
         debug: true,
     };*/
 
@@ -76,6 +77,7 @@ fn main() {
         args.background,
         args.outlier,
         args.compression,
+        args.sample,
     );
     let (buff, is_outlier) = processor
         .process(&layout, &temp_files[..], &args.slice, Some(size_hint))
