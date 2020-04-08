@@ -145,11 +145,20 @@ fn create_video(args: &CliParsed, files: &[PathBuf], layout: &SampleLayout, imag
     let mut frame = v_lower;
     while frame < v_upper {
         let start = match frames.start() {
-            Some(s) => cmp::max(0, frame + s),
+            Some(s) => {
+                let mut st = frame + s;
+                while st < 0 {
+                    st += frames.step() as i32
+                }
+                cmp::max(st % frames.step() as i32, frame + s)
+            }
             None => 0,
         };
         let end = match frames.end() {
-            Some(e) => cmp::min(image_count as i32, frame + e),
+            Some(e) => cmp::min(
+                image_count as i32 + (frame + e) % frames.step() as i32 - frames.step() as i32,
+                frame + e,
+            ),
             None => image_count as i32,
         };
 
@@ -159,41 +168,46 @@ fn create_video(args: &CliParsed, files: &[PathBuf], layout: &SampleLayout, imag
             indices.push(f as usize);
             f += frames.step() as i32;
         }
-        let (name, ext) = name_and_extension(&args.output)
-            .expect(&format!("Unexpected format in {:?}", &args.output));
-        let mut output = args
-            .output
-            .parent()
-            .expect(&format!("Unexpected format in {:?}", &args.output))
-            .to_path_buf();
-        output.push(&format!("{}-{:05}.{}", name, frame - v_lower, ext));
-
-        let out_blend = args.output_blend.as_ref().and_then(|out| {
-            let (name, ext) =
-                name_and_extension(&out).expect(&format!("Unexpected format in {:?}", &out));
+        if !indices.is_empty() {
+            let (name, ext) = name_and_extension(&args.output)
+                .expect(&format!("Unexpected format in {:?}", &args.output));
             let mut output = args
                 .output
                 .parent()
-                .expect(&format!("Unexpected format in {:?}", &out))
+                .expect(&format!("Unexpected format in {:?}", &args.output))
                 .to_path_buf();
             output.push(&format!("{}-{:05}.{}", name, frame - v_lower, ext));
-            Some(output)
-        });
 
-        print!(
-            "Processing frame {}/{} -> ",
-            frame - v_lower,
-            v_upper - v_lower
-        );
-        create_frame(
-            &args,
-            &files,
-            &layout,
-            image_count,
-            Some(&indices[..]),
-            &output,
-            &out_blend,
-        );
+            let out_blend = args.output_blend.as_ref().and_then(|out| {
+                let (name, ext) =
+                    name_and_extension(&out).expect(&format!("Unexpected format in {:?}", &out));
+                let mut output = args
+                    .output
+                    .parent()
+                    .expect(&format!("Unexpected format in {:?}", &out))
+                    .to_path_buf();
+                output.push(&format!("{}-{:05}.{}", name, frame - v_lower, ext));
+                Some(output)
+            });
+
+            print!(
+                "Processing frame {}/{} -> ",
+                frame - v_lower,
+                v_upper - v_lower
+            );
+            create_frame(
+                &args,
+                &files,
+                &layout,
+                image_count,
+                Some(&indices[..]),
+                &output,
+                &out_blend,
+            );
+        } else {
+            println!("Skipping frame {}/{}", frame - v_lower, v_upper - v_lower);
+        }
+
         frame += video.step() as i32;
     }
 }
