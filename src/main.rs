@@ -1,7 +1,7 @@
 use chrono_photo::chrono::ChronoProcessor;
 use chrono_photo::cli::{Cli, CliParsed};
 use chrono_photo::flist::FrameRange;
-//use chrono_photo::options::{BackgroundMode, OutlierSelectionMode, SelectionMode, Threshold};
+use chrono_photo::options::{BackgroundMode, OutlierSelectionMode, SelectionMode, Threshold};
 use chrono_photo::slicer::{SliceLength, TimeSliceError, TimeSlicer};
 use chrono_photo::streams::{Compression, ImageStream};
 use image::flat::SampleLayout;
@@ -14,11 +14,11 @@ use structopt::StructOpt;
 fn main() {
     let start = Instant::now();
 
-    /*let mut args = CliParsed {
-        pattern: "test_data/generated/image-*.jpg".to_string(),
+    let mut args = CliParsed {
+        pattern: "test_data/test_16bit/*.tif".to_string(),
         frames: Some(FrameRange::new(None, None, Some(1))),
         temp_dir: Some(PathBuf::from("test_data/temp")),
-        output: PathBuf::from("test_data/out.jpg"),
+        output: PathBuf::from("test_data/out.tiff"),
         output_blend: Some(PathBuf::from("test_data/out-debug.png")),
         mode: SelectionMode::Outlier,
         threshold: Threshold::abs(0.05, 0.2),
@@ -26,12 +26,12 @@ fn main() {
         background: BackgroundMode::Random,
         compression: Compression::GZip(6),
         quality: 98,
-        slice: SliceLength::Count(100),
-        sample: Some(12),
+        slice: SliceLength::Rows(1),
+        sample: None,
         debug: true,
-    };*/
+    };
 
-    let mut args: CliParsed = Cli::from_args().parse().unwrap();
+    //let mut args: CliParsed = Cli::from_args().parse().unwrap();
 
     // Determine temp directory
     if args.temp_dir.is_none() {

@@ -148,7 +148,10 @@ impl TimeSlicer {
         println!(
             "Total: {} kb in {} files",
             total_bytes / 1024,
-            out_streams.as_mut().unwrap().len()
+            out_streams
+                .as_mut()
+                .expect("No input images supplied!")
+                .len()
         );
 
         for stream in out_streams.as_mut().unwrap().iter_mut() {
