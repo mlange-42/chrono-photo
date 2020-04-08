@@ -129,6 +129,11 @@ memory usage can also be reduces to the half, while producing twice as many temp
 _TODO: Detailed explanation._
 
 ```
+A command-line tool for combining (potentially large amounts of) images into a single chrono-photography.
+
+Use `chrono-photo -h`     for help, or
+    `chrono-photo --help` even more comprehensive help.
+
 USAGE:
     chrono-photo [FLAGS] [OPTIONS] --output <output> --pattern <pattern>
 
@@ -151,11 +156,18 @@ OPTIONS:
         --output-blend <output-blend>    Path of output image showing which pixels are outliers (blend value)
     -p, --pattern <pattern>              File search pattern
     -q, --quality <quality>              Output image quality for JPG files, in percent. Optional, default '95'
+        --sample <sample>                Restricts calculation of median and inter-quartile range to a sub-sample of
+                                         input images. Use for large amounts of images to speed up calculations.
+                                         Optional
     -s, --slice <slice>                  Controls slicing to temp files (rows|pixels|count)/<number>. Optional, default
                                          'rows/4'
     -d, --temp-dir <temp-dir>            Temp directory. Optional, default system temp directory
     -t, --threshold <threshold>          Outlier threshold mode (abs|rel)/<lower>[/<upper>]. Optional, default
                                          'abs/0.05/0.2'
+        --video-in <video-in>            Video input frames. Frames to be used per video frame: `start/end/step`.
+                                         Optional
+        --video-out <video-out>          Video output frames. Range and step width of video output frames:
+                                         `start/end/step`. Optional
 ```
 
 ## How to prepare videos
