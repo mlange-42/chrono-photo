@@ -87,7 +87,7 @@ pub struct Cli {
 impl Cli {
     /// Parses this Cli into a [CliParsed](struct.CliParsed.html).
     pub fn parse(&self) -> Result<CliParsed, ParseCliError> {
-        Ok(CliParsed {
+        let out = CliParsed {
             pattern: self.pattern.clone(),
             // is_16bit: self.is_16bit,
             temp_dir: self.temp_dir.as_ref().map(|d| PathBuf::from(d)),
@@ -159,7 +159,8 @@ impl Cli {
                 .unwrap(),
             sample: self.sample,
             debug: self.debug,
-        })
+        };
+        out.validate()
     }
 }
 
@@ -202,6 +203,12 @@ pub struct CliParsed {
     pub sample: Option<usize>,
     /// Print debug information (i.e. parsed cmd parameters).
     pub debug: bool,
+}
+
+impl CliParsed {
+    pub fn validate(self) -> Result<Self, ParseCliError> {
+        Ok(self)
+    }
 }
 
 /// Error type for failed parsing of `String`s to `enum`s.

@@ -8,12 +8,12 @@ use std::str::FromStr;
 
 #[derive(Clone, Debug)]
 pub struct FrameRange {
-    start: Option<usize>,
-    end: Option<usize>,
-    step: usize,
+    start: Option<i32>,
+    end: Option<i32>,
+    step: u32,
 }
 impl FrameRange {
-    pub fn new(start: Option<usize>, end: Option<usize>, step: usize) -> Self {
+    pub fn new(start: Option<i32>, end: Option<i32>, step: u32) -> Self {
         FrameRange { start, end, step }
     }
     pub fn empty() -> Self {
@@ -22,6 +22,18 @@ impl FrameRange {
             end: None,
             step: 1,
         }
+    }
+    pub fn start(&self) -> Option<i32> {
+        self.start
+    }
+    pub fn end(&self) -> Option<i32> {
+        self.end
+    }
+    pub fn step(&self) -> u32 {
+        self.step
+    }
+    pub fn range(&self) -> Option<i32> {
+        self.start.and_then(|s| self.end.and_then(|e| Some(e - s)))
     }
 }
 impl FromStr for FrameRange {
@@ -54,7 +66,7 @@ impl FromStr for FrameRange {
         Ok(FrameRange {
             start: values[0],
             end: values[1],
-            step: values[2].unwrap_or(1),
+            step: values[2].unwrap_or(1) as u32,
         })
     }
 }
@@ -83,10 +95,16 @@ impl FileLister {
             .map(|p| p.unwrap());
         match &self.frames {
             Some(fr) => Ok(vec
-                .take(fr.end.unwrap_or(std::usize::MAX))
-                .skip(fr.start.unwrap_or(0))
+                .take(fr.end.unwrap_or(std::i32::MAX) as usize)
+                .skip(fr.start.unwrap_or(0) as usize)
                 .enumerate()
-                .filter_map(|(i, p)| if i % fr.step == 0 { Some(p) } else { None })
+                .filter_map(|(i, p)| {
+                    if i as u32 % fr.step == 0 {
+                        Some(p)
+                    } else {
+                        None
+                    }
+                })
                 .collect()),
             None => Ok(vec.collect()),
         }

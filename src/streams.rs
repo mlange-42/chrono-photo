@@ -8,7 +8,7 @@ use glob::PatternError;
 use image;
 use std::collections::VecDeque;
 use std::fs::File;
-use std::io::{BufReader, BufWriter, Read, Write};
+use std::io::{BufReader, BufWriter, Read, Seek, SeekFrom, Write};
 use std::path::PathBuf;
 use std::str::FromStr;
 
@@ -181,6 +181,23 @@ impl PixelInputStream {
                 Some(size)
             }
         }
+    }
+
+    pub fn skip_chunk(&mut self) -> Option<usize> {
+        let len = match self.stream.read_u32::<BigEndian>() {
+            Ok(l) => l,
+            Err(err) => match err.kind() {
+                std::io::ErrorKind::UnexpectedEof => return None,
+                _ => panic!(err),
+            },
+        };
+        if let Err(err) = self.stream.seek(SeekFrom::Current(len as i64)) {
+            match err.kind() {
+                std::io::ErrorKind::UnexpectedEof => return None,
+                _ => {}
+            }
+        }
+        Some(0)
     }
 }
 
