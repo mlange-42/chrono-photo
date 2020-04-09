@@ -79,7 +79,7 @@ pub struct Cli {
     #[structopt(long)]
     sample: Option<usize>,
 
-    /// Color channel weights (4 values) for distance calculation. Optional, default '1 1 1 1'.
+    /// Color channel weights (4 values: RGBA) for distance calculation. Optional, default '1 1 1 1'.
     #[structopt(long, short, number_of_values = 4, value_name = "w")]
     weights: Option<Vec<f32>>,
 

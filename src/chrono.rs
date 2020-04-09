@@ -289,7 +289,7 @@ impl ChronoProcessor {
         for (sample_idx, data_idx) in self.sample_indices.iter().enumerate() {
             let idx = data_idx * channels;
             for ch in 0..channels {
-                if self.weights[ch] > 0.0 {
+                if self.weights[ch] != 0.0 {
                     let p = pixel_data[idx + ch];
                     self.data.values[ch * sub_samples + sample_idx] = p;
                 }
@@ -303,7 +303,7 @@ impl ChronoProcessor {
 
         // Calculate medians and inverse inter-quartile range
         for i in 0..channels {
-            if self.weights[i] > 0.0 {
+            if self.weights[i] != 0.0 {
                 let slice =
                     &mut self.data.values[(i * sub_samples)..(i * sub_samples + sub_samples)];
                 slice.sort_unstable();
@@ -329,7 +329,7 @@ impl ChronoProcessor {
             let mut dist_sq = 0.0;
             for (i, p) in pix.iter().enumerate() {
                 let w = self.weights[i];
-                if w > 0.0 {
+                if w != 0.0 {
                     let diff = median[i] - *p as f32;
                     dist_sq += if diff == 0.0 {
                         0.0
