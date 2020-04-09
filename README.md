@@ -146,13 +146,13 @@ memory usage can also be reduces to the half, while producing twice as many temp
 _TODO: Detailed explanation._
 
 ```
-A command-line tool for combining (potentially large amounts of) images into a single chrono-photography.
+Command-line tool for combining images into a single chrono-photograph or chrono-video.
 
 Use `chrono-photo -h`     for help, or
     `chrono-photo --help` even more comprehensive help.
 
 USAGE:
-    chrono-photo [FLAGS] [OPTIONS] --output <output> --pattern <pattern>
+    chrono-photo [FLAGS] [OPTIONS] --output <path> --pattern <pattern>
 
 FLAGS:
         --debug      Print debug information (i.e. parsed cmd parameters)
@@ -160,31 +160,31 @@ FLAGS:
     -V, --version    Prints version information
 
 OPTIONS:
-    -b, --background <background>        Background pixel selection mode (first|random|average|median). Optional,
-                                         default 'random'
-    -c, --compression <compression>      Compression mode and level (0 to 9) for time slices
-                                         (gzip|zlib|deflate)[/<level>]. Optional, default 'gzip/6'
-    -f, --frames <frames>                Frames to be used from those matching pattern: `start/end/step`. Optional. For
-                                         default values, use `.`, e.g. `././2`
-    -m, --mode <mode>                    Pixel selection mode (lighter|darker|outlier). Optional, default 'outlier'
-    -l, --outlier <outlier>              Outlier selection mode in case more than one outlier is found
-                                         (first|last|extreme|average|forward|backward). Optional, default 'extreme'
-    -o, --output <output>                Path to output file
-        --output-blend <output-blend>    Path of output image showing which pixels are outliers (blend value)
-    -p, --pattern <pattern>              File search pattern
-    -q, --quality <quality>              Output image quality for JPG files, in percent. Optional, default '95'
-        --sample <sample>                Restricts calculation of median and inter-quartile range to a sub-sample of
-                                         input images. Use for large amounts of images to speed up calculations.
-                                         Optional
-    -s, --slice <slice>                  Controls slicing to temp files (rows|pixels|count)/<number>. Optional, default
-                                         'rows/4'
-    -d, --temp-dir <temp-dir>            Temp directory. Optional, default system temp directory
-    -t, --threshold <threshold>          Outlier threshold mode (abs|rel)/<lower>[/<upper>]. Optional, default
-                                         'abs/0.05/0.2'
-        --video-in <video-in>            Video input frames. Frames to be used per video frame: `start/end/step`.
-                                         Optional
-        --video-out <video-out>          Video output frames. Range and step width of video output frames:
-                                         `start/end/step`. Optional
+    -b, --background <bg>           Background pixel selection mode (first|random|average|median). Optional, default
+                                    'random'
+    -c, --compression <comp/lev>    Compression mode and level (0 to 9) for time slices (gzip|zlib|deflate)[/<level>].
+                                    Optional, default 'gzip/6'
+    -f, --frames <frames>           Frames to be used from those matching pattern: `start/end/step`. Optional. For
+                                    default values, use `.`, e.g. `././2`
+    -m, --mode <mode>               Pixel selection mode (lighter|darker|outlier). Optional, default 'outlier'
+    -l, --outlier <mode>            Outlier selection mode in case more than one outlier is found
+                                    (first|last|extreme|average|forward|backward). Optional, default 'extreme'
+    -o, --output <path>             Path to output file
+        --output-blend <path>       Path of output image showing which pixels are outliers (blend value)
+    -p, --pattern <pattern>         File search pattern
+    -q, --quality <quality>         Output image quality for JPG files, in percent. Optional, default '95'
+        --sample <sample>           Restricts calculation of median and inter-quartile range to a sub-sample of input
+                                    images. Use for large amounts of images to speed up calculations. Optional
+    -s, --slice <slice>             Controls slicing to temp files (rows|pixels|count)/<number>. Optional, default
+                                    'rows/4'
+    -d, --temp-dir <path>           Temp directory. Optional, default system temp directory
+    -t, --threshold <thresh>        Outlier threshold mode (abs|rel)/<lower>[/<upper>]. Optional, default
+                                    'abs/0.05/0.2'
+        --video-in <frames>         Video input frames. Frames to be used per video frame: `start/end/step`. Optional
+        --video-out <frames>        Video output frames. Range and step width of video output frames: `start/end/step`.
+                                    Optional
+    -w, --weights <w>...            Color channel weights (4 values: RGBA) for distance calculation. Optional, default
+                                    '1 1 1 1'
 ```
 
 ## How to prepare videos

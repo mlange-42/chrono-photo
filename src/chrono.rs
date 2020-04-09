@@ -34,6 +34,7 @@ pub struct ChronoProcessor {
     threshold: Threshold,
     background: BackgroundMode,
     outlier: OutlierSelectionMode,
+    weights: [f32; 4],
     compression: Compression,
     sample_count: Option<usize>,
     sample_indices: Vec<usize>,
@@ -47,6 +48,7 @@ impl ChronoProcessor {
         threshold: Threshold,
         bg_mode: BackgroundMode,
         outlier_mode: OutlierSelectionMode,
+        weights: [f32; 4],
         compression: Compression,
         sample_count: Option<usize>,
     ) -> Self {
@@ -55,6 +57,7 @@ impl ChronoProcessor {
             threshold,
             background: bg_mode,
             outlier: outlier_mode,
+            weights,
             compression,
             sample_count,
             sample_indices: vec![],
@@ -223,11 +226,15 @@ impl ChronoProcessor {
         let channels = pixel.len();
         let pixels = pixel_data.len() / channels;
 
-        let mut sum_min = std::u32::MAX;
+        let mut sum_min = std::f32::MAX;
         let mut idx_min = 0;
         for pix in 0..pixels {
             let idx = pix * channels;
-            let sum = pixel_data[idx..(idx + 3)].iter().map(|v| *v as u32).sum();
+            let sum = pixel_data[idx..(idx + 3)]
+                .iter()
+                .enumerate()
+                .map(|(i, v)| *v as f32 * self.weights[i])
+                .sum();
             if sum < sum_min {
                 sum_min = sum;
                 idx_min = pix;
@@ -242,11 +249,15 @@ impl ChronoProcessor {
         let channels = pixel.len();
         let pixels = pixel_data.len() / channels;
 
-        let mut sum_max = std::u32::MIN;
+        let mut sum_max = std::f32::MIN;
         let mut idx_max = 0;
         for pix in 0..pixels {
             let idx = pix * channels;
-            let sum = pixel_data[idx..(idx + 3)].iter().map(|v| *v as u32).sum();
+            let sum = pixel_data[idx..(idx + 3)]
+                .iter()
+                .enumerate()
+                .map(|(i, v)| *v as f32 * self.weights[i])
+                .sum();
             if sum > sum_max {
                 sum_max = sum;
                 idx_max = pix;
@@ -278,8 +289,10 @@ impl ChronoProcessor {
         for (sample_idx, data_idx) in self.sample_indices.iter().enumerate() {
             let idx = data_idx * channels;
             for ch in 0..channels {
-                let p = pixel_data[idx + ch];
-                self.data.values[ch * sub_samples + sample_idx] = p;
+                if self.weights[ch] != 0.0 {
+                    let p = pixel_data[idx + ch];
+                    self.data.values[ch * sub_samples + sample_idx] = p;
+                }
             }
         }
         /*for (sample_idx, pix) in pixel_data.chunks(channels).enumerate() {
@@ -290,18 +303,21 @@ impl ChronoProcessor {
 
         // Calculate medians and inverse inter-quartile range
         for i in 0..channels {
-            let slice = &mut self.data.values[(i * sub_samples)..(i * sub_samples + sub_samples)];
-            slice.sort_unstable();
-            if threshold.absolute() {
-                median[i] = Self::median(slice);
-            } else {
-                let (q1, med, q3) = Self::quartiles(slice);
-                median[i] = med;
-                iqr_inv[i] = q3 - q1;
-                if iqr_inv[i] == 0.0 {
-                    iqr_inv[i] = 1.0;
+            if self.weights[i] != 0.0 {
+                let slice =
+                    &mut self.data.values[(i * sub_samples)..(i * sub_samples + sub_samples)];
+                slice.sort_unstable();
+                if threshold.absolute() {
+                    median[i] = Self::median(slice);
+                } else {
+                    let (q1, med, q3) = Self::quartiles(slice);
+                    median[i] = med;
+                    iqr_inv[i] = q3 - q1;
+                    if iqr_inv[i] == 0.0 {
+                        iqr_inv[i] = 1.0;
+                    }
+                    iqr_inv[i] = 1.0 / iqr_inv[i];
                 }
-                iqr_inv[i] = 1.0 / iqr_inv[i];
             }
         }
 
@@ -312,16 +328,19 @@ impl ChronoProcessor {
         for (sample_idx, pix) in pixel_data.chunks(channels).enumerate() {
             let mut dist_sq = 0.0;
             for (i, p) in pix.iter().enumerate() {
-                let diff = median[i] - *p as f32;
-                dist_sq += if diff == 0.0 {
-                    0.0
-                } else {
-                    if threshold.absolute() {
-                        (diff * diff)
+                let w = self.weights[i];
+                if w != 0.0 {
+                    let diff = median[i] - *p as f32;
+                    dist_sq += if diff == 0.0 {
+                        0.0
                     } else {
-                        (iqr_inv[i] * diff).powi(2)
-                    }
-                };
+                        if threshold.absolute() {
+                            w.signum() * (w * diff).powi(2)
+                        } else {
+                            w.signum() * (w * iqr_inv[i] * diff).powi(2)
+                        }
+                    };
+                }
             }
             //println!("{:?}, {:?}", dist_sq.sqrt(), threshold_sq.sqrt());
             if dist_sq >= threshold_sq {
