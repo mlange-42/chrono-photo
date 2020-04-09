@@ -34,6 +34,23 @@ based on outlier detection (see section [How it works](#how-it-works) for detail
 * For a detailed explanation of all options see section [Command line options](#command-line-options)
 * For an explanation of the algorithm see next section, [How it works](#how-it-works).
 
+### Examples
+
+_Note 1:_ The ^ at the end of each line is required for breaking commands into multiple lines (at least on Windows).
+
+_Note 2:_ You can copy the chrono-photo executable anywhere to use it with convenient paths,
+in case adding it to the PATH environmental variable is not an option. 
+No further files from the installation directory are required to run chrono-photo.
+
+Minimal example:
+```
+chrono-photo ^
+  --pattern input/image-*.jpg ^
+  --output output/out.jpg
+```
+
+For more options, see [Command line options](#command-line-options).
+
 ## How it works
 
 The principle idea is to stack all images to be processes, and analyze the entire stack pixel by pixel
