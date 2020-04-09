@@ -7,13 +7,13 @@ use core::fmt;
 use std::path::PathBuf;
 use structopt::StructOpt;
 
-/// A command-line tool for combining (potentially large amounts of) images into a single chrono-photography.
+/// Command-line tool for combining images into a single chrono-photograph or chrono-video.
 ///
 /// Use `chrono-photo -h`     for help, or
 ///     `chrono-photo --help` even more comprehensive help.
 #[derive(StructOpt)]
 #[structopt(verbatim_doc_comment)]
-#[structopt(name = "chrono-photo command line application")]
+//#[structopt(name = "chrono-photo command line application")]
 pub struct Cli {
     /// File search pattern
     #[structopt(short, long)]
@@ -24,27 +24,27 @@ pub struct Cli {
     // is_16bit: bool,
     /// Frames to be used from those matching pattern: `start/end/step`. Optional.
     /// For default values, use `.`, e.g. `././2`.
-    #[structopt(short, long)]
+    #[structopt(short, long, value_name = "frames")]
     frames: Option<String>,
 
     /// Video input frames. Frames to be used per video frame: `start/end/step`. Optional.
-    #[structopt(long, name = "video-in")]
+    #[structopt(long, name = "video-in", value_name = "frames")]
     video_in: Option<String>,
 
     /// Video output frames. Range and step width of video output frames: `start/end/step`. Optional.
-    #[structopt(long, name = "video-out")]
+    #[structopt(long, name = "video-out", value_name = "frames")]
     video_out: Option<String>,
 
     /// Path to output file
-    #[structopt(short, long)]
+    #[structopt(short, long, value_name = "path")]
     output: String,
 
     /// Temp directory. Optional, default system temp directory.
-    #[structopt(short = "d", long, name = "temp-dir")]
+    #[structopt(short = "d", long, name = "temp-dir", value_name = "path")]
     temp_dir: Option<String>,
 
     /// Path of output image showing which pixels are outliers (blend value).
-    #[structopt(long, name = "output-blend")]
+    #[structopt(long, name = "output-blend", value_name = "path")]
     output_blend: Option<String>,
 
     /// Pixel selection mode (lighter|darker|outlier). Optional, default 'outlier'.
@@ -52,19 +52,19 @@ pub struct Cli {
     mode: Option<String>,
 
     /// Outlier threshold mode (abs|rel)/<lower>[/<upper>]. Optional, default 'abs/0.05/0.2'.
-    #[structopt(short, long)]
+    #[structopt(short, long, value_name = "thresh")]
     threshold: Option<String>,
 
     /// Background pixel selection mode (first|random|average|median). Optional, default 'random'.
-    #[structopt(short, long)]
+    #[structopt(short, long, value_name = "bg")]
     background: Option<String>,
 
     /// Outlier selection mode in case more than one outlier is found (first|last|extreme|average|forward|backward). Optional, default 'extreme'.
-    #[structopt(short = "l", long)]
+    #[structopt(short = "l", long, value_name = "mode")]
     outlier: Option<String>,
 
     /// Compression mode and level (0 to 9) for time slices (gzip|zlib|deflate)[/<level>]. Optional, default 'gzip/6'.
-    #[structopt(short, long)]
+    #[structopt(short, long, value_name = "comp/lev")]
     compression: Option<String>,
 
     /// Output image quality for JPG files, in percent. Optional, default '95'.
@@ -80,7 +80,7 @@ pub struct Cli {
     sample: Option<usize>,
 
     /// Color channel weights (4 values) for distance calculation. Optional, default '1 1 1 1'.
-    #[structopt(long, short, number_of_values = 4)]
+    #[structopt(long, short, number_of_values = 4, value_name = "w")]
     weights: Option<Vec<f32>>,
 
     /// Print debug information (i.e. parsed cmd parameters).
