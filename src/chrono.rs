@@ -335,9 +335,9 @@ impl ChronoProcessor {
                         0.0
                     } else {
                         if threshold.absolute() {
-                            (w * diff).powi(2)
+                            w.signum() * (w * diff).powi(2)
                         } else {
-                            (w * iqr_inv[i] * diff).powi(2)
+                            w.signum() * (w * iqr_inv[i] * diff).powi(2)
                         }
                     };
                 }
