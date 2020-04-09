@@ -249,6 +249,7 @@ fn create_frame(
         args.threshold.clone(),
         args.background.clone(),
         args.outlier.clone(),
+        args.weights.clone(),
         args.compression.clone(),
         args.sample.clone(),
     );

@@ -11,6 +11,7 @@
 --quality 98 ^
 --compression gzip/6 ^
 --slice rows/2 ^
---sample 12 ^
+--sample 20 ^
+--weights 1 1 1 0 ^
 --debug
 pause

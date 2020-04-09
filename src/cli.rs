@@ -79,6 +79,10 @@ pub struct Cli {
     #[structopt(long)]
     sample: Option<usize>,
 
+    /// Color channel weights (4 values) for distance calculation. Optional, default '1 1 1 1'.
+    #[structopt(long, short, number_of_values = 4)]
+    weights: Option<Vec<f32>>,
+
     /// Print debug information (i.e. parsed cmd parameters).
     #[structopt(long)]
     debug: bool,
@@ -87,6 +91,12 @@ pub struct Cli {
 impl Cli {
     /// Parses this Cli into a [CliParsed](struct.CliParsed.html).
     pub fn parse(&self) -> Result<CliParsed, ParseCliError> {
+        let mut weights = [1.0; 4];
+        if let Some(w) = &self.weights {
+            for (i, v) in w.iter().enumerate() {
+                weights[i] = *v;
+            }
+        }
         let out = CliParsed {
             pattern: self.pattern.clone(),
             // is_16bit: self.is_16bit,
@@ -158,6 +168,7 @@ impl Cli {
                 .parse()
                 .unwrap(),
             sample: self.sample,
+            weights: weights,
             debug: self.debug,
         };
         out.validate()
@@ -201,6 +212,8 @@ pub struct CliParsed {
     pub slice: SliceLength,
     /// Restricts calculation of median and inter-quartile range to a sub-sample of input images. Use for large amounts of images to speed up calculations. Optional.
     pub sample: Option<usize>,
+    /// Color channel weights for distance calculation
+    pub weights: [f32; 4],
     /// Print debug information (i.e. parsed cmd parameters).
     pub debug: bool,
 }
