@@ -183,8 +183,8 @@ OPTIONS:
         --video-in <frames>         Video input frames. Frames to be used per video frame: `start/end/step`. Optional
         --video-out <frames>        Video output frames. Range and step width of video output frames: `start/end/step`.
                                     Optional
-    -w, --weights <w>...            Color channel weights (4 values) for distance calculation. 
-                                    Optional, default '1 1 1 1'
+    -w, --weights <w>...            Color channel weights (4 values: RGBA) for distance calculation. Optional, default
+                                    '1 1 1 1'
 ```
 
 ## How to prepare videos
