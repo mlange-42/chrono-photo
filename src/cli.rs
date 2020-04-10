@@ -1,6 +1,6 @@
 //! Command-line interface for chrono-photo.
 use crate::flist::FrameRange;
-use crate::options::{BackgroundMode, OutlierSelectionMode, SelectionMode, Threshold};
+use crate::options::{BackgroundMode, Fade, OutlierSelectionMode, SelectionMode, Threshold};
 use crate::slicer::SliceLength;
 use crate::streams::Compression;
 use core::fmt;
@@ -83,6 +83,10 @@ pub struct Cli {
     #[structopt(long, short, number_of_values = 4, value_name = "w")]
     weights: Option<Vec<f32>>,
 
+    /// Frame fading. Optional, default None. Format: (clamp|repeat)/(abs|rel)/(f1,v1)/(f2,v2)[/(f,v)...]
+    #[structopt(long)]
+    fade: Option<Fade>,
+
     /// Print debug information (i.e. parsed cmd parameters).
     #[structopt(long)]
     debug: bool,
@@ -90,7 +94,7 @@ pub struct Cli {
 
 impl Cli {
     /// Parses this Cli into a [CliParsed](struct.CliParsed.html).
-    pub fn parse(&self) -> Result<CliParsed, ParseCliError> {
+    pub fn parse(self) -> Result<CliParsed, ParseCliError> {
         let mut weights = [1.0; 4];
         if let Some(w) = &self.weights {
             for (i, v) in w.iter().enumerate() {
@@ -98,39 +102,19 @@ impl Cli {
             }
         }
         let out = CliParsed {
-            pattern: self.pattern.clone(),
+            pattern: self.pattern,
             // is_16bit: self.is_16bit,
-            temp_dir: self.temp_dir.as_ref().map(|d| PathBuf::from(d)),
+            temp_dir: self.temp_dir.map(|d| PathBuf::from(d)),
             output: PathBuf::from(&self.output),
-            output_blend: match &self.output_blend {
+            output_blend: match self.output_blend {
                 Some(out) => Some(PathBuf::from(out)),
                 None => None,
             },
-            mode: self
-                .mode
-                .as_ref()
-                .unwrap_or(&SelectionMode::Outlier)
-                .clone(),
-            threshold: self
-                .threshold
-                .as_ref()
-                .unwrap_or(&Threshold::abs(0.05, 0.2))
-                .clone(),
-            background: self
-                .background
-                .as_ref()
-                .unwrap_or(&BackgroundMode::Random)
-                .clone(),
-            outlier: self
-                .outlier
-                .as_ref()
-                .unwrap_or(&OutlierSelectionMode::Extreme)
-                .clone(),
-            compression: self
-                .compression
-                .as_ref()
-                .unwrap_or(&Compression::GZip(6))
-                .clone(),
+            mode: self.mode.unwrap_or(SelectionMode::Outlier),
+            threshold: self.threshold.unwrap_or(Threshold::abs(0.05, 0.2)),
+            background: self.background.unwrap_or(BackgroundMode::Random),
+            outlier: self.outlier.unwrap_or(OutlierSelectionMode::Extreme),
+            compression: self.compression.unwrap_or(Compression::GZip(6)),
             quality: match self.quality {
                 Some(q) => {
                     if q <= 100 && q > 0 {
@@ -144,12 +128,13 @@ impl Cli {
                 }
                 None => 95,
             },
-            frames: self.frames.clone(),
-            video_in: self.video_in.clone(),
-            video_out: self.video_out.clone(),
-            slice: self.slice.as_ref().unwrap_or(&SliceLength::Rows(4)).clone(),
+            frames: self.frames,
+            video_in: self.video_in,
+            video_out: self.video_out,
+            slice: self.slice.unwrap_or(SliceLength::Rows(4)),
             sample: self.sample,
             weights,
+            fade: self.fade.unwrap_or(Fade::none()),
             debug: self.debug,
         };
         out.validate()
@@ -195,6 +180,8 @@ pub struct CliParsed {
     pub sample: Option<usize>,
     /// Color channel weights for distance calculation
     pub weights: [f32; 4],
+    /// Frame fading. Optional, default None.
+    pub fade: Fade,
     /// Print debug information (i.e. parsed cmd parameters).
     pub debug: bool,
 }

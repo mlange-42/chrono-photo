@@ -143,7 +143,7 @@ memory usage can also be reduces to the half, while producing twice as many temp
 
 ## Command line options
 
-_TODO: Detailed explanation._
+**For detailed explanation, see [docs/options.md](docs/options.md)**.
 
 ```
 Command-line tool for combining images into a single chrono-photograph or chrono-video.

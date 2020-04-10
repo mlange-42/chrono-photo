@@ -1,6 +1,6 @@
 //! Processes time-sliced data produced by [`TimeSlicer`](./time_slice/struct.TimeSlicer.html).
 use crate::color;
-use crate::options::{BackgroundMode, OutlierSelectionMode, SelectionMode, Threshold};
+use crate::options::{BackgroundMode, Fade, OutlierSelectionMode, SelectionMode, Threshold};
 use crate::slicer::SliceLength;
 use crate::streams::{Compression, PixelInputStream};
 use image::flat::SampleLayout;
@@ -38,6 +38,7 @@ pub struct ChronoProcessor {
     compression: Compression,
     sample_count: Option<usize>,
     sample_indices: Vec<usize>,
+    fade: Fade,
     data: ThreadData,
 }
 
@@ -49,6 +50,7 @@ impl ChronoProcessor {
         bg_mode: BackgroundMode,
         outlier_mode: OutlierSelectionMode,
         weights: [f32; 4],
+        fade: Fade,
         compression: Compression,
         sample_count: Option<usize>,
     ) -> Self {
@@ -58,6 +60,7 @@ impl ChronoProcessor {
             background: bg_mode,
             outlier: outlier_mode,
             weights,
+            fade,
             compression,
             sample_count,
             sample_indices: vec![],
@@ -95,14 +98,14 @@ impl ChronoProcessor {
             bar.inc(1);
 
             let buff_row_start = out_row * slice_bytes; //layout.height_stride;
-            let mut data = match image_indices {
-                Some(indices) => Vec::with_capacity(indices.len() * slice_bytes),
+            let (mut data, frame_offset) = match image_indices {
+                Some(indices) => (Vec::with_capacity(indices.len() * slice_bytes), indices[0]),
                 None => match size_hint {
-                    Some(hint) => Vec::with_capacity(hint * slice_bytes),
-                    None => Vec::new(),
+                    Some(hint) => (Vec::with_capacity(hint * slice_bytes), 0),
+                    None => (Vec::new(), 0),
                 },
             };
-            let mut num_rows = 0;
+            let mut num_rows: usize = 0;
             let mut num_bytes = 0;
             {
                 let mut stream = PixelInputStream::new(file, self.compression.clone())?;
@@ -184,7 +187,8 @@ impl ChronoProcessor {
                     (pix_offset / layout.height_stride) as usize,
                 );*/
 
-                let (blend, warning) = self.calc_pixel(&pixel_data, &mut pixel);
+                let (blend, warning) =
+                    self.calc_pixel(&pixel_data, &mut pixel, frame_offset as i32);
                 if warning {
                     warnings += 1;
                 }
@@ -211,13 +215,13 @@ impl ChronoProcessor {
         Ok((buffer, is_outlier))
     }
 
-    fn calc_pixel(&mut self, pixel_data: &[u8], pixel: &mut [u8]) -> (u8, bool) {
+    fn calc_pixel(&mut self, pixel_data: &[u8], pixel: &mut [u8], frame_offset: i32) -> (u8, bool) {
         let mode = &self.mode.clone(); // TODO find a way to avoid clone
         match mode {
             SelectionMode::Darker => self.calc_pixel_darker(pixel_data, pixel),
             SelectionMode::Lighter => self.calc_pixel_lighter(pixel_data, pixel),
             SelectionMode::Outlier => {
-                self.calc_pixel_z_score(pixel_data, pixel, self.threshold.clone())
+                self.calc_pixel_z_score(pixel_data, pixel, self.threshold.clone(), frame_offset)
             }
         }
     }
@@ -274,6 +278,7 @@ impl ChronoProcessor {
         pixel_data: &[u8],
         mut pixel: &mut [u8],
         threshold: Threshold,
+        frame_offset: i32,
     ) -> (u8, bool) {
         let channels = pixel.len();
         let samples = pixel_data.len() / channels;
@@ -464,7 +469,8 @@ impl ChronoProcessor {
                 let sample =
                     &pixel_data[(sample_idx * channels)..(sample_idx * channels + channels)];
 
-                let blend = threshold.blend_value(dist_sq.sqrt());
+                let fade = self.fade(sample_idx as i32, samples as i32, frame_offset);
+                let blend = fade * threshold.blend_value(dist_sq.sqrt());
                 color::blend_into_u8(&mut pixel, &sample, blend);
                 ((blend * 255.0).round() as u8, has_warning)
             } else {
@@ -484,7 +490,8 @@ impl ChronoProcessor {
                             let offset = sample_idx * channels;
                             let sample = &pixel_data[offset..(offset + channels)];
                             // Blend outlier into background
-                            let blend = threshold.blend_value(dist_sq.sqrt());
+                            let fade = self.fade(*sample_idx as i32, samples as i32, frame_offset);
+                            let blend = fade * threshold.blend_value(dist_sq.sqrt());
                             color::blend_into_f32_u8(&mut pix_new, &sample, blend);
                             blend_inv *= 1.0 - blend;
                         }
@@ -495,7 +502,8 @@ impl ChronoProcessor {
                             let offset = sample_idx * channels;
                             let sample = &pixel_data[offset..(offset + channels)];
                             // Blend outlier into background
-                            let blend = threshold.blend_value(dist_sq.sqrt());
+                            let fade = self.fade(*sample_idx as i32, samples as i32, frame_offset);
+                            let blend = fade * threshold.blend_value(dist_sq.sqrt());
                             color::blend_into_f32_u8(&mut pix_new, &sample, blend);
                             blend_inv *= 1.0 - blend;
                         }
@@ -506,12 +514,14 @@ impl ChronoProcessor {
                     (((1.0 - blend_inv) * 255.0).round() as u8, has_warning)
                 } else {
                     let mut temp_sample = [0; 4];
-                    let (sample, dist) = if self.outlier == OutlierSelectionMode::Average {
+                    let (sample_idx, sample, dist) = if self.outlier
+                        == OutlierSelectionMode::Average
+                    {
                         if num_outliers == 1 {
                             let (sample_idx, dist_sq) = self.data.outlier_indices[0];
                             let sample = &pixel_data
                                 [(sample_idx * channels)..(sample_idx * channels + channels)];
-                            (sample, dist_sq.sqrt())
+                            (sample_idx, sample, dist_sq.sqrt())
                         } else {
                             let mut mean = [0.0; 4];
                             for pix in pixel_data.chunks(channels) {
@@ -539,7 +549,7 @@ impl ChronoProcessor {
                             for ch in 0..channels {
                                 temp_sample[ch] = (mean[ch] / num_outliers as f32).round() as u8;
                             }
-                            (&temp_sample[..], mean_dist / num_outliers as f32)
+                            (0, &temp_sample[..], mean_dist / num_outliers as f32)
                         }
                     } else {
                         let (sample_idx, dist_sq) = match self.outlier {
@@ -554,16 +564,25 @@ impl ChronoProcessor {
                         };
                         let sample = &pixel_data
                             [(sample_idx * channels)..(sample_idx * channels + channels)];
-                        (sample, dist_sq.sqrt())
+                        (sample_idx, sample, dist_sq.sqrt())
                     };
                     // Blend outlier into background
-                    let blend = threshold.blend_value(dist);
+                    let fade = self.fade(sample_idx as i32, samples as i32, frame_offset);
+                    let blend = fade * threshold.blend_value(dist);
                     color::blend_into_u8(&mut pixel, &sample, blend);
                     ((blend * 255.0).round() as u8, has_warning)
                 }
             }
         } else {
             (0, has_warning)
+        }
+    }
+
+    fn fade(&self, frame: i32, total: i32, offset: i32) -> f32 {
+        if self.fade.absolute() {
+            self.fade.get(offset + frame)
+        } else {
+            self.fade.get(total - frame - 1)
         }
     }
 
