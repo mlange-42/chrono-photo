@@ -25,15 +25,15 @@ pub struct Cli {
     /// Frames to be used from those matching pattern: `start/end/step`. Optional.
     /// For default values, use `.`, e.g. `././2`.
     #[structopt(short, long, value_name = "frames")]
-    frames: Option<String>,
+    frames: Option<FrameRange>,
 
     /// Video input frames. Frames to be used per video frame: `start/end/step`. Optional.
     #[structopt(long, name = "video-in", value_name = "frames")]
-    video_in: Option<String>,
+    video_in: Option<FrameRange>,
 
     /// Video output frames. Range and step width of video output frames: `start/end/step`. Optional.
     #[structopt(long, name = "video-out", value_name = "frames")]
-    video_out: Option<String>,
+    video_out: Option<FrameRange>,
 
     /// Path to output file
     #[structopt(short, long, value_name = "path")]
@@ -49,23 +49,23 @@ pub struct Cli {
 
     /// Pixel selection mode (lighter|darker|outlier). Optional, default 'outlier'.
     #[structopt(short, long)]
-    mode: Option<String>,
+    mode: Option<SelectionMode>,
 
     /// Outlier threshold mode (abs|rel)/<lower>[/<upper>]. Optional, default 'abs/0.05/0.2'.
     #[structopt(short, long, value_name = "thresh")]
-    threshold: Option<String>,
+    threshold: Option<Threshold>,
 
     /// Background pixel selection mode (first|random|average|median). Optional, default 'random'.
     #[structopt(short, long, value_name = "bg")]
-    background: Option<String>,
+    background: Option<BackgroundMode>,
 
     /// Outlier selection mode in case more than one outlier is found (first|last|extreme|average|forward|backward). Optional, default 'extreme'.
     #[structopt(short = "l", long, value_name = "mode")]
-    outlier: Option<String>,
+    outlier: Option<OutlierSelectionMode>,
 
     /// Compression mode and level (0 to 9) for time slices (gzip|zlib|deflate)[/<level>]. Optional, default 'gzip/6'.
     #[structopt(short, long, value_name = "comp/lev")]
-    compression: Option<String>,
+    compression: Option<Compression>,
 
     /// Output image quality for JPG files, in percent. Optional, default '95'.
     #[structopt(short, long)]
@@ -73,7 +73,7 @@ pub struct Cli {
 
     /// Controls slicing to temp files (rows|pixels|count)/<number>. Optional, default 'rows/4'.
     #[structopt(short, long)]
-    slice: Option<String>,
+    slice: Option<SliceLength>,
 
     /// Restricts calculation of median and inter-quartile range to a sub-sample of input images. Use for large amounts of images to speed up calculations. Optional.
     #[structopt(long)]
@@ -109,33 +109,28 @@ impl Cli {
             mode: self
                 .mode
                 .as_ref()
-                .unwrap_or(&"outlier".to_string())
-                .parse()
-                .unwrap(),
+                .unwrap_or(&SelectionMode::Outlier)
+                .clone(),
             threshold: self
                 .threshold
                 .as_ref()
-                .unwrap_or(&"abs/0.05/0.2".to_string())
-                .parse()
-                .unwrap(),
+                .unwrap_or(&Threshold::abs(0.05, 0.2))
+                .clone(),
             background: self
                 .background
                 .as_ref()
-                .unwrap_or(&"random".to_string())
-                .parse()
-                .unwrap(),
+                .unwrap_or(&BackgroundMode::Random)
+                .clone(),
             outlier: self
                 .outlier
                 .as_ref()
-                .unwrap_or(&"extreme".to_string())
-                .parse()
-                .unwrap(),
+                .unwrap_or(&OutlierSelectionMode::Extreme)
+                .clone(),
             compression: self
                 .compression
                 .as_ref()
-                .unwrap_or(&"gzip".to_string())
-                .parse()
-                .unwrap(),
+                .unwrap_or(&Compression::GZip(6))
+                .clone(),
             quality: match self.quality {
                 Some(q) => {
                     if q <= 100 && q > 0 {
@@ -149,26 +144,12 @@ impl Cli {
                 }
                 None => 95,
             },
-            frames: self
-                .frames
-                .as_ref()
-                .and_then(|fr| Some(fr.parse().unwrap())),
-            video_in: self
-                .video_in
-                .as_ref()
-                .and_then(|fr| Some(fr.parse().unwrap())),
-            video_out: self
-                .video_out
-                .as_ref()
-                .and_then(|fr| Some(fr.parse().unwrap())),
-            slice: self
-                .slice
-                .as_ref()
-                .unwrap_or(&"rows/4".to_string())
-                .parse()
-                .unwrap(),
+            frames: self.frames.clone(),
+            video_in: self.video_in.clone(),
+            video_out: self.video_out.clone(),
+            slice: self.slice.as_ref().unwrap_or(&SliceLength::Rows(4)).clone(),
             sample: self.sample,
-            weights: weights,
+            weights,
             debug: self.debug,
         };
         out.validate()
