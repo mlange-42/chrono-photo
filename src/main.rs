@@ -6,7 +6,9 @@ use chrono_photo::slicer::{SliceLength, TimeSliceError, TimeSlicer};
 use chrono_photo::streams::{Compression, ImageStream};
 use image::flat::SampleLayout;
 use indicatif::ProgressBar;
+use std::cmp;
 use std::fs::File;
+use std::option::Option::Some;
 use std::path::PathBuf;
 use std::time::Instant;
 use structopt::StructOpt;
@@ -16,17 +18,20 @@ fn main() {
 
     /*let mut args = CliParsed {
         pattern: "test_data/generated/image-*.jpg".to_string(),
-        frames: Some(FrameRange::new(None, None, Some(2))),
+        frames: Some(FrameRange::new(None, Some(10), 1)),
+        video_in: Some(FrameRange::new(Some(0), Some(5), 1)),
+        video_out: Some(FrameRange::new(None, None, 1)),
         temp_dir: Some(PathBuf::from("test_data/temp")),
         output: PathBuf::from("test_data/out.jpg"),
-        output_blend: Some(PathBuf::from("test_data/out-debug.png")),
+        output_blend: None,
         mode: SelectionMode::Outlier,
         threshold: Threshold::abs(0.05, 0.2),
         outlier: OutlierSelectionMode::Extreme,
         background: BackgroundMode::Random,
         compression: Compression::GZip(6),
         quality: 98,
-        slice: SliceLength::Count(100),
+        slice: SliceLength::Rows(1),
+        sample: None,
         debug: true,
     };*/
 
@@ -55,10 +60,11 @@ fn main() {
     }
 
     // Convert to time slices and save to temp files
-    let (temp_files, layout, size_hint) = match to_time_slices(
+    let (temp_files, layout, image_count) = match to_time_slices(
         &args.pattern,
-        args.frames,
-        &args.temp_dir.unwrap(),
+        false,
+        &args.frames,
+        &args.temp_dir.as_ref().unwrap(),
         &args.compression,
         &args.slice,
     ) {
@@ -69,22 +75,29 @@ fn main() {
         }
     };
 
-    // Process time slices
-    let processor = ChronoProcessor::new(
-        args.mode,
-        args.threshold,
-        args.background,
-        args.outlier,
-        args.compression,
-    );
-    let (buff, is_outlier) = processor
-        .process(&layout, &temp_files[..], &args.slice, Some(size_hint))
-        .unwrap();
-
-    println!("Saving output... ");
-    save_image(&buff, &layout, &args.output, args.quality);
-    if let Some(out) = &args.output_blend {
-        save_image(&is_outlier, &layout, &out, args.quality);
+    // Process to video or image
+    if args.video_in.is_some() || args.video_out.is_some() {
+        // Fill missing video range
+        if args.video_in.is_some() {
+            if args.video_out.is_none() {
+                args.video_out = Some(FrameRange::empty());
+            }
+        } else if args.video_out.is_some() {
+            args.video_in = Some(FrameRange::empty());
+        }
+        // Process to video
+        create_video(&args, &temp_files[..], &layout, image_count);
+    } else {
+        // Process to image
+        create_frame(
+            &args,
+            &temp_files[..],
+            &layout,
+            image_count,
+            None,
+            &args.output,
+            &args.output_blend,
+        );
     }
 
     // Delete temp file
@@ -100,6 +113,161 @@ fn main() {
     bar.finish_and_clear();
 
     println!("Total time: {:?}", start.elapsed());
+}
+
+fn create_video(args: &CliParsed, files: &[PathBuf], layout: &SampleLayout, image_count: usize) {
+    let video = &args
+        .video_out
+        .as_ref()
+        .expect("Video frame range required (`--video-out`)");
+    let frames = &args
+        .video_in
+        .as_ref()
+        .expect("Per-frame frame range required (`--video-in`)");
+
+    let v_lower = match video.start() {
+        Some(start) => start,
+        None => {
+            if let Some(r) = frames.range() {
+                -r + 1
+            } else {
+                0
+            }
+        }
+    };
+
+    let v_upper = match video.end() {
+        Some(end) => end,
+        None => image_count as i32,
+    };
+
+    let mut indices = Vec::new();
+    let mut frame = v_lower;
+    while frame < v_upper {
+        let start = match frames.start() {
+            Some(s) => {
+                let mut st = frame + s;
+                while st < 0 {
+                    st += frames.step() as i32
+                }
+                cmp::max(st % frames.step() as i32, frame + s)
+            }
+            None => 0,
+        };
+        let end = match frames.end() {
+            Some(e) => cmp::min(
+                image_count as i32 + (frame + e) % frames.step() as i32 - frames.step() as i32,
+                frame + e,
+            ),
+            None => image_count as i32,
+        };
+
+        indices.clear();
+        let mut f = start;
+        while f < end {
+            indices.push(f as usize);
+            f += frames.step() as i32;
+        }
+        if !indices.is_empty() {
+            let (name, ext) = name_and_extension(&args.output)
+                .expect(&format!("Unexpected format in {:?}", &args.output));
+            let mut output = args
+                .output
+                .parent()
+                .expect(&format!("Unexpected format in {:?}", &args.output))
+                .to_path_buf();
+            output.push(&format!("{}-{:05}.{}", name, frame - v_lower, ext));
+
+            let out_blend = args.output_blend.as_ref().and_then(|out| {
+                let (name, ext) =
+                    name_and_extension(&out).expect(&format!("Unexpected format in {:?}", &out));
+                let mut output = args
+                    .output
+                    .parent()
+                    .expect(&format!("Unexpected format in {:?}", &out))
+                    .to_path_buf();
+                output.push(&format!("{}-{:05}.{}", name, frame - v_lower, ext));
+                Some(output)
+            });
+
+            print!(
+                "Processing frame {}/{} -> ",
+                frame - v_lower,
+                v_upper - v_lower
+            );
+            create_frame(
+                &args,
+                &files,
+                &layout,
+                image_count,
+                Some(&indices[..]),
+                &output,
+                &out_blend,
+            );
+        } else {
+            println!("Skipping frame {}/{}", frame - v_lower, v_upper - v_lower);
+        }
+
+        frame += video.step() as i32;
+    }
+}
+
+fn name_and_extension(path: &PathBuf) -> Option<(String, String)> {
+    let stem = path.file_stem();
+    if stem.is_none() {
+        return None;
+    }
+    let stem = stem.unwrap().to_str();
+    if stem.is_none() {
+        return None;
+    }
+
+    let ext = path.extension();
+    if ext.is_none() {
+        return None;
+    }
+    let ext = ext.unwrap().to_str();
+    if ext.is_none() {
+        return None;
+    }
+
+    Some((stem.unwrap().to_string(), ext.unwrap().to_string()))
+}
+
+fn create_frame(
+    args: &CliParsed,
+    files: &[PathBuf],
+    layout: &SampleLayout,
+    image_count: usize,
+    image_indices: Option<&[usize]>,
+    output: &PathBuf,
+    output_blend: &Option<PathBuf>,
+) {
+    // Process time slices
+    let processor = ChronoProcessor::new(
+        args.mode.clone(),
+        args.threshold.clone(),
+        args.background.clone(),
+        args.outlier.clone(),
+        args.weights.clone(),
+        args.compression.clone(),
+        args.sample.clone(),
+    );
+    let (buff, is_outlier) = processor
+        .process(
+            &layout,
+            &files,
+            &args.slice,
+            Some(image_count),
+            image_indices,
+        )
+        .unwrap();
+
+    println!("Saving output... ");
+    save_image(&buff, &layout, &output, args.quality);
+    if let Some(out) = &output_blend {
+        save_image(&is_outlier, &layout, &out, args.quality);
+    }
 }
 
 fn save_image(buffer: &[u8], layout: &SampleLayout, out_path: &PathBuf, quality: u8) {
@@ -143,12 +311,17 @@ fn save_image(buffer: &[u8], layout: &SampleLayout, out_path: &PathBuf, quality:
 
 fn to_time_slices(
     image_pattern: &str,
-    frames: Option<FrameRange>,
+    is_16bit: bool,
+    frames: &Option<FrameRange>,
     temp_path: &PathBuf,
     compression: &Compression,
     slices: &SliceLength,
 ) -> Result<(Vec<PathBuf>, SampleLayout, usize), TimeSliceError> {
     let images =
         ImageStream::from_pattern(image_pattern, frames).expect("Error processing pattern");
-    TimeSlicer::write_time_slices(images, temp_path.clone(), compression, slices)
+    if is_16bit {
+        TimeSlicer::new_16bit().write_time_slices(images, temp_path.clone(), compression, slices)
+    } else {
+        TimeSlicer::new_8bit().write_time_slices(images, temp_path.clone(), compression, slices)
+    }
 }

@@ -7,29 +7,44 @@ use core::fmt;
 use std::path::PathBuf;
 use structopt::StructOpt;
 
-/// Raw command line arguments.
+/// Command-line tool for combining images into a single chrono-photograph or chrono-video.
+///
+/// Use `chrono-photo -h`     for help, or
+///     `chrono-photo --help` even more comprehensive help.
 #[derive(StructOpt)]
-#[structopt(name = "chrono-photo command line application")]
+#[structopt(verbatim_doc_comment)]
+//#[structopt(name = "chrono-photo command line application")]
 pub struct Cli {
     /// File search pattern
     #[structopt(short, long)]
     pattern: String,
 
+    // /// Sets to 16 bit per color channel mode. Use for 16 bit TIFF files.
+    // #[structopt(long, name = "16-bit")]
+    // is_16bit: bool,
     /// Frames to be used from those matching pattern: `start/end/step`. Optional.
     /// For default values, use `.`, e.g. `././2`.
-    #[structopt(short, long)]
+    #[structopt(short, long, value_name = "frames")]
     frames: Option<String>,
 
+    /// Video input frames. Frames to be used per video frame: `start/end/step`. Optional.
+    #[structopt(long, name = "video-in", value_name = "frames")]
+    video_in: Option<String>,
+
+    /// Video output frames. Range and step width of video output frames: `start/end/step`. Optional.
+    #[structopt(long, name = "video-out", value_name = "frames")]
+    video_out: Option<String>,
+
     /// Path to output file
-    #[structopt(short, long)]
+    #[structopt(short, long, value_name = "path")]
     output: String,
 
     /// Temp directory. Optional, default system temp directory.
-    #[structopt(short = "d", long, name = "temp-dir")]
+    #[structopt(short = "d", long, name = "temp-dir", value_name = "path")]
     temp_dir: Option<String>,
 
     /// Path of output image showing which pixels are outliers (blend value).
-    #[structopt(long, name = "output-blend")]
+    #[structopt(long, name = "output-blend", value_name = "path")]
     output_blend: Option<String>,
 
     /// Pixel selection mode (lighter|darker|outlier). Optional, default 'outlier'.
@@ -37,28 +52,36 @@ pub struct Cli {
     mode: Option<String>,
 
     /// Outlier threshold mode (abs|rel)/<lower>[/<upper>]. Optional, default 'abs/0.05/0.2'.
-    #[structopt(short, long)]
+    #[structopt(short, long, value_name = "thresh")]
     threshold: Option<String>,
 
     /// Background pixel selection mode (first|random|average|median). Optional, default 'random'.
-    #[structopt(short, long)]
+    #[structopt(short, long, value_name = "bg")]
     background: Option<String>,
 
     /// Outlier selection mode in case more than one outlier is found (first|last|extreme|average|forward|backward). Optional, default 'extreme'.
-    #[structopt(short = "l", long)]
+    #[structopt(short = "l", long, value_name = "mode")]
     outlier: Option<String>,
 
     /// Compression mode and level (0 to 9) for time slices (gzip|zlib|deflate)[/<level>]. Optional, default 'gzip/6'.
-    #[structopt(short, long)]
+    #[structopt(short, long, value_name = "comp/lev")]
     compression: Option<String>,
 
     /// Output image quality for JPG files, in percent. Optional, default '95'.
     #[structopt(short, long)]
     quality: Option<u8>,
 
-    /// Controls slicing to temp files (rows|pixels|count)/<number>. Optional, default 'rows/1'
+    /// Controls slicing to temp files (rows|pixels|count)/<number>. Optional, default 'rows/4'.
     #[structopt(short, long)]
     slice: Option<String>,
+
+    /// Restricts calculation of median and inter-quartile range to a sub-sample of input images. Use for large amounts of images to speed up calculations. Optional.
+    #[structopt(long)]
+    sample: Option<usize>,
+
+    /// Color channel weights (4 values: RGBA) for distance calculation. Optional, default '1 1 1 1'.
+    #[structopt(long, short, number_of_values = 4, value_name = "w")]
+    weights: Option<Vec<f32>>,
 
     /// Print debug information (i.e. parsed cmd parameters).
     #[structopt(long)]
@@ -68,8 +91,15 @@ pub struct Cli {
 impl Cli {
     /// Parses this Cli into a [CliParsed](struct.CliParsed.html).
     pub fn parse(&self) -> Result<CliParsed, ParseCliError> {
-        Ok(CliParsed {
+        let mut weights = [1.0; 4];
+        if let Some(w) = &self.weights {
+            for (i, v) in w.iter().enumerate() {
+                weights[i] = *v;
+            }
+        }
+        let out = CliParsed {
             pattern: self.pattern.clone(),
+            // is_16bit: self.is_16bit,
             temp_dir: self.temp_dir.as_ref().map(|d| PathBuf::from(d)),
             output: PathBuf::from(&self.output),
             output_blend: match &self.output_blend {
@@ -123,14 +153,25 @@ impl Cli {
                 .frames
                 .as_ref()
                 .and_then(|fr| Some(fr.parse().unwrap())),
+            video_in: self
+                .video_in
+                .as_ref()
+                .and_then(|fr| Some(fr.parse().unwrap())),
+            video_out: self
+                .video_out
+                .as_ref()
+                .and_then(|fr| Some(fr.parse().unwrap())),
             slice: self
                 .slice
                 .as_ref()
                 .unwrap_or(&"rows/4".to_string())
                 .parse()
                 .unwrap(),
+            sample: self.sample,
+            weights: weights,
             debug: self.debug,
-        })
+        };
+        out.validate()
     }
 }
 
@@ -140,9 +181,15 @@ impl Cli {
 pub struct CliParsed {
     /// File search pattern
     pub pattern: String,
+    // /// Sets to 16 bit per color channel mode. Use for 16 bit TIFF files.
+    //pub is_16bit: bool,
     /// Frames to be used from those matching pattern: `start/end/step`. Optional.
     /// For default values, use `.`, e.g. `././step`.
     pub frames: Option<FrameRange>,
+    /// Video input frames. Frames to be used per video frame: `start/end/step`. Optional.
+    pub video_in: Option<FrameRange>,
+    /// Video output frames. Range and step width of video output frames: `start/end/step`. Optional.
+    pub video_out: Option<FrameRange>,
     /// Temp directory. Uses system temp directory if `None`.
     pub temp_dir: Option<PathBuf>,
     /// Path of the final output image.
@@ -163,8 +210,18 @@ pub struct CliParsed {
     pub quality: u8,
     /// Controls slicing to temp files (rows|pixels|count)/<number>. Optional, default 'rows/1'
     pub slice: SliceLength,
+    /// Restricts calculation of median and inter-quartile range to a sub-sample of input images. Use for large amounts of images to speed up calculations. Optional.
+    pub sample: Option<usize>,
+    /// Color channel weights for distance calculation
+    pub weights: [f32; 4],
     /// Print debug information (i.e. parsed cmd parameters).
     pub debug: bool,
+}
+
+impl CliParsed {
+    pub fn validate(self) -> Result<Self, ParseCliError> {
+        Ok(self)
+    }
 }
 
 /// Error type for failed parsing of `String`s to `enum`s.

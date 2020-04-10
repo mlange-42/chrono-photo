@@ -8,13 +8,32 @@ use std::str::FromStr;
 
 #[derive(Clone, Debug)]
 pub struct FrameRange {
-    start: Option<usize>,
-    end: Option<usize>,
-    step: Option<usize>,
+    start: Option<i32>,
+    end: Option<i32>,
+    step: u32,
 }
 impl FrameRange {
-    pub fn new(start: Option<usize>, end: Option<usize>, step: Option<usize>) -> Self {
+    pub fn new(start: Option<i32>, end: Option<i32>, step: u32) -> Self {
         FrameRange { start, end, step }
+    }
+    pub fn empty() -> Self {
+        FrameRange {
+            start: None,
+            end: None,
+            step: 1,
+        }
+    }
+    pub fn start(&self) -> Option<i32> {
+        self.start
+    }
+    pub fn end(&self) -> Option<i32> {
+        self.end
+    }
+    pub fn step(&self) -> u32 {
+        self.step
+    }
+    pub fn range(&self) -> Option<i32> {
+        self.start.and_then(|s| self.end.and_then(|e| Some(e - s)))
     }
 }
 impl FromStr for FrameRange {
@@ -47,7 +66,7 @@ impl FromStr for FrameRange {
         Ok(FrameRange {
             start: values[0],
             end: values[1],
-            step: values[2],
+            step: values[2].unwrap_or(1) as u32,
         })
     }
 }
@@ -61,10 +80,10 @@ pub struct FileLister {
 
 impl FileLister {
     /// Creates a new lister from a pattern.
-    pub fn new(pattern: &str, frames: Option<FrameRange>) -> Self {
+    pub fn new(pattern: &str, frames: &Option<FrameRange>) -> Self {
         FileLister {
             pattern: pattern.to_string(),
-            frames,
+            frames: frames.clone(),
         }
     }
     /// Lists all files that match this lister's pattern.
@@ -76,11 +95,11 @@ impl FileLister {
             .map(|p| p.unwrap());
         match &self.frames {
             Some(fr) => Ok(vec
-                .take(fr.end.unwrap_or(std::usize::MAX))
-                .skip(fr.start.unwrap_or(0))
+                .take(fr.end.unwrap_or(std::i32::MAX) as usize)
+                .skip(fr.start.unwrap_or(0) as usize)
                 .enumerate()
                 .filter_map(|(i, p)| {
-                    if i % fr.step.unwrap_or(1) == 0 {
+                    if i as u32 % fr.step == 0 {
                         Some(p)
                     } else {
                         None
@@ -99,7 +118,7 @@ mod test {
     #[test]
     fn parse_pattern() {
         let pattern = "test_data/*.txt";
-        let lister = FileLister::new(&pattern, None);
+        let lister = FileLister::new(&pattern, &None);
 
         let _list = lister.list_files().expect("Error processing pattern");
     }
