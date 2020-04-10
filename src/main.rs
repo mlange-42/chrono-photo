@@ -250,6 +250,7 @@ fn create_frame(
         args.background.clone(),
         args.outlier.clone(),
         args.weights.clone(),
+        args.fade.clone(),
         args.compression.clone(),
         args.sample.clone(),
     );
