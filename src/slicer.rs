@@ -10,7 +10,7 @@ use std::fmt;
 use std::path::PathBuf;
 use std::str::FromStr;
 
-#[derive(Debug)]
+#[derive(Debug, Clone)]
 pub enum SliceLength {
     Rows(usize),
     Pixels(usize),
