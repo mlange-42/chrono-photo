@@ -27,3 +27,13 @@ impl fmt::Display for ParseOptionError {
         self.0.fmt(f)
     }
 }
+
+/// Error type for failed parsing of `String`s to a CLI option.
+#[derive(Debug, Clone, PartialEq, Eq)]
+pub struct ParseArrayError(String);
+
+impl fmt::Display for ParseArrayError {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        self.0.fmt(f)
+    }
+}

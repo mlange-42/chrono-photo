@@ -28,6 +28,153 @@ impl FromStr for SelectionMode {
     }
 }
 
+#[derive(Debug, PartialEq, Clone)]
+pub enum FadeMode {
+    Repeat,
+    Clamp,
+    //RepeatMirror, TODO
+}
+
+impl FromStr for FadeMode {
+    type Err = ParseEnumError;
+
+    fn from_str(str: &str) -> Result<Self, Self::Err> {
+        match str {
+            "repeat" => Ok(FadeMode::Repeat),
+            "clamp" => Ok(FadeMode::Clamp),
+            _ => Err(ParseEnumError(format!(
+                "Not a fade mode: {}. Must be one of (repeat|clamp)",
+                str
+            ))),
+        }
+    }
+}
+
+#[derive(Debug, Clone)]
+pub struct Fade {
+    is_none: bool,
+    mode: FadeMode,
+    absolute: bool,
+    offset: i32,
+    values: Vec<f32>,
+}
+impl Fade {
+    /// Expects vector of (frame, value) pairs, ordered by frame
+    pub fn new(mode: FadeMode, absolute: bool, frames: Vec<(i32, f32)>) -> Self {
+        let offset = frames[0].0;
+        let len = (frames
+            .last()
+            .expect("Fade requires at least two frames specified.")
+            .0
+            - offset) as usize;
+        let mut values = vec![1.0; len + 1];
+        let mut idx = 0;
+        for i in 0..(len + 1) {
+            let (f1, v1) = frames[idx];
+            let (f2, v2) = frames[idx + 1];
+            let frame = i as i32 + offset;
+            values[i] = v1 + (v2 - v1) * (frame - f1) as f32 / (f2 - f1) as f32;
+            if frame == f2 {
+                idx += 1;
+            }
+        }
+        Fade {
+            is_none: false,
+            mode,
+            absolute,
+            offset,
+            values,
+        }
+    }
+
+    pub fn none() -> Self {
+        Fade {
+            is_none: true,
+            mode: FadeMode::Clamp,
+            absolute: true,
+            offset: 0,
+            values: vec![],
+        }
+    }
+
+    pub fn absolute(&self) -> bool {
+        self.absolute
+    }
+
+    pub fn get(&self, frame: i32) -> f32 {
+        if self.is_none {
+            return 1.0;
+        }
+        let mut i = frame - self.offset;
+        let len = self.values.len();
+        if i >= 0 && i < len as i32 {
+            self.values[i as usize]
+        } else {
+            match self.mode {
+                FadeMode::Clamp => {
+                    if i < 0 {
+                        self.values[0]
+                    } else {
+                        self.values[len - 1]
+                    }
+                }
+                FadeMode::Repeat => {
+                    while i < 0 {
+                        i += len as i32;
+                    }
+                    i = i % len as i32;
+                    self.values[i as usize]
+                }
+            }
+        }
+    }
+}
+impl FromStr for Fade {
+    type Err = ParseOptionError;
+
+    fn from_str(str: &str) -> Result<Self, Self::Err> {
+        let parts: Vec<_> = str.split('/').collect();
+        let mode_str = parts
+            .get(0)
+            .expect(&format!("Unexpected format in {}", str));
+        let mode = mode_str.parse().expect(&format!(
+            "Unexpected fade mode in {}, must be one of (clamp|repeat)",
+            str
+        ));
+
+        let abs_str = parts
+            .get(1)
+            .expect(&format!("Unexpected format in {}", str));
+        let absolute = match *abs_str {
+            "absolute" | "abs" => true,
+            "relative" | "rel" => false,
+            _ => return Err(ParseOptionError(format!("Not a frame fade spec: {}", str))),
+        };
+        let mut frames = vec![];
+        for p in parts.iter().skip(2) {
+            let parts: Vec<_> = p.split(',').collect();
+            if parts.len() != 2 {
+                return Err(ParseOptionError(format!(
+                    "Expected (int,float) per frame for fade. Got: {}",
+                    str
+                )));
+            }
+            frames.push((
+                parts[0].parse().expect(&format!(
+                    "Expected (int,float) per frame for fade. Got: {}",
+                    str
+                )),
+                parts[1].parse().expect(&format!(
+                    "Expected (int,float) per frame for fade. Got: {}",
+                    str
+                )),
+            ));
+        }
+
+        Ok(Fade::new(mode, absolute, frames))
+    }
+}
+
 /// Outlier determination algorithm.
 #[derive(Debug, Clone)]
 pub struct Threshold {
@@ -177,5 +324,18 @@ impl FromStr for BackgroundMode {
                 str
             ))),
         }
+    }
+}
+
+#[cfg(test)]
+mod test {
+    use crate::options::Fade;
+
+    #[test]
+    fn fade_test() {
+        let str = "clamp/abs/0,0/10,1";
+        let _f: Fade = str.parse().unwrap();
+
+        //println!("{:#?}", f);
     }
 }
