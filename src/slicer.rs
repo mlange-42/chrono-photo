@@ -112,12 +112,13 @@ where
         let mut slicing: Option<(usize, usize)> = None;
         let mut count = 0;
 
-        let mut out_streams: Option<Vec<PixelOutputStream>> = None;
+        let mut files: Option<Vec<PathBuf>> = None;
 
         let mut total_bytes = 0;
+        let mut total_files = 0;
         println!("Time-slicing {} images", size_hint);
         let bar = ProgressBar::new(size_hint as u64);
-        for img in images {
+        for (img_index, img) in images.enumerate() {
             bar.inc(1);
 
             let dyn_img = img.unwrap();
@@ -148,25 +149,29 @@ where
             };
             let slice_bytes = sli.0;
             let slice_count = sli.1;
+            total_files = slice_count;
 
-            if out_streams.is_none() {
-                out_streams = Some(
+            if files.is_none() {
+                files = Some(
                     (0..slice_count)
                         .map(|i| {
                             let mut path = PathBuf::from(&temp_dir);
                             path.push(format!("temp-{:05}.bin", i));
-                            PixelOutputStream::new(&path, compression.clone())
-                                .expect(&format!("Unable to create file {:?}", path))
+                            path
                         })
                         .collect(),
                 );
             }
+
             let stride = slice_bytes; //lay.height_stride;
             let num_sample = pix.samples.len();
-            for (row, stream) in out_streams.as_mut().unwrap().iter_mut().enumerate() {
+            //for (row, stream) in out_streams.as_mut().unwrap().iter_mut().enumerate() {
+            for (row, path) in files.as_ref().unwrap().iter().enumerate() {
                 let start = row * stride;
                 let end = std::cmp::min((row + 1) * stride, num_sample);
-                //println!("{} - {}, ({}) by {}", start, end, pix.samples.len(), stride);
+
+                let mut stream = PixelOutputStream::new(&path, compression.clone(), img_index > 0)
+                    .expect(&format!("Unable to create file {:?}", path));
                 total_bytes += stream
                     .write_chunk(&pix.samples[start..end])
                     .expect(&format!(
@@ -177,28 +182,28 @@ where
             count += 1;
         }
         bar.finish_and_clear();
-        println!(
-            "Total: {} kb in {} files",
-            total_bytes / 1024,
-            out_streams
-                .as_mut()
-                .expect("No input images supplied!")
-                .len()
-        );
+        println!("Total: {} kb in {} files", total_bytes / 1024, total_files);
 
-        for stream in out_streams.as_mut().unwrap().iter_mut() {
+        /*for stream in out_streams.as_mut().unwrap().iter_mut() {
             stream.close().unwrap();
-        }
+        }*/
 
         if count == 0 {
             Err(TimeSliceError("No images found for pattern {}".to_string()))
         } else {
             Ok((
-                out_streams
-                    .unwrap()
-                    .iter()
-                    .map(|stream| stream.path().clone())
+                (0..total_files)
+                    .map(|i| {
+                        let mut path = PathBuf::from(&temp_dir);
+                        path.push(format!("temp-{:05}.bin", i));
+                        path
+                    })
                     .collect(),
+                /*out_streams
+                .unwrap()
+                .iter()
+                .map(|stream| stream.path().clone())
+                .collect(),*/
                 layout.unwrap(),
                 size_hint,
             ))

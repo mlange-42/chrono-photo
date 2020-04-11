@@ -7,7 +7,7 @@ use flate2::write::{DeflateEncoder, GzEncoder, ZlibEncoder};
 use glob::PatternError;
 use image;
 use std::collections::VecDeque;
-use std::fs::File;
+use std::fs::{File, OpenOptions};
 use std::io::{BufReader, BufWriter, Read, Seek, SeekFrom, Write};
 use std::path::PathBuf;
 use std::str::FromStr;
@@ -82,8 +82,17 @@ pub struct PixelOutputStream {
     compression: Compression,
 }
 impl PixelOutputStream {
-    pub fn new(path: &PathBuf, compression: Compression) -> std::io::Result<Self> {
-        let stream = BufWriter::new(File::create(path)?);
+    pub fn new(path: &PathBuf, compression: Compression, append: bool) -> std::io::Result<Self> {
+        let file = if append {
+            OpenOptions::new().write(true).append(true).open(path)?
+        } else {
+            OpenOptions::new()
+                .write(true)
+                .truncate(true)
+                .create(true)
+                .open(path)?
+        };
+        let stream = BufWriter::new(file);
         let stream = PixelOutputStream {
             path: path.clone(),
             stream,
@@ -91,6 +100,7 @@ impl PixelOutputStream {
         };
         Ok(stream)
     }
+
     pub fn path(&self) -> &PathBuf {
         &self.path
     }
