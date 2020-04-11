@@ -10,12 +10,15 @@ use structopt::StructOpt;
 /// Command-line tool for combining images into a single chrono-photograph or chrono-video.
 ///
 /// Use `chrono-photo -h`     for help, or
-///     `chrono-photo --help` even more comprehensive help.
+///     `chrono-photo --help` for more detailed help.
+///
+/// For more documentation and explanation of the algorithm, see the GitHub repository:
+///      https://github.com/mlange-42/chrono-photo
 #[derive(StructOpt)]
 #[structopt(verbatim_doc_comment)]
 //#[structopt(name = "chrono-photo command line application")]
 pub struct Cli {
-    /// File search pattern
+    /// File search pattern. ** MUST be quoted on Unix systems! **
     #[structopt(short, long)]
     pattern: String,
 

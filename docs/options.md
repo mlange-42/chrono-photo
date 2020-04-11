@@ -11,12 +11,14 @@
 #### `--pattern`
 
 _Required._
-Search pattern for input files (glob-style). 
+Search pattern for input files (glob-style).
+
+_**Note:**_ The pattern **MUST be quoted on Unix** systems.
 
 Examples:
 ```
---pattern path/to/*.jpg
---pattern image-*.jpg
+--pattern "path/to/*.jpg"
+--pattern "image-*.jpg"
 ```
 The files found are used in lexical order.
 
@@ -41,7 +43,7 @@ _Default:_ No output of outlier image.
 _Optional._ Temporary directory for storing time slice files. 
 Files are delected after processing, while the directory is not. 
 If the directory does not exist, but the parent directory exists, it is created.
-Tf the parent directory does not exist, the program exits with an error.
+If the parent directory does not exist, the program exits with an error.
 
 _Default:_ `<system-temp>/chrono-photo/`
 
@@ -83,7 +85,7 @@ _Default:_ `outlier`
 _Optional._ Outlier distance to median threshold and blend distance in format `(abs|rel)/min[/max]`.
 Colors closer to the median than `min` are considered background.
 Colors between `min` and `max` are blended over the background linearly.
-Colors more distant to the median then `max` are blended background over the background with 100% (but see [--fade](#--fade)).
+Colors more distant to the median then `max` are blended over the background with 100% (replace, but see [--fade](#--fade)).
 
 An **absolute** threshold relates to the total color range, e.g. fractions of 255 for 8 bit per channel images.
 E.g. `abs/0.1/0.2` for 8 bits images blends for distances between 25.5 and 51 (0.1 * 255, 0.2 * 255).
@@ -149,7 +151,7 @@ Parts are:
 1. `abs` or `rel`: specifies where the frames given in the remaining parts relate to. 
 `abs` is relative to the first frame in the entire sequence (forward). 
 `rel` is relative to the last actually processed frame (backward).
-See the examples
+See the examples.
 1. At least two blend value pairs in the format `frame,value` without additional spaces.
 **Must be in strictly increasing frame order!**
 
@@ -210,7 +212,7 @@ _Default:_ No video output, or `././.` if `--video-in` is specified.
 
 _Optional._ Specifies a sample count to reduce the number of images used for calculations and (if required) quartiles.
 
-This option is particularly useful when processing large numbers of images (thousands) to speed up calculations.
+This option is particularly useful to speed up calculations when processing large numbers of images (thousands).
 
 _Default:_ No sampling, use all images.
 
@@ -220,7 +222,7 @@ _Optional._ Compression method and level for temporary time slice files.
 Format `(gzip|zlib|deflate)[/<level>]`. 
 Levels range from 0 (no compression) to 9 (slowest).
 
-_Default:_ `gzip/7`
+_Default:_ `gzip/6`
 
 #### `--slice`
 
