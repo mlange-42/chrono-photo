@@ -15,7 +15,7 @@ use structopt::StructOpt;
 #[structopt(verbatim_doc_comment)]
 //#[structopt(name = "chrono-photo command line application")]
 pub struct Cli {
-    /// File search pattern
+    /// File search pattern. MUST be quoted on Unix systems!
     #[structopt(short, long)]
     pattern: String,
 

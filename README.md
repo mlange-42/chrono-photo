@@ -45,7 +45,7 @@ No further files from the installation directory are required to run chrono-phot
 Minimal example:
 ```
 chrono-photo ^
-  --pattern input/image-*.jpg ^
+  --pattern "input/image-*.jpg" ^
   --output output/out.jpg
 ```
 
