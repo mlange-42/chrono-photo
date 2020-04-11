@@ -7,6 +7,7 @@ This tool helps to create chrono-photos like
 from photo series or ([later](#how-to-prepare-videos)) video footage.
 
 * **[Download binaries](https://github.com/mlange-42/chrono-photo/releases/)**
+* [Sources on GitHub](https://github.com/mlange-42/chrono-photo)
 
 _Warning:_ This project is still in an experimental stage. However, the image below shows a proof of concept for the algorithm,
 based on outlier detection (see section [How it works](#how-it-works) for details). 
@@ -29,10 +30,17 @@ based on outlier detection (see section [How it works](#how-it-works) for detail
 
 ## Getting started
 
-* Try the example batch files in sub-directory [/cmd_examples](/cmd_examples).
-* To view the full list of options, run `chrono-photo --help`
-* For a detailed explanation of all options see section [Command line options](#command-line-options)
-* For an explanation of the algorithm see next section, [How it works](#how-it-works).
+* Try the example batch files in sub-directory [/cmd_examples](/cmd_examples)
+(run `create-test-data` before to generate the required example data). 
+* To view the full list of options, run `chrono-photo --help` or see section [Command line options](#command-line-options).
+* For a detailed explanation of all options, see [docs/options.md](docs/options.md)
+* For an explanation of the algorithm see section [How it works](#how-it-works).
+
+### Tutorials (TODO)
+
+* [Recording material for chrono-photo](docs/tutorial_recording.md)
+* [Creating chrono-photos](docs/tutorial_photos.md)
+* [Creating chrono-videos](docs/tutorial_videos.md)
 
 ### Examples
 
@@ -192,15 +200,17 @@ OPTIONS:
 
 ## How to prepare videos
 
-There is no support for direct video file processing yet.
+See also [Recording material for chrono-photo](docs/tutorial_recording.md).
+
+There is no support for direct video file processing _yet_.
 
 To process videos, they have to be converted into a sequence of images by a third party tool.
 E.g. with the open source software [Blender](https://www.blender.org/),
-using it's 'Video Sequencer' view. The required settings are shown in the image below
+using it's _Video Sequencer_. The required settings are shown in the image below
 (particularly, see 'Output' in the bottom-left corner).
 
 ![Blender-VideoSequencer](https://user-images.githubusercontent.com/44003176/78508454-58a94500-7787-11ea-9e55-675e88cf14d7.PNG)
-_Blender with 'Video Sequencer' view (right part) and required output settings (bottom left).
+_Blender with_ Video Sequencer _view (right part) and required output settings (bottom left).
 To start rendering, click 'Render Animation' in menu 'Render' (top-most menu bar) or press Ctrl+F12._
 
 ## Library / crate

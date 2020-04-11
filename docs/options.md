@@ -2,9 +2,15 @@
 
 **Content**
 * [Input and output](#input-and-output)
+  * [--pattern](#--pattern) | [--output](#--output) | [--output-blend](#--output-blend) |
+[--temp-dir](#--temp-dir) |  [--frames](#--frames) |  [--quality](#--quality)
 * [Algorithm](#algorithm)
+  * [--mode](#--mode) | [--threshold](#--threshold) | [--outlier](#--outlier) |
+[--background](#--background) | [--weights](#--weights) | [--fade](#--fade)
 * [Video creation](#video-creation)
+  * [--video-in](#--video-in) | [--video-out](#--video-out)
 * [Performance](#performance)
+  * [--sample](#--sample) | [--compression](#--compression) | [--slice](#--slice)
 
 ## Input and output
 
