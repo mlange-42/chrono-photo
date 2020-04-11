@@ -146,6 +146,7 @@ memory usage can also be reduces to the half, while producing twice as many temp
 **For detailed explanation, see [docs/options.md](docs/options.md)**.
 
 ```
+chrono-photo 0.4.0
 Command-line tool for combining images into a single chrono-photograph or chrono-video.
 
 Use `chrono-photo -h`     for help, or
@@ -164,6 +165,8 @@ OPTIONS:
                                     'random'
     -c, --compression <comp/lev>    Compression mode and level (0 to 9) for time slices (gzip|zlib|deflate)[/<level>].
                                     Optional, default 'gzip/6'
+        --fade <fade>               Frame fading. Optional, default None. Format:
+                                    (clamp|repeat)/(abs|rel)/(f1,v1)/(f2,v2)[/(f,v)...]
     -f, --frames <frames>           Frames to be used from those matching pattern: `start/end/step`. Optional. For
                                     default values, use `.`, e.g. `././2`
     -m, --mode <mode>               Pixel selection mode (lighter|darker|outlier). Optional, default 'outlier'
@@ -171,7 +174,7 @@ OPTIONS:
                                     (first|last|extreme|average|forward|backward). Optional, default 'extreme'
     -o, --output <path>             Path to output file
         --output-blend <path>       Path of output image showing which pixels are outliers (blend value)
-    -p, --pattern <pattern>         File search pattern
+    -p, --pattern <pattern>         File search pattern. ** MUST be quoted on Unix systems! **
     -q, --quality <quality>         Output image quality for JPG files, in percent. Optional, default '95'
         --sample <sample>           Restricts calculation of median and inter-quartile range to a sub-sample of input
                                     images. Use for large amounts of images to speed up calculations. Optional
