@@ -1,5 +1,5 @@
 ..\target\release\chrono-photo ^
---pattern ../test_data/generated/image-*.jpg ^
+--pattern "../test_data/generated/image-*.jpg" ^
 --frames ././1 ^
 --temp-dir ../test_data/temp ^
 --output ../test_data/out.jpg ^

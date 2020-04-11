@@ -1,5 +1,5 @@
 ..\target\release\chrono-photo ^
---pattern ../test_data/generated/image-*.jpg ^
+--pattern "../test_data/generated/image-*.jpg" ^
 --frames ././1 ^
 --video-in 0/5/2 ^
 --video-out ././. ^
