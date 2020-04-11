@@ -32,9 +32,9 @@ based on outlier detection (see section [How it works](#how-it-works) for detail
 
 * Try the example batch files in sub-directory [/cmd_examples](/cmd_examples)
 (run `create-test-data` before to generate the required example data). 
-* To view the full list of options, run `chrono-photo --help` or see section [Command line options](#command-line-options).
-* For a detailed explanation of all options, see [docs/options.md](docs/options.md)
-* For an explanation of the algorithm see section [How it works](#how-it-works).
+* See section [Command line options](#command-line-options) or run `chrono-photo --help` to view the full list of options.
+* See [docs/options.md](docs/options.md) for a detailed explanation of all options.
+* See section [How it works](#how-it-works) for an explanation of the algorithm .
 
 ### Tutorials (TODO)
 
