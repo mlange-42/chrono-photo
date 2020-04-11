@@ -1,5 +1,7 @@
 # Recording material for chrono-photo
 
+Next tutorial: [Creating chrono-photos](docs/tutorial_photos.md).
+
 This tutorial covers how to record material for use with `chrono-photo`,
 particularly for fast-moving subjects like birds.
 
@@ -81,3 +83,5 @@ This way you can achieve a sharp image even when your subject does not pass in t
 
 Of course, the decision is a trade-off between wide depth-of-field and high shutter speed
 (see [Shutter speed](#shutter-speed)).
+
+#### To next tutorial: [Creating chrono-photos](docs/tutorial_photos.md)
