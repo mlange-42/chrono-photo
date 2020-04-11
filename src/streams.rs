@@ -213,25 +213,12 @@ impl PixelInputStream {
 
 #[cfg(test)]
 mod test {
-    use crate::streams::{Compression, ImageStream, PixelOutputStream};
-    use std::path::PathBuf;
+    use crate::streams::ImageStream;
 
     #[test]
     fn iterate() {
         let pattern = "test_data/*.png";
         let _stream = ImageStream::from_pattern(&pattern, &None).expect("Error processing pattern");
-        /*
-        for img in stream {
-            println!("{:?}", img.unwrap().color());
-        }*/
-    }
-    #[test]
-    fn pixel_stream() {
-        let mut _stream =
-            PixelOutputStream::new(&PathBuf::from("test_data/temp.bin"), Compression::GZip(6))
-                .unwrap();
-
-        //stream.write_chunk(&[0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10]);
         /*
         for img in stream {
             println!("{:?}", img.unwrap().color());
