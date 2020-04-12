@@ -152,13 +152,14 @@ _Default:_ `1 1 1 1`
 
 _Optional._ Allows for fading outlier blending over frames. Format (clamp|repeat)/(abs/rel)/f,v/f,v[/f,v...]
 
-Parts are:
+Parts between `/` are:
 1. Fading mode: `clamp` or `repeat`. Specifies how frames outside the given fade transition are treated.
-1. `abs` or `rel`: specifies where the frames given in the remaining parts relate to. 
+1. `abs` or `rel`: specifies where the frames given in the `frame,value` parts relate to. 
 `abs` is relative to the first frame in the entire sequence (forward). 
 `rel` is relative to the last actually processed frame (backward).
 See the examples.
-1. At least two blend value pairs in the format `frame,value` without additional spaces.
+1. At least two blend value pairs in the format `frame,value` (without additional spaces!).
+
 **Must be in strictly increasing frame order!**
 
 Between the specified frames, values are interpolated linearly. Values should be between 0 and 1.
@@ -216,7 +217,8 @@ _Default:_ No video output, or `././.` if `--video-in` is specified.
 
 #### `--sample`
 
-_Optional._ Specifies a sample count to reduce the number of images used for calculations and (if required) quartiles.
+_Optional._ Specifies a sample count to reduce the number of images used for calculation of per-pixel median
+and (if required) quartiles.
 
 This option is particularly useful to speed up calculations when processing large numbers of images (thousands).
 
