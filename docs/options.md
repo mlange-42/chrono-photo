@@ -10,7 +10,7 @@
 * [Video creation](#video-creation)
   * [--video-in](#--video-in) | [--video-out](#--video-out)
 * [Performance](#performance)
-  * [--threads](#--threads) | [--sample](#--sample) | [--compression](#--compression) | [--slice](#--slice)
+  * [--threads](#--threads) [--video-threads](#--video-threads) | | [--sample](#--sample) | [--compression](#--compression) | [--slice](#--slice)
 
 ## Input and output
 
