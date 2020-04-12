@@ -102,8 +102,13 @@ pub struct Cli {
     fade: Option<Fade>,
 
     /// Number of threads. Optional, default equal to number of processors.
-    #[structopt(long)]
+    #[structopt(long, value_name = "num")]
     threads: Option<usize>,
+
+    /// Number of threads for parallel video frame output. Optional, default equal to number of processors.
+    /// Limiting this may be required if memory usage is too high.
+    #[structopt(long, name = "video-threads", value_name = "num")]
+    video_threads: Option<usize>,
 
     /// Print debug information (i.e. parsed cmd parameters).
     #[structopt(long)]
@@ -182,6 +187,7 @@ impl Cli {
             weights,
             fade: self.fade.unwrap_or(Fade::none()),
             threads: self.threads,
+            video_threads: self.video_threads,
             debug: self.debug,
         };
 
@@ -240,6 +246,8 @@ pub struct CliParsed {
     pub fade: Fade,
     /// Number of threads. Optional, default equal to number of processors.
     pub threads: Option<usize>,
+    /// Number of threads for parallel video frame output. Optional, default equal to number of processors.
+    pub video_threads: Option<usize>,
     /// Print debug information (i.e. parsed cmd parameters).
     pub debug: bool,
 }

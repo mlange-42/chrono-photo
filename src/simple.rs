@@ -24,6 +24,7 @@ impl SimpleProcessor {
         self,
         files: &[PathBuf],
         image_indices: Option<&[usize]>,
+        show_progress: bool,
     ) -> image::ImageResult<(Vec<u8>, SampleLayout)> {
         let samples = match image_indices {
             Some(indices) => indices.len(),
@@ -128,18 +129,26 @@ impl SimpleProcessor {
             Some(indices) => {
                 let bar = ProgressBar::new(indices.len() as u64);
                 for (i, index) in indices.iter().enumerate() {
-                    bar.inc(1);
+                    if show_progress {
+                        bar.inc(1);
+                    }
                     fun(i, &files[*index])?;
                 }
-                bar.finish_and_clear();
+                if show_progress {
+                    bar.finish_and_clear();
+                }
             }
             None => {
                 let bar = ProgressBar::new(files.len() as u64);
                 for (i, file) in files.iter().enumerate() {
-                    bar.inc(1);
+                    if show_progress {
+                        bar.inc(1);
+                    }
                     fun(i, file)?;
                 }
-                bar.finish_and_clear();
+                if show_progress {
+                    bar.finish_and_clear();
+                }
             }
         }
 

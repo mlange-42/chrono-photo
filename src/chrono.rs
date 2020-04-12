@@ -77,6 +77,7 @@ impl OutlierProcessor {
         slices: &SliceLength,
         size_hint: Option<usize>,
         image_indices: Option<&[usize]>,
+        show_progress: bool,
     ) -> std::io::Result<(Vec<u8>, Vec<u8>)> {
         let channels = layout.width_stride;
         let mut buffer = vec![0; layout.height as usize * layout.height_stride];
@@ -89,10 +90,14 @@ impl OutlierProcessor {
         let slice_bytes = slices.bytes(&layout);
         //let slice_count = slices.count(&layout);
 
-        println!("Processing {} time slices", files.len());
+        if show_progress {
+            println!("Processing {} time slices", files.len());
+        }
         let bar = ProgressBar::new(files.len() as u64);
         for (out_row, file) in files.iter().enumerate() {
-            bar.inc(1);
+            if show_progress {
+                bar.inc(1);
+            }
 
             let buff_row_start = out_row * slice_bytes; //layout.height_stride;
             let (mut data, frame_offset) = match image_indices {
@@ -165,8 +170,7 @@ impl OutlierProcessor {
                 self.data.non_outlier_indices = vec![0; num_rows];
                 self.data.values = vec![0; self.sample_indices.len() * channels];
             }
-            //for col in 0..layout.width {
-            for col in 0..(num_bytes / channels) {
+            (0..(num_bytes / channels)).into_iter().for_each(|col| {
                 let col_offset = col as usize * channels;
                 for row in 0..num_rows {
                     //let pix_start = row * layout.height_stride + col_offset;
@@ -198,9 +202,11 @@ impl OutlierProcessor {
                         is_outlier[idx] = 255;
                     }
                 }
-            }
+            });
         }
-        bar.finish_and_clear();
+        if show_progress {
+            bar.finish_and_clear();
+        }
 
         if warnings > 0 {
             println!(

@@ -231,6 +231,16 @@ Number of threads to use for parallel processing.
 
 _Default:_ Number of processors.
 
+#### `--video-threads`
+
+_Optional._
+
+Number of threads to use for parallel processing for video / image sequence creation. 
+Entire frames are processed in parallel. 
+It may be necessary to limit the number of video threads is memory usage is too high.
+
+_Default:_ Number of processors.
+
 #### `--sample`
 
 _Optional, used with `--mode outlier` only._

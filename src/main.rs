@@ -8,6 +8,7 @@ use chrono_photo::slicer::{SliceLength, TimeSliceError, TimeSlicer};
 use chrono_photo::streams::{Compression, ImageStream};
 use image::flat::SampleLayout;
 use indicatif::ProgressBar;
+use rayon::prelude::*;
 use std::cmp;
 use std::fs::File;
 use std::option::Option::Some;
@@ -39,6 +40,13 @@ fn main() {
 
     let args: CliParsed = Cli::from_args().parse().unwrap();
 
+    if let Some(threads) = args.threads {
+        rayon::ThreadPoolBuilder::new()
+            .num_threads(threads)
+            .build_global()
+            .expect("Error building thread pool. Pool already built.");
+    }
+
     if args.mode == SelectionMode::Outlier {
         run_outliers(args);
     } else {
@@ -66,10 +74,10 @@ fn run_simple(mut args: CliParsed) {
             args.video_in = Some(FrameRange::empty());
         }
         // Process to video
-        create_video_simple(&args, &files[..]);
+        create_video_simple(&args, &files[..], args.video_threads);
     } else {
         // Process to image
-        create_frame_simple(&args, &files[..], None, &args.output);
+        create_frame_simple(&args, &files[..], None, &args.output, true);
     }
 }
 
@@ -123,7 +131,13 @@ fn run_outliers(mut args: CliParsed) {
             args.video_in = Some(FrameRange::empty());
         }
         // Process to video
-        create_video(&args, &temp_files[..], &layout, image_count);
+        create_video(
+            &args,
+            &temp_files[..],
+            &layout,
+            image_count,
+            args.video_threads,
+        );
     } else {
         // Process to image
         create_frame(
@@ -134,6 +148,7 @@ fn run_outliers(mut args: CliParsed) {
             None,
             &args.output,
             &args.output_blend,
+            true,
         );
     }
 
@@ -150,7 +165,13 @@ fn run_outliers(mut args: CliParsed) {
     bar.finish_and_clear();
 }
 
-fn create_video(args: &CliParsed, files: &[PathBuf], layout: &SampleLayout, image_count: usize) {
+fn create_video(
+    args: &CliParsed,
+    files: &[PathBuf],
+    layout: &SampleLayout,
+    image_count: usize,
+    threads: Option<usize>,
+) {
     let video = &args
         .video_out
         .as_ref()
@@ -176,78 +197,94 @@ fn create_video(args: &CliParsed, files: &[PathBuf], layout: &SampleLayout, imag
         None => image_count as i32,
     };
 
-    let mut indices = Vec::new();
-    let mut frame = v_lower;
-    while frame < v_upper {
-        let start = match frames.start() {
-            Some(s) => {
-                let mut st = frame + s;
-                while st < 0 {
-                    st += frames.step() as i32
+    //let mut indices = Vec::new();
+    //let mut frame = v_lower;
+
+    let all_frames: Vec<_> = (0..((v_upper - v_lower) / video.step() as i32))
+        .map(|i| i * video.step() as i32 + v_lower)
+        .collect();
+    //while frame < v_upper {
+
+    let pool = match threads {
+        Some(threads) => rayon::ThreadPoolBuilder::new().num_threads(threads),
+        None => rayon::ThreadPoolBuilder::new(),
+    }
+    .build()
+    .expect("Unable to build thread pool.");
+    pool.install(|| {
+        all_frames.par_iter().for_each(|frame| {
+            let start = match frames.start() {
+                Some(s) => {
+                    let mut st = frame + s;
+                    while st < 0 {
+                        st += frames.step() as i32
+                    }
+                    cmp::max(st % frames.step() as i32, frame + s)
                 }
-                cmp::max(st % frames.step() as i32, frame + s)
+                None => 0,
+            };
+            let end = match frames.end() {
+                Some(e) => cmp::min(
+                    image_count as i32 + (frame + e) % frames.step() as i32 - frames.step() as i32,
+                    frame + e,
+                ),
+                None => image_count as i32,
+            };
+
+            //indices.clear();
+            let mut indices = Vec::new();
+            let mut f = start;
+            while f < end {
+                indices.push(f as usize);
+                f += frames.step() as i32;
             }
-            None => 0,
-        };
-        let end = match frames.end() {
-            Some(e) => cmp::min(
-                image_count as i32 + (frame + e) % frames.step() as i32 - frames.step() as i32,
-                frame + e,
-            ),
-            None => image_count as i32,
-        };
-
-        indices.clear();
-        let mut f = start;
-        while f < end {
-            indices.push(f as usize);
-            f += frames.step() as i32;
-        }
-        if !indices.is_empty() {
-            let (name, ext) = name_and_extension(&args.output)
-                .expect(&format!("Unexpected format in {:?}", &args.output));
-            let mut output = args
-                .output
-                .parent()
-                .expect(&format!("Unexpected format in {:?}", &args.output))
-                .to_path_buf();
-            output.push(&format!("{}-{:05}.{}", name, frame - v_lower, ext));
-
-            let out_blend = args.output_blend.as_ref().and_then(|out| {
-                let (name, ext) =
-                    name_and_extension(&out).expect(&format!("Unexpected format in {:?}", &out));
+            if !indices.is_empty() {
+                let (name, ext) = name_and_extension(&args.output)
+                    .expect(&format!("Unexpected format in {:?}", &args.output));
                 let mut output = args
                     .output
                     .parent()
-                    .expect(&format!("Unexpected format in {:?}", &out))
+                    .expect(&format!("Unexpected format in {:?}", &args.output))
                     .to_path_buf();
                 output.push(&format!("{}-{:05}.{}", name, frame - v_lower, ext));
-                Some(output)
-            });
 
-            print!(
-                "Processing frame {}/{} -> ",
-                frame - v_lower,
-                v_upper - v_lower
-            );
-            create_frame(
-                &args,
-                &files,
-                &layout,
-                image_count,
-                Some(&indices[..]),
-                &output,
-                &out_blend,
-            );
-        } else {
-            println!("Skipping frame {}/{}", frame - v_lower, v_upper - v_lower);
-        }
+                let out_blend = args.output_blend.as_ref().and_then(|out| {
+                    let (name, ext) = name_and_extension(&out)
+                        .expect(&format!("Unexpected format in {:?}", &out));
+                    let mut output = args
+                        .output
+                        .parent()
+                        .expect(&format!("Unexpected format in {:?}", &out))
+                        .to_path_buf();
+                    output.push(&format!("{}-{:05}.{}", name, frame - v_lower, ext));
+                    Some(output)
+                });
 
-        frame += video.step() as i32;
-    }
+                println!(
+                    "Processing frame {}/{} -> ",
+                    frame - v_lower,
+                    v_upper - v_lower
+                );
+                create_frame(
+                    &args,
+                    &files,
+                    &layout,
+                    image_count,
+                    Some(&indices[..]),
+                    &output,
+                    &out_blend,
+                    false,
+                );
+            } else {
+                println!("Skipping frame {}/{}", frame - v_lower, v_upper - v_lower);
+            }
+
+            //frame += video.step() as i32;
+        });
+    });
 }
 
-fn create_video_simple(args: &CliParsed, files: &[PathBuf]) {
+fn create_video_simple(args: &CliParsed, files: &[PathBuf], threads: Option<usize>) {
     let video = &args
         .video_out
         .as_ref()
@@ -273,56 +310,70 @@ fn create_video_simple(args: &CliParsed, files: &[PathBuf]) {
         None => files.len() as i32,
     };
 
-    let mut indices = Vec::new();
-    let mut frame = v_lower;
-    while frame < v_upper {
-        let start = match frames.start() {
-            Some(s) => {
-                let mut st = frame + s;
-                while st < 0 {
-                    st += frames.step() as i32
-                }
-                cmp::max(st % frames.step() as i32, frame + s)
-            }
-            None => 0,
-        };
-        let end = match frames.end() {
-            Some(e) => cmp::min(
-                files.len() as i32 + (frame + e) % frames.step() as i32 - frames.step() as i32,
-                frame + e,
-            ),
-            None => files.len() as i32,
-        };
+    //let mut indices = Vec::new();
+    //let mut frame = v_lower;
 
-        indices.clear();
-        let mut f = start;
-        while f < end {
-            indices.push(f as usize);
-            f += frames.step() as i32;
-        }
-        if !indices.is_empty() {
-            let (name, ext) = name_and_extension(&args.output)
-                .expect(&format!("Unexpected format in {:?}", &args.output));
-
-            let mut output = args
-                .output
-                .parent()
-                .expect(&format!("Unexpected format in {:?}", &args.output))
-                .to_path_buf();
-            output.push(&format!("{}-{:05}.{}", name, frame - v_lower, ext));
-
-            print!(
-                "Processing frame {}/{} -> ",
-                frame - v_lower,
-                v_upper - v_lower
-            );
-            create_frame_simple(&args, &files, Some(&indices[..]), &output);
-        } else {
-            println!("Skipping frame {}/{}", frame - v_lower, v_upper - v_lower);
-        }
-
-        frame += video.step() as i32;
+    let all_frames: Vec<_> = (0..((v_upper - v_lower) / video.step() as i32))
+        .map(|i| i * video.step() as i32 + v_lower)
+        .collect();
+    //while frame < v_upper {
+    let pool = match threads {
+        Some(threads) => rayon::ThreadPoolBuilder::new().num_threads(threads),
+        None => rayon::ThreadPoolBuilder::new(),
     }
+    .build()
+    .expect("Unable to build thread pool.");
+    pool.install(|| {
+        all_frames.par_iter().for_each(|frame| {
+            let start = match frames.start() {
+                Some(s) => {
+                    let mut st = frame + s;
+                    while st < 0 {
+                        st += frames.step() as i32
+                    }
+                    cmp::max(st % frames.step() as i32, frame + s)
+                }
+                None => 0,
+            };
+            let end = match frames.end() {
+                Some(e) => cmp::min(
+                    files.len() as i32 + (frame + e) % frames.step() as i32 - frames.step() as i32,
+                    frame + e,
+                ),
+                None => files.len() as i32,
+            };
+
+            //indices.clear();
+            let mut indices = Vec::new();
+            let mut f = start;
+            while f < end {
+                indices.push(f as usize);
+                f += frames.step() as i32;
+            }
+            if !indices.is_empty() {
+                let (name, ext) = name_and_extension(&args.output)
+                    .expect(&format!("Unexpected format in {:?}", &args.output));
+
+                let mut output = args
+                    .output
+                    .parent()
+                    .expect(&format!("Unexpected format in {:?}", &args.output))
+                    .to_path_buf();
+                output.push(&format!("{}-{:05}.{}", name, frame - v_lower, ext));
+
+                println!(
+                    "Processing frame {}/{} -> ",
+                    frame - v_lower,
+                    v_upper - v_lower
+                );
+                create_frame_simple(&args, &files, Some(&indices[..]), &output, false);
+            } else {
+                println!("Skipping frame {}/{}", frame - v_lower, v_upper - v_lower);
+            }
+
+            //frame += video.step() as i32;
+        });
+    });
 }
 
 fn name_and_extension(path: &PathBuf) -> Option<(String, String)> {
@@ -355,6 +406,7 @@ fn create_frame(
     image_indices: Option<&[usize]>,
     output: &PathBuf,
     output_blend: &Option<PathBuf>,
+    show_progress: bool,
 ) {
     // Process time slices
     let processor = OutlierProcessor::new(
@@ -373,10 +425,13 @@ fn create_frame(
             &args.slice,
             Some(image_count),
             image_indices,
+            show_progress,
         )
         .unwrap();
 
-    println!("Saving output... ");
+    if show_progress {
+        println!("Saving output... ");
+    }
     save_image(&buff, &layout, &output, args.quality);
     if let Some(out) = &output_blend {
         save_image(&is_outlier, &layout, &out, args.quality);
@@ -388,6 +443,7 @@ fn create_frame_simple(
     files: &[PathBuf],
     image_indices: Option<&[usize]>,
     output: &PathBuf,
+    show_progress: bool,
 ) {
     // Process time slices
     let processor = SimpleProcessor::new(
@@ -395,9 +451,13 @@ fn create_frame_simple(
         args.fade.clone(),
         args.mode == SelectionMode::Darker,
     );
-    let (buff, layout) = processor.process(files, image_indices).unwrap();
+    let (buff, layout) = processor
+        .process(files, image_indices, show_progress)
+        .unwrap();
 
-    println!("Saving output... ");
+    if show_progress {
+        println!("Saving output... ");
+    }
     save_image(&buff, &layout, &output, args.quality);
 }
 
