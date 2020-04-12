@@ -358,7 +358,6 @@ fn create_frame(
 ) {
     // Process time slices
     let processor = OutlierProcessor::new(
-        args.mode.clone(),
         args.threshold.clone(),
         args.background.clone(),
         args.outlier.clone(),
