@@ -2,15 +2,15 @@
 
 **Content**
 * [Input and output](#input-and-output)
-  * [--pattern](#--pattern) | [--output](#--output) | [--output-blend](#--output-blend) |
-[--temp-dir](#--temp-dir) |  [--frames](#--frames) |  [--quality](#--quality)
+  * [--pattern](#--pattern) &nbsp; [--output](#--output) &nbsp; [--output-blend](#--output-blend) &nbsp;
+[--temp-dir](#--temp-dir) &nbsp;  [--frames](#--frames) &nbsp;  [--quality](#--quality)
 * [Algorithm](#algorithm)
-  * [--mode](#--mode) | [--threshold](#--threshold) | [--outlier](#--outlier) |
-[--background](#--background) | [--weights](#--weights) | [--fade](#--fade)
+  * [--mode](#--mode) &nbsp; [--threshold](#--threshold) &nbsp; [--outlier](#--outlier) &nbsp;
+[--background](#--background) &nbsp; [--weights](#--weights) &nbsp; [--fade](#--fade)
 * [Video creation](#video-creation)
-  * [--video-in](#--video-in) | [--video-out](#--video-out)
+  * [--video-in](#--video-in) &nbsp; [--video-out](#--video-out)
 * [Performance](#performance)
-  * [--threads](#--threads) [--video-threads](#--video-threads) | | [--sample](#--sample) | [--compression](#--compression) | [--slice](#--slice)
+  * [--threads](#--threads) &nbsp; [--video-threads](#--video-threads) &nbsp; [--sample](#--sample) &nbsp; [--compression](#--compression) &nbsp; [--slice](#--slice)
 
 ## Input and output
 
