@@ -109,6 +109,34 @@ pub struct Cli {
 impl Cli {
     /// Parses this Cli into a [CliParsed](struct.CliParsed.html).
     pub fn parse(self) -> Result<CliParsed, ParseCliError> {
+        let mut warings = Vec::new();
+        if self.mode.is_some() && self.mode.as_ref().unwrap() != &SelectionMode::Outlier {
+            if self.output_blend.is_some() {
+                warings.push("--output-blend".to_string());
+            }
+            if self.threshold.is_some() {
+                warings.push("--threshold".to_string());
+            }
+            if self.outlier.is_some() {
+                warings.push("--outlier".to_string());
+            }
+            if self.background.is_some() {
+                warings.push("--background".to_string());
+            }
+            if self.temp_dir.is_some() {
+                warings.push("--temp-dir".to_string());
+            }
+            if self.sample.is_some() {
+                warings.push("--sample".to_string());
+            }
+            if self.slice.is_some() {
+                warings.push("--slice".to_string());
+            }
+            if self.compression.is_some() {
+                warings.push("--compression".to_string());
+            }
+        }
+
         let mut weights = [1.0; 4];
         if let Some(w) = &self.weights {
             for (i, v) in w.iter().enumerate() {
@@ -151,6 +179,15 @@ impl Cli {
             fade: self.fade.unwrap_or(Fade::none()),
             debug: self.debug,
         };
+
+        if !warings.is_empty() {
+            println!("WARNING! The following options are not used, as they are required only for `--mode outlier`:", );
+            for w in warings {
+                println!("{}", w);
+            }
+            println!();
+        }
+
         out.validate()
     }
 }
