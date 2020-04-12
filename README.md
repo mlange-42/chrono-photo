@@ -61,6 +61,17 @@ For more options, see [Command line options](#command-line-options).
 
 ## How it works
 
+The basic algorithm to use is selected by option `--mode`.
+
+Three different modes are available: `darker`, `lighter` and `outlier`. 
+The first two modes simply select the darkest or brightest value found for a certain pixel among all images.
+Calculations are very fast, but control over the result is limited.
+
+The core algorithm of this tool, which is explained in detail below,
+is based on outlier detection (`--mode outlier`).
+This method offers great control over the result and can handle a far wider range of scenarios.
+However, it is also computationally more expensive.
+
 The principle idea is to stack all images to be processes, and analyze the entire stack pixel by pixel
 (but see also section [Technical realization](#technical-realization)).
 
@@ -154,11 +165,13 @@ memory usage can also be reduces to the half, while producing twice as many temp
 **For detailed explanation, see [docs/options.md](docs/options.md)**.
 
 ```
-chrono-photo 0.4.0
 Command-line tool for combining images into a single chrono-photograph or chrono-video.
 
 Use `chrono-photo -h`     for help, or
-    `chrono-photo --help` even more comprehensive help.
+    `chrono-photo --help` for more detailed help.
+
+For more documentation and explanation of the algorithm, see the GitHub repository:
+     https://github.com/mlange-42/chrono-photo
 
 USAGE:
     chrono-photo [FLAGS] [OPTIONS] --output <path> --pattern <pattern>
@@ -170,30 +183,37 @@ FLAGS:
 
 OPTIONS:
     -b, --background <bg>           Background pixel selection mode (first|random|average|median). Optional, default
-                                    'random'
+                                    'random'. Used with `--mode outlier` only
     -c, --compression <comp/lev>    Compression mode and level (0 to 9) for time slices (gzip|zlib|deflate)[/<level>].
-                                    Optional, default 'gzip/6'
+                                    Used with `--mode outlier` only. Optional, default 'gzip/6'
         --fade <fade>               Frame fading. Optional, default None. Format:
                                     (clamp|repeat)/(abs|rel)/(f1,v1)/(f2,v2)[/(f,v)...]
     -f, --frames <frames>           Frames to be used from those matching pattern: `start/end/step`. Optional. For
                                     default values, use `.`, e.g. `././2`
     -m, --mode <mode>               Pixel selection mode (lighter|darker|outlier). Optional, default 'outlier'
     -l, --outlier <mode>            Outlier selection mode in case more than one outlier is found
-                                    (first|last|extreme|average|forward|backward). Optional, default 'extreme'
+                                    (first|last|extreme|average|forward|backward). Optional, default 'extreme'. Used
+                                    with `--mode outlier` only
     -o, --output <path>             Path to output file
-        --output-blend <path>       Path of output image showing which pixels are outliers (blend value)
+        --output-blend <path>       Path of output image showing which pixels are outliers (blend value). Used with
+                                    `--mode outlier` only
     -p, --pattern <pattern>         File search pattern. ** MUST be quoted on Unix systems! **
     -q, --quality <quality>         Output image quality for JPG files, in percent. Optional, default '95'
         --sample <sample>           Restricts calculation of median and inter-quartile range to a sub-sample of input
-                                    images. Use for large amounts of images to speed up calculations. Optional
-    -s, --slice <slice>             Controls slicing to temp files (rows|pixels|count)/<number>. Optional, default
-                                    'rows/4'
-    -d, --temp-dir <path>           Temp directory. Optional, default system temp directory
+                                    images. Use for large amounts of images to speed up calculations. Optional. Used
+                                    with `--mode outlier` only
+    -s, --slice <slice>             Controls slicing to temp files (rows|pixels|count)/<number>. Used with `--mode
+                                    outlier` only. Optional, default 'rows/4'
+    -d, --temp-dir <path>           Temp directory. Used with `--mode outlier` only. Optional, default system temp
+                                    directory
+        --threads <num>             Number of threads. Optional, default equal to number of processors
     -t, --threshold <thresh>        Outlier threshold mode (abs|rel)/<lower>[/<upper>]. Optional, default
-                                    'abs/0.05/0.2'
+                                    'abs/0.05/0.2'. Used with `--mode outlier` only
         --video-in <frames>         Video input frames. Frames to be used per video frame: `start/end/step`. Optional
         --video-out <frames>        Video output frames. Range and step width of video output frames: `start/end/step`.
                                     Optional
+        --video-threads <num>       Number of threads for parallel video frame output. Optional, default equal to
+                                    number of processors. Limiting this may be required if memory usage is too high
     -w, --weights <w>...            Color channel weights (4 values: RGBA) for distance calculation. Optional, default
                                     '1 1 1 1'
 ```

@@ -87,7 +87,31 @@ impl FileLister {
         }
     }
     /// Lists all files that match this lister's pattern.
-    pub fn list_files<'a>(&self) -> Result<VecDeque<PathBuf>, glob::PatternError> {
+    pub fn files_vecdeque<'a>(&self) -> Result<VecDeque<PathBuf>, glob::PatternError> {
+        // TODO Return an iterator instead of a vector. Having problems with "size not known at compile time".
+        let paths: glob::Paths = glob::glob(&self.pattern)?;
+        let vec = paths
+            .filter(|p| p.is_ok() && p.as_ref().unwrap().is_file())
+            .map(|p| p.unwrap());
+        match &self.frames {
+            Some(fr) => Ok(vec
+                .take(fr.end.unwrap_or(std::i32::MAX) as usize)
+                .skip(fr.start.unwrap_or(0) as usize)
+                .enumerate()
+                .filter_map(|(i, p)| {
+                    if i as u32 % fr.step == 0 {
+                        Some(p)
+                    } else {
+                        None
+                    }
+                })
+                .collect()),
+            None => Ok(vec.collect()),
+        }
+    }
+
+    /// Lists all files that match this lister's pattern.
+    pub fn files_vec<'a>(&self) -> Result<Vec<PathBuf>, glob::PatternError> {
         // TODO Return an iterator instead of a vector. Having problems with "size not known at compile time".
         let paths: glob::Paths = glob::glob(&self.pattern)?;
         let vec = paths
@@ -120,6 +144,6 @@ mod test {
         let pattern = "test_data/*.txt";
         let lister = FileLister::new(&pattern, &None);
 
-        let _list = lister.list_files().expect("Error processing pattern");
+        let _list = lister.files_vecdeque().expect("Error processing pattern");
     }
 }

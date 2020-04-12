@@ -42,11 +42,12 @@ pub struct Cli {
     #[structopt(short, long, value_name = "path")]
     output: String,
 
-    /// Temp directory. Optional, default system temp directory.
+    /// Temp directory. Used with `--mode outlier` only. Optional, default system temp directory.
     #[structopt(short = "d", long, name = "temp-dir", value_name = "path")]
     temp_dir: Option<String>,
 
     /// Path of output image showing which pixels are outliers (blend value).
+    /// Used with `--mode outlier` only.
     #[structopt(long, name = "output-blend", value_name = "path")]
     output_blend: Option<String>,
 
@@ -55,18 +56,24 @@ pub struct Cli {
     mode: Option<SelectionMode>,
 
     /// Outlier threshold mode (abs|rel)/<lower>[/<upper>]. Optional, default 'abs/0.05/0.2'.
+    /// Used with `--mode outlier` only.
     #[structopt(short, long, value_name = "thresh")]
     threshold: Option<Threshold>,
 
     /// Background pixel selection mode (first|random|average|median). Optional, default 'random'.
+    /// Used with `--mode outlier` only.
     #[structopt(short, long, value_name = "bg")]
     background: Option<BackgroundMode>,
 
-    /// Outlier selection mode in case more than one outlier is found (first|last|extreme|average|forward|backward). Optional, default 'extreme'.
+    /// Outlier selection mode in case more than one outlier is found
+    /// (first|last|extreme|average|forward|backward). Optional, default 'extreme'.
+    /// Used with `--mode outlier` only.
     #[structopt(short = "l", long, value_name = "mode")]
     outlier: Option<OutlierSelectionMode>,
 
-    /// Compression mode and level (0 to 9) for time slices (gzip|zlib|deflate)[/<level>]. Optional, default 'gzip/6'.
+    /// Compression mode and level (0 to 9) for time slices (gzip|zlib|deflate)[/<level>].
+    /// Used with `--mode outlier` only.
+    /// Optional, default 'gzip/6'.
     #[structopt(short, long, value_name = "comp/lev")]
     compression: Option<Compression>,
 
@@ -74,11 +81,15 @@ pub struct Cli {
     #[structopt(short, long)]
     quality: Option<u8>,
 
-    /// Controls slicing to temp files (rows|pixels|count)/<number>. Optional, default 'rows/4'.
+    /// Controls slicing to temp files (rows|pixels|count)/<number>.
+    /// Used with `--mode outlier` only.
+    /// Optional, default 'rows/4'.
     #[structopt(short, long)]
     slice: Option<SliceLength>,
 
-    /// Restricts calculation of median and inter-quartile range to a sub-sample of input images. Use for large amounts of images to speed up calculations. Optional.
+    /// Restricts calculation of median and inter-quartile range to a sub-sample of input images.
+    /// Use for large amounts of images to speed up calculations. Optional.
+    /// Used with `--mode outlier` only.
     #[structopt(long)]
     sample: Option<usize>,
 
@@ -90,6 +101,15 @@ pub struct Cli {
     #[structopt(long)]
     fade: Option<Fade>,
 
+    /// Number of threads. Optional, default equal to number of processors.
+    #[structopt(long, value_name = "num")]
+    threads: Option<usize>,
+
+    /// Number of threads for parallel video frame output. Optional, default equal to number of processors.
+    /// Limiting this may be required if memory usage is too high.
+    #[structopt(long, name = "video-threads", value_name = "num")]
+    video_threads: Option<usize>,
+
     /// Print debug information (i.e. parsed cmd parameters).
     #[structopt(long)]
     debug: bool,
@@ -98,6 +118,34 @@ pub struct Cli {
 impl Cli {
     /// Parses this Cli into a [CliParsed](struct.CliParsed.html).
     pub fn parse(self) -> Result<CliParsed, ParseCliError> {
+        let mut warings = Vec::new();
+        if self.mode.is_some() && self.mode.as_ref().unwrap() != &SelectionMode::Outlier {
+            if self.output_blend.is_some() {
+                warings.push("--output-blend".to_string());
+            }
+            if self.threshold.is_some() {
+                warings.push("--threshold".to_string());
+            }
+            if self.outlier.is_some() {
+                warings.push("--outlier".to_string());
+            }
+            if self.background.is_some() {
+                warings.push("--background".to_string());
+            }
+            if self.temp_dir.is_some() {
+                warings.push("--temp-dir".to_string());
+            }
+            if self.sample.is_some() {
+                warings.push("--sample".to_string());
+            }
+            if self.slice.is_some() {
+                warings.push("--slice".to_string());
+            }
+            if self.compression.is_some() {
+                warings.push("--compression".to_string());
+            }
+        }
+
         let mut weights = [1.0; 4];
         if let Some(w) = &self.weights {
             for (i, v) in w.iter().enumerate() {
@@ -138,8 +186,19 @@ impl Cli {
             sample: self.sample,
             weights,
             fade: self.fade.unwrap_or(Fade::none()),
+            threads: self.threads,
+            video_threads: self.video_threads,
             debug: self.debug,
         };
+
+        if !warings.is_empty() {
+            println!("WARNING! The following options are not used, as they are required only for `--mode outlier`:", );
+            for w in warings {
+                println!("{}", w);
+            }
+            println!();
+        }
+
         out.validate()
     }
 }
@@ -185,6 +244,10 @@ pub struct CliParsed {
     pub weights: [f32; 4],
     /// Frame fading. Optional, default None.
     pub fade: Fade,
+    /// Number of threads. Optional, default equal to number of processors.
+    pub threads: Option<usize>,
+    /// Number of threads for parallel video frame output. Optional, default equal to number of processors.
+    pub video_threads: Option<usize>,
     /// Print debug information (i.e. parsed cmd parameters).
     pub debug: bool,
 }

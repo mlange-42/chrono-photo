@@ -53,7 +53,7 @@ impl ImageStream {
     /// Creates an ImageStream from a file search pattern.
     pub fn from_pattern(pattern: &str, frames: &Option<FrameRange>) -> Result<Self, PatternError> {
         let lister = FileLister::new(&pattern, frames);
-        let files = lister.list_files()?;
+        let files = lister.files_vecdeque()?;
         Ok(ImageStream { files })
     }
 }
@@ -73,6 +73,14 @@ impl ImageStream {
     /// The number of images in this stream
     pub fn len(&self) -> usize {
         self.files.len()
+    }
+    pub fn skip(&mut self) -> Option<()> {
+        if self.files.is_empty() {
+            None
+        } else {
+            let _path = self.files.pop_front().unwrap();
+            Some(())
+        }
     }
 }
 

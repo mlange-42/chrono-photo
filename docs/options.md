@@ -2,15 +2,15 @@
 
 **Content**
 * [Input and output](#input-and-output)
-  * [--pattern](#--pattern) | [--output](#--output) | [--output-blend](#--output-blend) |
-[--temp-dir](#--temp-dir) |  [--frames](#--frames) |  [--quality](#--quality)
+  * [--pattern](#--pattern) &nbsp; [--output](#--output) &nbsp; [--output-blend](#--output-blend) &nbsp;
+[--temp-dir](#--temp-dir) &nbsp;  [--frames](#--frames) &nbsp;  [--quality](#--quality)
 * [Algorithm](#algorithm)
-  * [--mode](#--mode) | [--threshold](#--threshold) | [--outlier](#--outlier) |
-[--background](#--background) | [--weights](#--weights) | [--fade](#--fade)
+  * [--mode](#--mode) &nbsp; [--threshold](#--threshold) &nbsp; [--outlier](#--outlier) &nbsp;
+[--background](#--background) &nbsp; [--weights](#--weights) &nbsp; [--fade](#--fade)
 * [Video creation](#video-creation)
-  * [--video-in](#--video-in) | [--video-out](#--video-out)
+  * [--video-in](#--video-in) &nbsp; [--video-out](#--video-out)
 * [Performance](#performance)
-  * [--sample](#--sample) | [--compression](#--compression) | [--slice](#--slice)
+  * [--threads](#--threads) &nbsp; [--video-threads](#--video-threads) &nbsp; [--sample](#--sample) &nbsp; [--compression](#--compression) &nbsp; [--slice](#--slice)
 
 ## Input and output
 
@@ -40,13 +40,17 @@ Examples:
 
 #### `--output-blend`
 
-_Optional._ Output path for the greyscale image showing the algorithm's outlier detections. See [`--output`](#--output) for details.
+_Optional, used with `--mode outlier` only._
+
+Output path for the greyscale image showing the algorithm's outlier detections. See [`--output`](#--output) for details.
 
 _Default:_ No output of outlier image.
 
 #### `--temp-dir`
 
-_Optional._ Temporary directory for storing time slice files. 
+_Optional, used with `--mode outlier` only._
+
+Temporary directory for storing time slice files. 
 Files are delected after processing, while the directory is not. 
 If the directory does not exist, but the parent directory exists, it is created.
 If the parent directory does not exist, the program exits with an error.
@@ -110,7 +114,9 @@ _Default:_ `abs/0.05/0.2`
 
 #### `--outlier`
 
-_Optional._ Outlier selection mode. Determines how selection between multiple outliers is performed.
+_Optional, used with `--mode outlier` only._
+
+Outlier selection mode. Determines how selection between multiple outliers is performed.
 
 This parameter is particularly useful when several movement trails overlap,
 or when a moving object is relatively slow compared to the recording frame rate, and thus overlaps itself. 
@@ -126,7 +132,9 @@ _Default:_ `extreme`
 
 #### `--background`
 
-_Optional._ Background color selection mode. Determines how selection between non-outlier colors is performed.
+_Optional, used with `--mode outlier` only._
+
+Background color selection mode. Determines how selection between non-outlier colors is performed.
 
 * `random`: Use a randomly selected pixel value, selected among all non-outlier images. The default value, but may result in a noisy image.
 * `first`: Use the pixel value from the first non-outlier image.
@@ -152,13 +160,14 @@ _Default:_ `1 1 1 1`
 
 _Optional._ Allows for fading outlier blending over frames. Format (clamp|repeat)/(abs/rel)/f,v/f,v[/f,v...]
 
-Parts are:
+Parts between `/` are:
 1. Fading mode: `clamp` or `repeat`. Specifies how frames outside the given fade transition are treated.
-1. `abs` or `rel`: specifies where the frames given in the remaining parts relate to. 
+1. `abs` or `rel`: specifies where the frames given in the `frame,value` parts relate to. 
 `abs` is relative to the first frame in the entire sequence (forward). 
 `rel` is relative to the last actually processed frame (backward).
 See the examples.
-1. At least two blend value pairs in the format `frame,value` without additional spaces.
+1. At least two blend value pairs in the format `frame,value` (without additional spaces!).
+
 **Must be in strictly increasing frame order!**
 
 Between the specified frames, values are interpolated linearly. Values should be between 0 and 1.
@@ -214,9 +223,30 @@ _Default:_ No video output, or `././.` if `--video-in` is specified.
 
 ## Performance
 
+#### `--threads`
+
+_Optional._
+
+Number of threads to use for parallel processing.
+
+_Default:_ Number of processors.
+
+#### `--video-threads`
+
+_Optional._
+
+Number of threads to use for parallel processing for video / image sequence creation. 
+Entire frames are processed in parallel. 
+It may be necessary to limit the number of video threads is memory usage is too high.
+
+_Default:_ Number of processors.
+
 #### `--sample`
 
-_Optional._ Specifies a sample count to reduce the number of images used for calculations and (if required) quartiles.
+_Optional, used with `--mode outlier` only._
+
+Specifies a sample count to reduce the number of images used for calculation of per-pixel median
+and (if required) quartiles.
 
 This option is particularly useful to speed up calculations when processing large numbers of images (thousands).
 
@@ -224,7 +254,9 @@ _Default:_ No sampling, use all images.
 
 #### `--compression`
 
-_Optional._ Compression method and level for temporary time slice files. 
+_Optional, used with `--mode outlier` only._
+
+Compression method and level for temporary time slice files. 
 Format `(gzip|zlib|deflate)[/<level>]`. 
 Levels range from 0 (no compression) to 9 (slowest).
 
@@ -232,7 +264,9 @@ _Default:_ `gzip/6`
 
 #### `--slice`
 
-_Optional._ Time-slicing in the format `(rows|pixels|count)/<number>`.
+_Optional, used with `--mode outlier` only._
+
+Time-slicing in the format `(rows|pixels|count)/<number>`.
 
 _Default:_ `rows/4` (should be sufficient for most scenarios)
 

@@ -21,7 +21,7 @@ for screen display or smaller prints.
 
 ## Camera settings
 
-## Focus
+### Focus
 
 **Turn auto-focus off!**
 
