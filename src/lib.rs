@@ -3,6 +3,7 @@ pub mod cli;
 pub mod color;
 pub mod flist;
 pub mod options;
+pub mod simple;
 pub mod slicer;
 pub mod streams;
 

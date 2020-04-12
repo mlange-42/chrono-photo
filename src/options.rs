@@ -2,7 +2,7 @@ use crate::{ParseEnumError, ParseOptionError};
 use std::str::FromStr;
 
 /// Pixel selection mode.
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone, PartialEq)]
 pub enum SelectionMode {
     /// Selects by outlier analysis (multi-dimensional z-score).
     /// Parameter `threshold` determines the minimum distance from the median, in fractions of the total color range (i.e. [0, 1]), to classify a pixel as outlier.
