@@ -10,7 +10,7 @@
 * [Video creation](#video-creation)
   * [--video-in](#--video-in) | [--video-out](#--video-out)
 * [Performance](#performance)
-  * [--sample](#--sample) | [--compression](#--compression) | [--slice](#--slice)
+  * [--threads](#--threads) | [--sample](#--sample) | [--compression](#--compression) | [--slice](#--slice)
 
 ## Input and output
 
@@ -222,6 +222,14 @@ In most cases, it is not necessary to set this option and just use `--video-in`.
 _Default:_ No video output, or `././.` if `--video-in` is specified.
 
 ## Performance
+
+#### `--threads`
+
+_Optional._
+
+Number of threads to use for parallel processing.
+
+_Default:_ Number of processors.
 
 #### `--sample`
 

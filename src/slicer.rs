@@ -6,6 +6,7 @@ use crate::ParseEnumError;
 use image::flat::SampleLayout;
 use indicatif::ProgressBar;
 use num_traits::PrimInt;
+use rayon::prelude::*;
 use std::fmt;
 use std::path::PathBuf;
 use std::str::FromStr;
@@ -112,7 +113,7 @@ where
         let mut slicing: Option<(usize, usize)> = None;
         let mut count = 0;
 
-        let mut files: Option<Vec<PathBuf>> = None;
+        let mut files: Option<Vec<(usize, PathBuf)>> = None;
 
         let mut total_bytes = 0;
         let mut total_files = 0;
@@ -157,7 +158,7 @@ where
                         .map(|i| {
                             let mut path = PathBuf::from(&temp_dir);
                             path.push(format!("temp-{:05}.bin", i));
-                            path
+                            (i, path)
                         })
                         .collect(),
                 );
@@ -166,19 +167,27 @@ where
             let stride = slice_bytes; //lay.height_stride;
             let num_sample = pix.samples.len();
             //for (row, stream) in out_streams.as_mut().unwrap().iter_mut().enumerate() {
-            for (row, path) in files.as_ref().unwrap().iter().enumerate() {
-                let start = row * stride;
-                let end = std::cmp::min((row + 1) * stride, num_sample);
+            /*for (row, path) in */
+            total_bytes = files
+                .as_ref()
+                .unwrap()
+                .par_iter()
+                .map(|(row, path)| {
+                    let start = row * stride;
+                    let end = std::cmp::min((row + 1) * stride, num_sample);
 
-                let mut stream = PixelOutputStream::new(&path, compression.clone(), img_index > 0)
-                    .expect(&format!("Unable to create file {:?}", path));
-                total_bytes += stream
-                    .write_chunk(&pix.samples[start..end])
-                    .expect(&format!(
-                        "Unable to write chunk to file {:?}",
-                        stream.path()
-                    ));
-            }
+                    let mut stream =
+                        PixelOutputStream::new(&path, compression.clone(), img_index > 0)
+                            .expect(&format!("Unable to create file {:?}", path));
+
+                    stream
+                        .write_chunk(&pix.samples[start..end])
+                        .expect(&format!(
+                            "Unable to write chunk to file {:?}",
+                            stream.path()
+                        ))
+                })
+                .sum();
             count += 1;
         }
         bar.finish_and_clear();

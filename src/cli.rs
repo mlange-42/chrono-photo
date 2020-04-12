@@ -101,6 +101,10 @@ pub struct Cli {
     #[structopt(long)]
     fade: Option<Fade>,
 
+    /// Number of threads. Optional, default equal to number of processors.
+    #[structopt(long)]
+    threads: Option<usize>,
+
     /// Print debug information (i.e. parsed cmd parameters).
     #[structopt(long)]
     debug: bool,
@@ -177,6 +181,7 @@ impl Cli {
             sample: self.sample,
             weights,
             fade: self.fade.unwrap_or(Fade::none()),
+            threads: self.threads,
             debug: self.debug,
         };
 
@@ -233,6 +238,8 @@ pub struct CliParsed {
     pub weights: [f32; 4],
     /// Frame fading. Optional, default None.
     pub fade: Fade,
+    /// Number of threads. Optional, default equal to number of processors.
+    pub threads: Option<usize>,
     /// Print debug information (i.e. parsed cmd parameters).
     pub debug: bool,
 }

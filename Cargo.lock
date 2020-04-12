@@ -79,6 +79,7 @@ dependencies = [
  "indicatif",
  "num-traits",
  "rand",
+ "rayon",
  "structopt",
 ]
 

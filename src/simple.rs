@@ -2,6 +2,7 @@ use crate::color;
 use crate::options::Fade;
 use image::flat::SampleLayout;
 use indicatif::ProgressBar;
+use rayon::prelude::*;
 use std::path::PathBuf;
 
 pub struct SimpleProcessor {
@@ -74,41 +75,51 @@ impl SimpleProcessor {
             let channels = channels.unwrap();
             let extremes = extreme_value.as_mut().unwrap();
 
-            for (idx, (out_pix, in_pix)) in buffer
+            /*for (idx, (out_pix, in_pix)) in buffer
                 .as_mut()
                 .unwrap()
-                .chunks_mut(channels)
-                .zip(buff.samples.chunks(channels))
+                .par_chunks_mut(channels)
+                .zip(buff.samples.par_chunks(channels))
                 .enumerate()
-            {
-                let mut value = 0.0;
-                for ch in 0..channels {
-                    value += in_pix[ch] as f32 * self.weights[ch];
-                }
-                let mut is_extreme = false;
-                if self.darker {
-                    if value < extremes[idx] {
-                        is_extreme = true;
+            {*/
+            buffer
+                .as_mut()
+                .unwrap()
+                .par_chunks_mut(channels)
+                .zip(buff.samples.par_chunks(channels))
+                .zip(extremes.par_iter_mut())
+                .for_each(|((out_pix, in_pix), extreme)| {
+                    let mut value = 0.0;
+                    for ch in 0..channels {
+                        value += in_pix[ch] as f32 * self.weights[ch];
                     }
-                } else {
-                    if value > extremes[idx] {
-                        is_extreme = true;
-                    }
-                }
-                if is_extreme {
-                    extremes[idx] = value;
-                    let fade = self.fade(sample_idx as i32, samples as i32, frame_offset);
-                    if fade > 0.0 {
-                        if fade >= 1.0 {
-                            for ch in 0..channels {
-                                out_pix[ch] = in_pix[ch];
-                            }
-                        } else {
-                            color::blend_into_u8(out_pix, &in_pix, fade);
+                    let mut is_extreme = false;
+                    if self.darker {
+                        //if value < extremes[idx] {
+                        if value < *extreme {
+                            is_extreme = true;
+                        }
+                    } else {
+                        //if value > extremes[idx] {
+                        if value > *extreme {
+                            is_extreme = true;
                         }
                     }
-                }
-            }
+                    if is_extreme {
+                        //extremes[idx] = value;
+                        *extreme = value;
+                        let fade = self.fade(sample_idx as i32, samples as i32, frame_offset);
+                        if fade > 0.0 {
+                            if fade >= 1.0 {
+                                for ch in 0..channels {
+                                    out_pix[ch] = in_pix[ch];
+                                }
+                            } else {
+                                color::blend_into_u8(out_pix, &in_pix, fade);
+                            }
+                        }
+                    }
+                });
 
             Ok(())
         };
