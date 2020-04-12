@@ -1,7 +1,9 @@
-use chrono_photo::chrono::ChronoProcessor;
+use chrono_photo::chrono::OutlierProcessor;
 use chrono_photo::cli::{Cli, CliParsed};
-use chrono_photo::flist::FrameRange;
+use chrono_photo::flist::{FileLister, FrameRange};
 //use chrono_photo::options::{BackgroundMode, OutlierSelectionMode, SelectionMode, Threshold};
+use chrono_photo::options::SelectionMode;
+use chrono_photo::simple::SimpleProcessor;
 use chrono_photo::slicer::{SliceLength, TimeSliceError, TimeSlicer};
 use chrono_photo::streams::{Compression, ImageStream};
 use image::flat::SampleLayout;
@@ -35,8 +37,43 @@ fn main() {
         debug: true,
     };*/
 
-    let mut args: CliParsed = Cli::from_args().parse().unwrap();
+    let args: CliParsed = Cli::from_args().parse().unwrap();
 
+    if args.mode == SelectionMode::Outlier {
+        run_outliers(args);
+    } else {
+        run_simple(args);
+    }
+
+    println!("Total time: {:?}", start.elapsed());
+}
+
+fn run_simple(mut args: CliParsed) {
+    let lister = FileLister::new(&args.pattern, &args.frames);
+    let files = lister.files_vec().expect(&format!(
+        "Unable to process search pattern {:?}",
+        &args.pattern
+    ));
+
+    // Process to video or image
+    if args.video_in.is_some() || args.video_out.is_some() {
+        // Fill missing video range
+        if args.video_in.is_some() {
+            if args.video_out.is_none() {
+                args.video_out = Some(FrameRange::empty());
+            }
+        } else if args.video_out.is_some() {
+            args.video_in = Some(FrameRange::empty());
+        }
+        // Process to video
+        create_video_simple(&args, &files[..]);
+    } else {
+        // Process to image
+        create_frame_simple(&args, &files[..], None, &args.output);
+    }
+}
+
+fn run_outliers(mut args: CliParsed) {
     // Determine temp directory
     if args.temp_dir.is_none() {
         let mut dir = std::env::temp_dir();
@@ -111,8 +148,6 @@ fn main() {
         }
     }
     bar.finish_and_clear();
-
-    println!("Total time: {:?}", start.elapsed());
 }
 
 fn create_video(args: &CliParsed, files: &[PathBuf], layout: &SampleLayout, image_count: usize) {
@@ -212,6 +247,84 @@ fn create_video(args: &CliParsed, files: &[PathBuf], layout: &SampleLayout, imag
     }
 }
 
+fn create_video_simple(args: &CliParsed, files: &[PathBuf]) {
+    let video = &args
+        .video_out
+        .as_ref()
+        .expect("Video frame range required (`--video-out`)");
+    let frames = &args
+        .video_in
+        .as_ref()
+        .expect("Per-frame frame range required (`--video-in`)");
+
+    let v_lower = match video.start() {
+        Some(start) => start,
+        None => {
+            if let Some(r) = frames.range() {
+                -r + 1
+            } else {
+                0
+            }
+        }
+    };
+
+    let v_upper = match video.end() {
+        Some(end) => end,
+        None => files.len() as i32,
+    };
+
+    let mut indices = Vec::new();
+    let mut frame = v_lower;
+    while frame < v_upper {
+        let start = match frames.start() {
+            Some(s) => {
+                let mut st = frame + s;
+                while st < 0 {
+                    st += frames.step() as i32
+                }
+                cmp::max(st % frames.step() as i32, frame + s)
+            }
+            None => 0,
+        };
+        let end = match frames.end() {
+            Some(e) => cmp::min(
+                files.len() as i32 + (frame + e) % frames.step() as i32 - frames.step() as i32,
+                frame + e,
+            ),
+            None => files.len() as i32,
+        };
+
+        indices.clear();
+        let mut f = start;
+        while f < end {
+            indices.push(f as usize);
+            f += frames.step() as i32;
+        }
+        if !indices.is_empty() {
+            let (name, ext) = name_and_extension(&args.output)
+                .expect(&format!("Unexpected format in {:?}", &args.output));
+
+            let mut output = args
+                .output
+                .parent()
+                .expect(&format!("Unexpected format in {:?}", &args.output))
+                .to_path_buf();
+            output.push(&format!("{}-{:05}.{}", name, frame - v_lower, ext));
+
+            print!(
+                "Processing frame {}/{} -> ",
+                frame - v_lower,
+                v_upper - v_lower
+            );
+            create_frame_simple(&args, &files, Some(&indices[..]), &output);
+        } else {
+            println!("Skipping frame {}/{}", frame - v_lower, v_upper - v_lower);
+        }
+
+        frame += video.step() as i32;
+    }
+}
+
 fn name_and_extension(path: &PathBuf) -> Option<(String, String)> {
     let stem = path.file_stem();
     if stem.is_none() {
@@ -244,7 +357,7 @@ fn create_frame(
     output_blend: &Option<PathBuf>,
 ) {
     // Process time slices
-    let processor = ChronoProcessor::new(
+    let processor = OutlierProcessor::new(
         args.mode.clone(),
         args.threshold.clone(),
         args.background.clone(),
@@ -269,6 +382,24 @@ fn create_frame(
     if let Some(out) = &output_blend {
         save_image(&is_outlier, &layout, &out, args.quality);
     }
+}
+
+fn create_frame_simple(
+    args: &CliParsed,
+    files: &[PathBuf],
+    image_indices: Option<&[usize]>,
+    output: &PathBuf,
+) {
+    // Process time slices
+    let processor = SimpleProcessor::new(
+        args.weights.clone(),
+        args.fade.clone(),
+        args.mode == SelectionMode::Darker,
+    );
+    let (buff, layout) = processor.process(files, image_indices).unwrap();
+
+    println!("Saving output... ");
+    save_image(&buff, &layout, &output, args.quality);
 }
 
 fn save_image(buffer: &[u8], layout: &SampleLayout, out_path: &PathBuf, quality: u8) {

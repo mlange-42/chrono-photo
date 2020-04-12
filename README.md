@@ -61,6 +61,17 @@ For more options, see [Command line options](#command-line-options).
 
 ## How it works
 
+The basic algorithm to use is selected by option `--mode`.
+
+Three different modes are available: `darker`, `lighter` and `outlier`. 
+The first two modes simply select the darkest or brightest value found for a certain pixel among all images.
+Calculations are very fast, but control over the result is limited.
+
+The core algorithm of this tool, which is explained in detail below,
+is based on outlier detection (`--mode outlier`).
+This method offers great control over the result and can handle a far wider range of scenarios.
+However, it is also computationally more expensive.
+
 The principle idea is to stack all images to be processes, and analyze the entire stack pixel by pixel
 (but see also section [Technical realization](#technical-realization)).
 

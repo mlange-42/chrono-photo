@@ -42,11 +42,12 @@ pub struct Cli {
     #[structopt(short, long, value_name = "path")]
     output: String,
 
-    /// Temp directory. Optional, default system temp directory.
+    /// Temp directory. Used with `--mode outlier` only. Optional, default system temp directory.
     #[structopt(short = "d", long, name = "temp-dir", value_name = "path")]
     temp_dir: Option<String>,
 
     /// Path of output image showing which pixels are outliers (blend value).
+    /// Used with `--mode outlier` only.
     #[structopt(long, name = "output-blend", value_name = "path")]
     output_blend: Option<String>,
 
@@ -55,18 +56,24 @@ pub struct Cli {
     mode: Option<SelectionMode>,
 
     /// Outlier threshold mode (abs|rel)/<lower>[/<upper>]. Optional, default 'abs/0.05/0.2'.
+    /// Used with `--mode outlier` only.
     #[structopt(short, long, value_name = "thresh")]
     threshold: Option<Threshold>,
 
     /// Background pixel selection mode (first|random|average|median). Optional, default 'random'.
+    /// Used with `--mode outlier` only.
     #[structopt(short, long, value_name = "bg")]
     background: Option<BackgroundMode>,
 
-    /// Outlier selection mode in case more than one outlier is found (first|last|extreme|average|forward|backward). Optional, default 'extreme'.
+    /// Outlier selection mode in case more than one outlier is found
+    /// (first|last|extreme|average|forward|backward). Optional, default 'extreme'.
+    /// Used with `--mode outlier` only.
     #[structopt(short = "l", long, value_name = "mode")]
     outlier: Option<OutlierSelectionMode>,
 
-    /// Compression mode and level (0 to 9) for time slices (gzip|zlib|deflate)[/<level>]. Optional, default 'gzip/6'.
+    /// Compression mode and level (0 to 9) for time slices (gzip|zlib|deflate)[/<level>].
+    /// Used with `--mode outlier` only.
+    /// Optional, default 'gzip/6'.
     #[structopt(short, long, value_name = "comp/lev")]
     compression: Option<Compression>,
 
@@ -74,11 +81,15 @@ pub struct Cli {
     #[structopt(short, long)]
     quality: Option<u8>,
 
-    /// Controls slicing to temp files (rows|pixels|count)/<number>. Optional, default 'rows/4'.
+    /// Controls slicing to temp files (rows|pixels|count)/<number>.
+    /// Used with `--mode outlier` only.
+    /// Optional, default 'rows/4'.
     #[structopt(short, long)]
     slice: Option<SliceLength>,
 
-    /// Restricts calculation of median and inter-quartile range to a sub-sample of input images. Use for large amounts of images to speed up calculations. Optional.
+    /// Restricts calculation of median and inter-quartile range to a sub-sample of input images.
+    /// Use for large amounts of images to speed up calculations. Optional.
+    /// Used with `--mode outlier` only.
     #[structopt(long)]
     sample: Option<usize>,
 

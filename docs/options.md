@@ -40,13 +40,17 @@ Examples:
 
 #### `--output-blend`
 
-_Optional._ Output path for the greyscale image showing the algorithm's outlier detections. See [`--output`](#--output) for details.
+_Optional, used with `--mode outlier` only._
+
+Output path for the greyscale image showing the algorithm's outlier detections. See [`--output`](#--output) for details.
 
 _Default:_ No output of outlier image.
 
 #### `--temp-dir`
 
-_Optional._ Temporary directory for storing time slice files. 
+_Optional, used with `--mode outlier` only._
+
+Temporary directory for storing time slice files. 
 Files are delected after processing, while the directory is not. 
 If the directory does not exist, but the parent directory exists, it is created.
 If the parent directory does not exist, the program exits with an error.
@@ -110,7 +114,9 @@ _Default:_ `abs/0.05/0.2`
 
 #### `--outlier`
 
-_Optional._ Outlier selection mode. Determines how selection between multiple outliers is performed.
+_Optional, used with `--mode outlier` only._
+
+Outlier selection mode. Determines how selection between multiple outliers is performed.
 
 This parameter is particularly useful when several movement trails overlap,
 or when a moving object is relatively slow compared to the recording frame rate, and thus overlaps itself. 
@@ -126,7 +132,9 @@ _Default:_ `extreme`
 
 #### `--background`
 
-_Optional._ Background color selection mode. Determines how selection between non-outlier colors is performed.
+_Optional, used with `--mode outlier` only._
+
+Background color selection mode. Determines how selection between non-outlier colors is performed.
 
 * `random`: Use a randomly selected pixel value, selected among all non-outlier images. The default value, but may result in a noisy image.
 * `first`: Use the pixel value from the first non-outlier image.
@@ -217,7 +225,9 @@ _Default:_ No video output, or `././.` if `--video-in` is specified.
 
 #### `--sample`
 
-_Optional._ Specifies a sample count to reduce the number of images used for calculation of per-pixel median
+_Optional, used with `--mode outlier` only._
+
+Specifies a sample count to reduce the number of images used for calculation of per-pixel median
 and (if required) quartiles.
 
 This option is particularly useful to speed up calculations when processing large numbers of images (thousands).
@@ -226,7 +236,9 @@ _Default:_ No sampling, use all images.
 
 #### `--compression`
 
-_Optional._ Compression method and level for temporary time slice files. 
+_Optional, used with `--mode outlier` only._
+
+Compression method and level for temporary time slice files. 
 Format `(gzip|zlib|deflate)[/<level>]`. 
 Levels range from 0 (no compression) to 9 (slowest).
 
@@ -234,7 +246,9 @@ _Default:_ `gzip/6`
 
 #### `--slice`
 
-_Optional._ Time-slicing in the format `(rows|pixels|count)/<number>`.
+_Optional, used with `--mode outlier` only._
+
+Time-slicing in the format `(rows|pixels|count)/<number>`.
 
 _Default:_ `rows/4` (should be sufficient for most scenarios)
 

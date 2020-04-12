@@ -29,7 +29,7 @@ struct ThreadData {
 
 /// Core processor for image analysis.
 /// Analysis is based on files as created by [`TimeSlicer`](./time_slice/struct.TimeSlicer.html).
-pub struct ChronoProcessor {
+pub struct OutlierProcessor {
     mode: SelectionMode,
     threshold: Threshold,
     background: BackgroundMode,
@@ -42,7 +42,7 @@ pub struct ChronoProcessor {
     data: ThreadData,
 }
 
-impl ChronoProcessor {
+impl OutlierProcessor {
     /// Creates a new image processor.
     pub fn new(
         mode: SelectionMode,
@@ -54,7 +54,7 @@ impl ChronoProcessor {
         compression: Compression,
         sample_count: Option<usize>,
     ) -> Self {
-        ChronoProcessor {
+        OutlierProcessor {
             mode,
             threshold,
             background: bg_mode,
@@ -678,13 +678,13 @@ impl ChronoProcessor {
 
 #[cfg(test)]
 mod test {
-    use crate::chrono::ChronoProcessor;
+    use crate::chrono::OutlierProcessor;
 
     #[test]
     fn quartiles_test() {
         let values = [0, 1, 2, 3, 4, 5, 6];
-        println!("{:?}", ChronoProcessor::quartiles(&values));
+        println!("{:?}", OutlierProcessor::quartiles(&values));
 
-        assert_eq!(ChronoProcessor::quartiles(&values), (1.0, 3.0, 5.0))
+        assert_eq!(OutlierProcessor::quartiles(&values), (1.0, 3.0, 5.0))
     }
 }
