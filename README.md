@@ -46,18 +46,18 @@ from photo series or ([later](#how-to-prepare-videos)) video footage.
 
 ## Examples
 
-_Note 1:_ The ^ at the end of each line is required for breaking commands into multiple lines (at least on Windows).
-
-_Note 2:_ You can copy the chrono-photo executable anywhere to use it with convenient paths,
-in case adding it to the PATH environmental variable is not an option. 
-No further files from the installation directory are required to run chrono-photo.
-
 Minimal example:
 ```
 chrono-photo ^
   --pattern "input/image-*.jpg" ^
   --output output/out.jpg
 ```
+
+> _Note 1:_ The ^ at the end of each line is required for breaking commands into multiple lines (at least on Windows).
+
+> _Note 2:_ You can copy the chrono-photo executable anywhere to use it with convenient paths,
+in case adding it to the PATH environmental variable is not an option. 
+No further files from the installation directory are required to run chrono-photo.
 
 For more options, see [Command line options](#command-line-options).
 
