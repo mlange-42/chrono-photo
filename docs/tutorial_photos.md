@@ -9,13 +9,13 @@ This tutorial explains how to use `chrono-photo` to create a chronophotography f
 We assume that you have such an image sequence ready, e.g. obtained by following the tutorials linked above.
 
 File extensions are for Windows. On Linux or Mac OSX, they need to be adapted accordingly.
-Particularly Windows batch files (`.bat`) have to replaces by Unix shell scripts (`.sh`). 
+Particularly Windows batch files (`.bat`) need to be replaces by Unix shell scripts (`.sh`). 
 
 For detailed explanation of all available options, see the [Command line options](options.md) documentation file.
 
 ## Working directory
 
-We further assume the following structure for your working directory:
+For this tutorial, we assume the following structure for your working directory:
 ```
 root/
 ├── images/
@@ -25,7 +25,7 @@ root/
 ├── output/
 └── chrono-photo.exe
 ``` 
-_Note:_ You can copy the `chrono-photo` executable anywhere for use with convenient paths.
+> _Note:_ You can copy the `chrono-photo` executable anywhere for use with convenient paths.
 No further files from the installation directory are required.
 
 The above structure is not required, we assume it just for convenient command line usage.
@@ -35,19 +35,19 @@ E.g., input images and output folder can be in completely different locations.
 
 We start by processing the images using standard parameters. 
 
-In `root/`, create a file `example-01.bat` and copy the following command there:
+In `root/`, create a file `example-01.bat` and copy the following lines there:
 ```
 chrono-photo ^
   --pattern "images/*.jpg" ^
   --output output/out.jpg
 ```
-Here, we only specify the search pattern for input files and the output file path.
+Here, we only specify the search pattern for input files, as well as the output file path.
 
 > _Note:_ The ^ at the end of each line is required for breaking commands into multiple lines (at least on Windows).
 
 Run the file from directory `root/`:
 ```
-C:\...\root> example-01
+C:\...\root>example-01
 ```
 
 ## Simple algorithm for large projects
@@ -69,7 +69,7 @@ chrono-photo ^
   --debug
 ```
 
-This example should complete in approx. 1/10th of the time required for the first example.
+This command should complete in approx. 1/10th of the time required for the first example.
 
 ## Tweaking algorithm parameters
 
