@@ -3,7 +3,7 @@
 Chronophotography command line tool and library in [Rust](https://www.rust-lang.org/).
 
 This tool helps to create chrono-photos like 
-[Xavi Bou's "Ornithographies"](http://www.xavibou.com/) 
+[Xavi Bou's "Ornithographies"](http://www.xavibou.com/index.php/project/ornitographies/) 
 from photo series or ([later](#how-to-prepare-videos)) video footage.
 
 * **[Download binaries](https://github.com/mlange-42/chrono-photo/releases/)**
