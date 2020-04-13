@@ -1,7 +1,7 @@
-# Creating chrono-photos
+# Preparing video material
 
 Before this tutorial, you may want to read
-[Recording material for chrono-photo](tutorial_recording.md) and [Preparing video material](docs/tutorial_prepare.md).
+[Recording material for chrono-photo](tutorial_recording.md).
 
 Next tutorial: [Creating chrono-videos](tutorial_videos.md).
 
