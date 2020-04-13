@@ -10,7 +10,7 @@ from photo series or ([later](#how-to-prepare-videos)) video footage.
 * [Sources on GitHub](https://github.com/mlange-42/chrono-photo)
 
 <p align="center">
-<img src="https://user-images.githubusercontent.com/44003176/77975353-236da480-72fa-11ea-9ff9-5c110895fe5d.jpg" alt="A simple Chronophotography example" width="500" /><br/>
+<img src="https://user-images.githubusercontent.com/44003176/77975353-236da480-72fa-11ea-9ff9-5c110895fe5d.jpg" alt="A simple Chronophotography example" width="750" /><br/>
 <sup><i>A simple Chronophotography example</i></sup>
 </p>
 
@@ -222,7 +222,7 @@ OPTIONS:
 
 ## How to prepare videos
 
-See also [Recording material for chrono-photo](docs/tutorial_recording.md).
+See also the tutorial on [Preparing video material](docs/tutorial_prepare.md).
 
 There is no support for direct video file processing _yet_.
 
