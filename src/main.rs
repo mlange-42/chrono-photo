@@ -469,6 +469,14 @@ fn save_image(buffer: &[u8], layout: &SampleLayout, out_path: &PathBuf, quality:
         .expect("Expects Unicode encoding for output file.")
         .to_lowercase();
 
+    let parent = out_path
+        .parent()
+        .expect(&format!("Not a valid output path: {:?}", out_path));
+    if !parent.is_dir() {
+        std::fs::create_dir(parent)
+            .expect(&format!("Unable to create output directory {:?}", parent));
+    }
+
     if ext == "jpg" || ext == "jpeg" {
         let mut file = File::create(&out_path)
             .expect(&format!("Unable to create output file {:?}.", &out_path));
