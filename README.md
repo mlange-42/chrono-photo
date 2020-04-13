@@ -9,15 +9,16 @@ from photo series or ([later](#how-to-prepare-videos)) video footage.
 * **[Download binaries](https://github.com/mlange-42/chrono-photo/releases/)**
 * [Sources on GitHub](https://github.com/mlange-42/chrono-photo)
 
-_Warning:_ This project is still in an experimental stage. However, the image below shows a proof of concept for the algorithm,
-based on outlier detection (see section [How it works](#how-it-works) for details). 
-
-![A simple Chronophotography example](https://user-images.githubusercontent.com/44003176/77975353-236da480-72fa-11ea-9ff9-5c110895fe5d.jpg)
-<sup>_A simple Chronophotography example_</sup>
+<p align="center">
+<img src="https://user-images.githubusercontent.com/44003176/77975353-236da480-72fa-11ea-9ff9-5c110895fe5d.jpg" alt="A simple Chronophotography example" width="750" /><br/>
+<sup><i>A simple Chronophotography example</i></sup>
+</p>
 
 **Content**
 * [Installation](#installation)
 * [Getting started](#getting-started)
+* [Tutorials](#tutorials)
+* [Examples](#examples)
 * [How it works](#how-it-works)
 * [Command line options](#command-line-options)
 * [How to prepare videos](#how-to-prepare-videos)
@@ -36,19 +37,14 @@ based on outlier detection (see section [How it works](#how-it-works) for detail
 * See [docs/options.md](docs/options.md) for a detailed explanation of all options.
 * See section [How it works](#how-it-works) for an explanation of the algorithm .
 
-### Tutorials (TODO)
+## Tutorials
 
 * [Recording material for chrono-photo](docs/tutorial_recording.md)
+* [Preparing video material](docs/tutorial_prepare.md)
 * [Creating chrono-photos](docs/tutorial_photos.md)
 * [Creating chrono-videos](docs/tutorial_videos.md)
 
-### Examples
-
-_Note 1:_ The ^ at the end of each line is required for breaking commands into multiple lines (at least on Windows).
-
-_Note 2:_ You can copy the chrono-photo executable anywhere to use it with convenient paths,
-in case adding it to the PATH environmental variable is not an option. 
-No further files from the installation directory are required to run chrono-photo.
+## Examples
 
 Minimal example:
 ```
@@ -56,6 +52,12 @@ chrono-photo ^
   --pattern "input/image-*.jpg" ^
   --output output/out.jpg
 ```
+
+> _Note 1:_ The ^ at the end of each line is required for breaking commands into multiple lines (at least on Windows).
+
+> _Note 2:_ You can copy the chrono-photo executable anywhere to use it with convenient paths,
+in case adding it to the PATH environmental variable is not an option. 
+No further files from the installation directory are required to run chrono-photo.
 
 For more options, see [Command line options](#command-line-options).
 
@@ -220,7 +222,7 @@ OPTIONS:
 
 ## How to prepare videos
 
-See also [Recording material for chrono-photo](docs/tutorial_recording.md).
+See also the tutorial on [Preparing video material](docs/tutorial_prepare.md).
 
 There is no support for direct video file processing _yet_.
 
