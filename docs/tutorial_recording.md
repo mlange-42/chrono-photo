@@ -1,6 +1,6 @@
 # Recording material for chrono-photo
 
-Next tutorial: [Creating chrono-photos](tutorial_photos.md).
+Next tutorial: [Preparing video material](tutorial_prepare.md).
 
 This tutorial covers how to record material for use with `chrono-photo`,
 particularly for fast-moving subjects like birds.
@@ -52,6 +52,11 @@ Even with 60 fps, cohesive movement trails may not be possible.
 For larger and slower birds, like birds of prey, goose etc.,
 cohesive trails are more easily achieved.
 
+<p align="center">
+<img src="https://user-images.githubusercontent.com/44003176/79148074-3a65c980-7dc5-11ea-8798-91a817c95600.jpg" alt="Frame rate example with pigeons" width="1024" /><br/>
+<i>Frame rate example: A flock of pigeons at 30 fps (left) and 60 fps (right)</i>
+</p>
+
 The choice of the frame rate is mostly a trade-off between "as much as possible, skip frames later"
 and reduced resolution at higher frame rates.
 
@@ -67,8 +72,9 @@ Typically, standard settings are 1/60s for 30 fps recording, or 1/120s for 60 fp
 For chrono-photography, you most often don't want too much motion blur,
 and these shutter speeds are far to slow.
 
-For recording with 30 fps, shutter speeds of 1/250 or faster are recommended (1/500 for 60 fps). 
-If light conditions allow, 1/1000 of even faster give very few blur even for fast subjects.
+For recording with 30 fps, shutter speeds of 1/250 or faster are recommended (1/500s for 60 fps). 
+If light conditions allow, 1/1000s of even faster give very few blur even for fast subjects.
+For the example image in section [Frame rate](#frame-rate), 1/800s was used.
 
 Not all cameras support manual selection of shutter speed for video,
 and most DSLRs must probably be switched to manual mode.
@@ -84,4 +90,4 @@ This way you can achieve a sharp image even when your subject does not pass in t
 Of course, the decision is a trade-off between wide depth-of-field and high shutter speed
 (see [Shutter speed](#shutter-speed)).
 
-#### To next tutorial: [Creating chrono-photos](tutorial_photos.md)
+#### To next tutorial: [Preparing video material](tutorial_prepare.md)
