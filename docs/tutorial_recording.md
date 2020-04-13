@@ -52,6 +52,11 @@ Even with 60 fps, cohesive movement trails may not be possible.
 For larger and slower birds, like birds of prey, goose etc.,
 cohesive trails are more easily achieved.
 
+<p align="center">
+<img src="https://user-images.githubusercontent.com/44003176/79148074-3a65c980-7dc5-11ea-8798-91a817c95600.jpg" alt="Frame rate example with pigeons" width="1024" /><br/>
+<sup><i>Frame rate example: A flock of pigeons at 30 fps (left) and 60 fps (right)</i></sup>
+</p>
+
 The choice of the frame rate is mostly a trade-off between "as much as possible, skip frames later"
 and reduced resolution at higher frame rates.
 

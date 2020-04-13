@@ -5,7 +5,7 @@ Before this tutorial, you may want to read
 
 Next tutorial: [Creating chrono-photos](tutorial_photos.md)
 
-Currently, `chrono-photo` does not yet direct processing of video files.
+Currently, `chrono-photo` does not yet support direct processing of video files.
 Therefore, videos have to be converted to image sequences using a 3rd party tool.
 
 In this tutorial, video pre-processing to images is described for
