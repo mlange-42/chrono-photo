@@ -3,7 +3,7 @@
 Before this tutorial, you may want to read
 [Recording material for chrono-photo](tutorial_recording.md).
 
-Next tutorial: [Creating chrono-photos](docs/tutorial_photos.md)
+Next tutorial: [Creating chrono-photos](tutorial_photos.md)
 
 Currently, `chrono-photo` does not yet direct processing of video files.
 Therefore, videos have to be converted to image sequences using a 3rd party tool.
@@ -51,8 +51,8 @@ for converting a video to an image sequence using Shortcut.
 
 [VLC media player](https://www.videolan.org/vlc/index.html) offers very basic video to image conversion via the user interface,
 and some more control via the command line. 
-If even more control is required, it is recommended to use Blender (see [With Blender](#with-blender))
-or a dedicated video editing software of your choice.
+If even more control is required, it is recommended to use Blender
+or a dedicated video editing software of your choice (e.g. Shortcut).
 
 Download VLC media player from [here](https://www.videolan.org/vlc/index.html).
 Follow the installation instructions.
@@ -75,4 +75,4 @@ Follow the installation instructions.
 [A short video tutorial](https://www.youtube.com/watch?v=gAw6ZWO7FOY)
 for converting a video to an image sequence using Blender.
 
-#### To next tutorial: [Creating chrono-photos](docs/tutorial_photos.md)
+#### To next tutorial: [Creating chrono-photos](tutorial_photos.md)
