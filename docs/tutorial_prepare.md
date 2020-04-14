@@ -1,9 +1,11 @@
 # Preparing video material
 
-Before this tutorial, you may want to read
+Previous tutorial:
 [Recording material for chrono-photo](tutorial_recording.md).
 
 Next tutorial: [Creating chrono-photos](tutorial_photos.md)
+
+----
 
 Currently, `chrono-photo` does not yet support direct processing of video files.
 Therefore, videos have to be converted to image sequences using a 3rd party tool.
@@ -19,10 +21,20 @@ Actually, this tutorial helps to decide for a tool, and links to respective 3rd 
 
 **Content**
 
+* [General considerations](#general-considerations)
 * [FFmpeg](#ffmpeg)
 * [Shortcut](#shortcut)
 * [VLC media player](#vlc-media-player)
 * [Blender](#blender)
+
+## General considerations
+
+It is recommended to provide `chrono-photo` with only the required frames of the recorded video.
+In most cases, this requires to either cut the video before conversion, or to use a tool that allows for
+conversion of only parts of a video.
+
+However, when working with very few images/frames (< 10), it may be necessary to provide some additional
+frames without the moving subject, from before or after "the action happened".
 
 ## FFmpeg
 
@@ -73,6 +85,10 @@ for converting a video to an image sequence using Blender.
 
 ## Summary
 
-[TODO]
+This tutorial gave an overview over a few open source tools that allow for the conversion
+of videos to image sequences. This step is required,
+as long as `chrono-photo` does not yet support direct video processing.
 
-#### To next tutorial: [Creating chrono-photos](tutorial_photos.md)
+----
+
+#### Next tutorial: [Creating chrono-photos](tutorial_photos.md)
