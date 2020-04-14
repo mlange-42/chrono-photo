@@ -208,6 +208,8 @@ Examples:
                          Requires start and end to be specified in order to work as intended!
 ```
 
+Everything here refer to the frames left _after_ selection through option [`--frames`](#--frames)!
+
 _Default:_ No video output, or `././.` if `--video-out` is specified.
 
 #### `--video-out`
@@ -218,6 +220,8 @@ The actual frame range will most likely be larger, as it is automatically extend
 to cover the per-frame offsets given by option `--video-in`.
 
 In most cases, it is not necessary to set this option and just use `--video-in`.
+
+Everything here refer to the frames left _after_ selection through option [`--frames`](#--frames)!
 
 _Default:_ No video output, or `././.` if `--video-in` is specified.
 

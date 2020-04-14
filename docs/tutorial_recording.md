@@ -90,4 +90,16 @@ This way you can achieve a sharp image even when your subject does not pass in t
 Of course, the decision is a trade-off between wide depth-of-field and high shutter speed
 (see [Shutter speed](#shutter-speed)).
 
+### White balance
+
+In order to avoid color differences between images (of between video frames),
+automatic white balancing (AWB) should be turned **off**.
+Choose a white balancing preset according the light conditions.
+
+This is of particular importance when taking photos rather than videos.
+
+## Summary
+
+[TODO]
+
 #### To next tutorial: [Preparing video material](tutorial_prepare.md)

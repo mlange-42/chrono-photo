@@ -30,7 +30,6 @@ Actually, this tutorial helps to decide for a tool, and links to respective 3rd 
 As such, it is easy to use while offering no graphical user interface.
 
 Download FFmpeg from [here](https://www.ffmpeg.org/).
-Follow the installation instructions.
 
 [A short but sufficient tutorial](https://averagelinuxuser.com/convert-video-to-images-with-ffmpeg-in-linux/)
 for converting a video to an image sequence using FFmpeg.
@@ -42,7 +41,6 @@ Among the altenatives described here, it probably offers the best trade-off betw
 convenience, control, and a flat learning curve.
 
 Download FFmpeg from [here](https://shotcut.org/).
-Follow the installation instructions.
 
 [A short video tutorial](https://www.youtube.com/watch?v=ji2-31r_C2Y)
 for converting a video to an image sequence using Shortcut.
@@ -55,7 +53,6 @@ If even more control is required, it is recommended to use Blender
 or a dedicated video editing software of your choice (e.g. Shortcut).
 
 Download VLC media player from [here](https://www.videolan.org/vlc/index.html).
-Follow the installation instructions.
 
 [A complete tutorial](https://averagelinuxuser.com/video-to-images-with-vlc-media-player/)
 for converting a video to an image sequence using VLC's GUI.
@@ -70,9 +67,12 @@ explains how to do it using VLC via the command line.
 However, Blender is so powerful and feature-rich that it may be overwhelming for people new to it.
 
 Download Blender from [here](https://www.blender.org/).
-Follow the installation instructions.
 
 [A short video tutorial](https://www.youtube.com/watch?v=gAw6ZWO7FOY)
 for converting a video to an image sequence using Blender.
+
+## Summary
+
+[TODO]
 
 #### To next tutorial: [Creating chrono-photos](tutorial_photos.md)
