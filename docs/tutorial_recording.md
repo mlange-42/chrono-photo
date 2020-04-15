@@ -2,16 +2,52 @@
 
 Next tutorial: [Preparing video material](tutorial_prepare.md).
 
+----
+
 This tutorial covers how to record material for use with `chrono-photo`,
 particularly for fast-moving subjects like birds.
 
-Fast subjects require recording videos rather than photos due to the frame rate limitations
+**Content**
+* [Photo or video?](#photo-or-video)
+* [General considerations](#general-considerations)
+* [What you need](#what-you-need)
+* [Camera settings](#camera-settings)
+* [Summary](#summary)
+
+## Photo or video?
+
+### Mostly videos
+
+Fast-moving subjects require recording videos rather than photos due to the frame rate limitations
 when using a camera in still photography mode. 
 So you will unfortunately not be able to take advantage of your DSLR's super-high-resolution sensor.
 
-Best results are obtained by using a 4K video camera. 
-However, the Full HD video resolution offered by most DSLRs is sufficient for producing images
+Best results are obtained by using a 4K video camera.
+However, the Full HD video resolution offered by most DSLRs in video mode is sufficient for producing images
 for screen display or smaller prints.
+
+### Sometimes photos
+
+In some cases, photos may be better suited. Examples are slow subjects,
+or when your aim is an image that shows multiple "clones" of the same person,
+like in the work of [Daisuke Takakura](https://www.lensculture.com/articles/daisuke-takakura-monodramatic).
+
+Working with photos, however, needs particular care (see next section).
+
+## General considerations
+
+In general, it is of primary importance to have a steady camera position.
+Also, a still background with as few motion as possible is desired.
+Requirements for both increase as the time span covered increases.
+Contrary, with a uniform background like a clear sky, requirements are relaxed.
+
+"Clone photography" is probably the use case which requires the greatest care regarding
+a still background and steady camera. 
+The long time span covered as well as the higher resolution compared to video take their toll here.
+Additionally, some manual corrections may be required afterwards.
+
+The following points apply no matter whether photos or videos are recorded,
+but the focus is primarily on video.
 
 ## What you need
 
@@ -90,4 +126,23 @@ This way you can achieve a sharp image even when your subject does not pass in t
 Of course, the decision is a trade-off between wide depth-of-field and high shutter speed
 (see [Shutter speed](#shutter-speed)).
 
-#### To next tutorial: [Preparing video material](tutorial_prepare.md)
+### White balance
+
+In order to avoid color differences between images (or between video frames),
+automatic white balancing (AWB) should be turned **off**.
+Choose a white balancing preset according the light conditions.
+
+This is of particular importance when taking photos rather than videos
+(e.g. "clone photography").
+
+## Summary
+
+We have seen that most points about recording revolve around:
+1. a steady camera with constant settings, and
+1. a shutter speed fitting the subject as well as the intended result
+
+Finally, the usual considerations for recording photos and videos apply.
+
+----
+
+#### Next tutorial: [Preparing video material](tutorial_prepare.md)

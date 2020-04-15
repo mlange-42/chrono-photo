@@ -1,9 +1,11 @@
 # Creating chrono-photos
 
-Before this tutorial, you may want to read
+Previous tutorials:
 [Recording material for chrono-photo](tutorial_recording.md) and [Preparing video material](tutorial_prepare.md).
 
 Next tutorial: [Creating chrono-videos](tutorial_videos.md).
+
+----
 
 This tutorial explains how to use `chrono-photo` to create a chronophotography from an image sequence.
 We assume that you have such an image sequence ready, e.g. obtained by following the tutorials linked above.
@@ -12,6 +14,13 @@ File extensions are for Windows. On Linux or Mac OSX, they need to be adapted ac
 Particularly Windows batch files (`.bat`) need to be replaces by Unix shell scripts (`.sh`). 
 
 For detailed explanation of all available options, see the [Command line options](options.md) documentation file.
+
+**Content**
+* [Working directory](#working-directory)
+* [Most simple command](#most-simple-command)
+* [Fast algorithm for large projects](#fast-algorithm-for-large-projects)
+* [Tweaking algorithm parameters](#tweaking-algorithm-parameters)
+* [Summary](#summary)
 
 ## Working directory
 
@@ -31,7 +40,7 @@ No further files from the installation directory are required.
 The above structure is not required, we assume it just for convenient command line usage.
 E.g., input images and output folder can be in completely different locations.
 
-## First attempt
+## Most simple command
 
 We start by processing the images using standard parameters. 
 
@@ -50,7 +59,7 @@ Run the file from directory `root/`:
 C:\...\root>example-01
 ```
 
-## Simple algorithm for large projects
+## Fast algorithm for large projects
 
 For large projects with a lot of input images, it is recommended to start with the faster simple algorithm
 by adding `--mode darker` or `--mode lighter`. 
@@ -73,6 +82,33 @@ This command should complete in approx. 1/10th of the time required for the firs
 
 ## Tweaking algorithm parameters
 
-[In progress]
+We return to the default algorithm by using `--mode outlier`, or just omitting `--mode`.
 
-#### To next tutorial: [Creating chrono-videos](tutorial_videos.md)
+Further, we add a few more options:
+```
+chrono-photo ^
+  --pattern "images/*.jpg" ^
+  --output output/out.jpg ^
+  --output-blend output/out-blend.jpg ^
+  --mode outlier ^
+  --threshold abs/0.05/0.2 ^
+  --background random ^
+  --outlier extreme ^
+  --debug
+```
+
+Here, `--output-blend` creates a debug image showing the "algorithm's view" of the images, in greyscale.
+
+The next four option specify the algorithm and is't details:
+We want to use the outlier algorithm, with an "absolute" threshold range
+(actually, it is relative to total color range 0 - 255).
+Selection between background pixels will be done randomly,
+while the most extreme outlier is selected in case outliers are found.
+
+## Summary
+
+[TODO]
+
+----
+
+#### Next tutorial: [Creating chrono-videos](tutorial_videos.md)
