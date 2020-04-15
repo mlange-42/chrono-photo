@@ -22,10 +22,12 @@ Actually, this tutorial helps to decide for a tool, and links to respective 3rd 
 **Content**
 
 * [General considerations](#general-considerations)
-* [FFmpeg](#ffmpeg)
-* [Shortcut](#shortcut)
-* [VLC media player](#vlc-media-player)
-* [Blender](#blender)
+* [Tools](#tools)
+  * [FFmpeg](#ffmpeg)
+  * [Shortcut](#shortcut)
+  * [VLC media player](#vlc-media-player)
+  * [Blender](#blender)
+* [Summary](#summary)
 
 ## General considerations
 
@@ -36,7 +38,9 @@ conversion of only parts of a video.
 However, when working with very few images/frames (< 10), it may be necessary to provide some additional
 frames without the moving subject, from before or after "the action happened".
 
-## FFmpeg
+## Tools
+
+### FFmpeg
 
 [FFmpeg](https://www.ffmpeg.org/) is a command line application for video processing.
 As such, it is easy to use while offering no graphical user interface.
@@ -46,7 +50,7 @@ Download FFmpeg from [here](https://www.ffmpeg.org/).
 [A short but sufficient tutorial](https://averagelinuxuser.com/convert-video-to-images-with-ffmpeg-in-linux/)
 for converting a video to an image sequence using FFmpeg.
 
-## Shortcut
+### Shortcut
 
 [Shortcut](https://shotcut.org/) is an open source video editing and cutting software.
 Among the altenatives described here, it probably offers the best trade-off between
@@ -57,7 +61,7 @@ Download FFmpeg from [here](https://shotcut.org/).
 [A short video tutorial](https://www.youtube.com/watch?v=ji2-31r_C2Y)
 for converting a video to an image sequence using Shortcut.
 
-## VLC media player
+### VLC media player
 
 [VLC media player](https://www.videolan.org/vlc/index.html) offers very basic video to image conversion via the user interface,
 and some more control via the command line. 
@@ -72,7 +76,7 @@ for converting a video to an image sequence using VLC's GUI.
 Section 3 of [this post](https://www.raymond.cc/blog/extract-video-frames-to-images-using-vlc-media-player/)
 explains how to do it using VLC via the command line.
 
-## Blender
+### Blender
 
 [Blender](https://www.blender.org/) is a full-featured 3D creation software, but it also has a powerful
 "Video Sequencer", which we will use here.
