@@ -31,7 +31,7 @@ from photo series or ([later](#how-to-prepare-videos)) video footage.
 
 ## Getting started
 
-* Try the example batch files in sub-directory [/cmd_examples](/cmd_examples)
+* Try the example batch files in sub-directory [/cmd_examples](https://github.com/mlange-42/chrono-photo/tree/master/cmd_examples)
 (run `create-test-data` before to generate the required example data). 
 * See section [Command line options](#command-line-options) or run `chrono-photo --help` to view the full list of options.
 * See [docs/options.md](docs/options.md) for a detailed explanation of all options.
