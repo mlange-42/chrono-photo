@@ -13,6 +13,8 @@
   * [--shake](#--shake) &nbsp; [--shake-anchors](#--shake-anchors)
 * [Performance](#performance)
   * [--threads](#--threads) &nbsp; [--video-threads](#--video-threads) &nbsp; [--sample](#--sample) &nbsp; [--compression](#--compression) &nbsp; [--slice](#--slice)
+* [Misc](#misc)
+  * [--debug](#--debug) &nbsp; [--wait](#--wait)
 
 ## Input and output
 
@@ -331,3 +333,15 @@ Examples:
 --slice count/100      -> Internally determines the amount of data written, in order to create 
                           a total of 100 time slices.
 ```
+
+## Misc
+
+#### `--debug`
+
+_Optional._ Switch to print the parsed command line arguments for debugging.
+
+#### `--wait`
+
+_Optional._ Switch to keep the terminal open and wait for user key press.
+Useful when running a `.bat`, `.sh` or `.chrono` file by double click,
+to let the user check for errors.

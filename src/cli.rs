@@ -6,6 +6,7 @@ use crate::slicer::SliceLength;
 use crate::streams::Compression;
 use core::fmt;
 use std::path::PathBuf;
+use std::str::FromStr;
 use structopt::StructOpt;
 
 /// Command-line tool for combining images into a single chrono-photograph or chrono-video.
@@ -44,7 +45,7 @@ pub struct Cli {
     output: String,
 
     /// Temp directory. Used with `--mode outlier` only. Optional, default system temp directory.
-    #[structopt(short = "d", long, name = "temp-dir", value_name = "path")]
+    #[structopt(long, name = "temp-dir", value_name = "path")]
     temp_dir: Option<String>,
 
     /// Path of output image showing which pixels are outliers (blend value).
@@ -95,7 +96,7 @@ pub struct Cli {
     sample: Option<usize>,
 
     /// Color channel weights (4 values: RGBA) for distance calculation. Optional, default '1 1 1 1'.
-    #[structopt(long, short, number_of_values = 4, value_name = "w")]
+    #[structopt(long, number_of_values = 4, value_name = "w")]
     weights: Option<Vec<f32>>,
 
     /// Frame fading. Optional, default None. Format: (clamp|repeat)/(abs|rel)/(f1,v1)/(f2,v2)[/(f,v)...]
@@ -120,9 +121,13 @@ pub struct Cli {
     #[structopt(long, name = "shake-anchors", value_name = "x/y")]
     shake_anchors: Option<Vec<ShakeAnchor>>,
 
-    /// Print debug information (i.e. parsed cmd parameters).
-    #[structopt(long)]
+    /// Prints debug information (i.e. parsed cmd parameters) before processing.
+    #[structopt(long, short)]
     debug: bool,
+
+    /// Keeps the terminal open after processing and wait for user key press.
+    #[structopt(long, short)]
+    wait: bool,
 }
 
 impl Cli {
@@ -216,6 +221,7 @@ impl Cli {
                 })
             }),
             debug: self.debug,
+            wait: self.wait,
         };
 
         if !warings.is_empty() {
@@ -227,6 +233,28 @@ impl Cli {
         }
 
         out.validate()
+    }
+}
+
+impl FromStr for Cli {
+    type Err = ParseCliError;
+
+    fn from_str(str: &str) -> Result<Self, Self::Err> {
+        let quote_parts: Vec<_> = str.split('"').collect();
+        let mut args: Vec<String> = vec![];
+        for (i, part) in quote_parts.iter().enumerate() {
+            let part = part.trim();
+            if i % 2 == 0 {
+                args.extend(
+                    part.split(' ')
+                        .map(|s| s.trim().to_string())
+                        .filter(|s| !s.is_empty()),
+                );
+            } else {
+                args.push(part.to_string());
+            }
+        }
+        Ok(Cli::from_iter(args.iter()))
     }
 }
 
@@ -279,6 +307,9 @@ pub struct CliParsed {
     pub shake_reduction: Option<ShakeReduction>,
     /// Print debug information (i.e. parsed cmd parameters).
     pub debug: bool,
+
+    /// Keep the terminal open after processing and wait for user key press.
+    pub wait: bool,
 }
 
 impl CliParsed {
@@ -294,5 +325,19 @@ pub struct ParseCliError(String);
 impl fmt::Display for ParseCliError {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         self.0.fmt(f)
+    }
+}
+
+#[cfg(test)]
+mod test {
+    use crate::cli::Cli;
+
+    #[test]
+    fn args_from_string() {
+        let str = "chrono-photo --pattern \"test_data/generated/*.jpg\" --output test_data/temp --weights 0 1 1 0";
+        let cli: Cli = str.parse().unwrap();
+        let parsed = cli.parse().unwrap();
+
+        //println!("{:#?}", parsed);
     }
 }

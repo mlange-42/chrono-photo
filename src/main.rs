@@ -10,11 +10,11 @@ use chrono_photo::streams::{Compression, ImageStream};
 use image::flat::SampleLayout;
 use indicatif::ProgressBar;
 use rayon::prelude::*;
-use std::cmp;
 use std::fs::File;
 use std::option::Option::Some;
 use std::path::PathBuf;
 use std::time::Instant;
+use std::{cmp, env, fs, io};
 use structopt::StructOpt;
 
 fn main() {
@@ -44,8 +44,18 @@ fn main() {
         shake_reduction: Some(ShakeReduction::new(vec![(772, 971), (1109, 539)], 10, 20)),
         debug: true,
     };*/
-
-    let args: CliParsed = Cli::from_args().parse().unwrap();
+    let args: Vec<String> = env::args().collect();
+    let mut args: CliParsed = if args.len() == 2 && !args[1].starts_with('-') {
+        let mut content = fs::read_to_string(&args[1]).expect(&format!(
+            "Something went wrong reading the options file {:?}",
+            &args[1]
+        ));
+        content = "chrono-photo ".to_string() + &content.replace("\r\n", " ").replace("\n", " ");
+        let cli: Cli = content.parse().unwrap();
+        cli.parse().unwrap()
+    } else {
+        Cli::from_args().parse().unwrap()
+    };
 
     if args.debug {
         println!("{:#?}", args);
@@ -89,15 +99,20 @@ fn main() {
     }
 
     if args.mode == SelectionMode::Outlier {
-        run_outliers(args, &crop);
+        run_outliers(&mut args, &crop);
     } else {
-        run_simple(args, &crop);
+        run_simple(&mut args, &crop);
     }
 
     println!("Total time: {:?}", start.elapsed());
+
+    if args.wait {
+        println!("Press enter to continue...");
+        io::stdin().read_line(&mut String::new()).unwrap();
+    }
 }
 
-fn run_simple(mut args: CliParsed, crop: &Option<Vec<Crop>>) {
+fn run_simple(args: &mut CliParsed, crop: &Option<Vec<Crop>>) {
     let lister = FileLister::new(&args.pattern, &args.frames);
     let files = lister.files_vec().expect(&format!(
         "Unable to process search pattern {:?}",
@@ -122,7 +137,7 @@ fn run_simple(mut args: CliParsed, crop: &Option<Vec<Crop>>) {
     }
 }
 
-fn run_outliers(mut args: CliParsed, crop: &Option<Vec<Crop>>) {
+fn run_outliers(args: &mut CliParsed, crop: &Option<Vec<Crop>>) {
     // Determine temp directory
     if args.temp_dir.is_none() {
         let mut dir = std::env::temp_dir();
