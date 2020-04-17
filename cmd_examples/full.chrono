@@ -13,3 +13,4 @@
 --sample 20
 --weights 1 1 1 0
 --debug
+--wait

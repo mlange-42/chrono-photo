@@ -14,7 +14,7 @@ use std::fs::File;
 use std::option::Option::Some;
 use std::path::PathBuf;
 use std::time::Instant;
-use std::{cmp, env, fs};
+use std::{cmp, env, fs, io};
 use structopt::StructOpt;
 
 fn main() {
@@ -45,7 +45,7 @@ fn main() {
         debug: true,
     };*/
     let args: Vec<String> = env::args().collect();
-    let args: CliParsed = if args.len() == 2 && !args[1].starts_with('-') {
+    let mut args: CliParsed = if args.len() == 2 && !args[1].starts_with('-') {
         let mut content = fs::read_to_string(&args[1]).expect(&format!(
             "Something went wrong reading the options file {:?}",
             &args[1]
@@ -99,15 +99,20 @@ fn main() {
     }
 
     if args.mode == SelectionMode::Outlier {
-        run_outliers(args, &crop);
+        run_outliers(&mut args, &crop);
     } else {
-        run_simple(args, &crop);
+        run_simple(&mut args, &crop);
     }
 
     println!("Total time: {:?}", start.elapsed());
+
+    if args.wait {
+        println!("Press enter to continue...");
+        io::stdin().read_line(&mut String::new()).unwrap();
+    }
 }
 
-fn run_simple(mut args: CliParsed, crop: &Option<Vec<Crop>>) {
+fn run_simple(args: &mut CliParsed, crop: &Option<Vec<Crop>>) {
     let lister = FileLister::new(&args.pattern, &args.frames);
     let files = lister.files_vec().expect(&format!(
         "Unable to process search pattern {:?}",
@@ -132,7 +137,7 @@ fn run_simple(mut args: CliParsed, crop: &Option<Vec<Crop>>) {
     }
 }
 
-fn run_outliers(mut args: CliParsed, crop: &Option<Vec<Crop>>) {
+fn run_outliers(args: &mut CliParsed, crop: &Option<Vec<Crop>>) {
     // Determine temp directory
     if args.temp_dir.is_none() {
         let mut dir = std::env::temp_dir();
