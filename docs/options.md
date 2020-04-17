@@ -342,6 +342,6 @@ _Optional._ Switch to print the parsed command line arguments for debugging.
 
 #### `--wait`
 
-_Optional._ Switch keep the terminal open and wait for user key press.
+_Optional._ Switch to keep the terminal open and wait for user key press.
 Useful when running a `.bat`, `.sh` or `.chrono` file by double click,
 to let the user check for errors.
