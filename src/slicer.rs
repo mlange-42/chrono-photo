@@ -117,7 +117,7 @@ where
 
         let mut files: Option<Vec<(usize, PathBuf)>> = None;
 
-        let mut total_bytes = 0;
+        let mut total_bytes: u32 = 0;
         let mut total_files = 0;
         println!("Time-slicing {} images", size_hint);
         let bar = ProgressBar::new(size_hint as u64);
@@ -174,7 +174,7 @@ where
             let num_sample = pix.samples.len();
             //for (row, stream) in out_streams.as_mut().unwrap().iter_mut().enumerate() {
             /*for (row, path) in */
-            total_bytes = files
+            total_bytes += files
                 .as_ref()
                 .unwrap()
                 .par_iter()
@@ -193,7 +193,7 @@ where
                             stream.path()
                         ))
                 })
-                .sum();
+                .sum::<usize>() as u32;
             count += 1;
         }
         bar.finish_and_clear();

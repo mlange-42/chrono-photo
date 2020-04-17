@@ -147,7 +147,14 @@ impl Crop {
                 offset
                     .iter()
                     .map(|(dx, dy)| {
-                        Crop::new((xmax - dx) as u32, (ymax - dy) as u32, w as u32, h as u32)
+                        //println!("{}-{}, {}-{}, {:?}", xmin, xmax, ymin, ymax, (dx, dy));
+                        //println!("-> {:?}", (((-xmin) + *dx), ((-ymin) + *dy)));
+                        Crop::new(
+                            ((-xmin) + *dx) as u32,
+                            ((-ymin) + *dy) as u32,
+                            w as u32,
+                            h as u32,
+                        )
                     })
                     .collect(),
             )
@@ -290,9 +297,9 @@ impl ShakeAnalyzer {
         }
         for (i, (cx, cy)) in anchors.iter().enumerate() {
             let win = &windows[(i * win_len)..(i * win_len + win_len)];
-            for ox in 0..search_size {
-                for oy in 0..search_size {
-                    let diff_idx = (ox * search_size + oy) as i32;
+            for oy in 0..search_size {
+                for ox in 0..search_size {
+                    let diff_idx = (oy * search_size + ox) as i32;
                     for dy in 0..size {
                         let yy = *cy + (oy - search_radius as i32) + dy - anchor_radius as i32;
                         for dx in 0..size {
