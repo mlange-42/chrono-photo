@@ -238,6 +238,8 @@ Thus, the output image will be slightly smaller than the input images.
 #### `--shake`
 
 _Optional._ Shake anchor radius and search radius in format `anchor-radius/search-radius`.
+
+Example:
 ```
 --shake 10/5
 ```
@@ -255,6 +257,7 @@ Also, anchors should not be occluded by a moving object in any image of the sequ
 Use an image editing software to get the exact pixel coordinates.
 Origin is the top-left corner of the image.
 
+Example:
 ```
 --shake-anchors 1234/789 2345/890
 ```
