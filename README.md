@@ -173,7 +173,7 @@ Use `chrono-photo -h`     for help, or
     `chrono-photo --help` for more detailed help.
 
 For more documentation and explanation of the algorithm, see the GitHub repository:
-     https://github.com/mlange-42/chrono-photo
+     https://mlange-42.github.io/chrono-photo/
 
 USAGE:
     chrono-photo [FLAGS] [OPTIONS] --output <path> --pattern <pattern>
