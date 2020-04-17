@@ -46,6 +46,10 @@ a still background and steady camera.
 The long time span covered as well as the higher resolution compared to video take their toll here.
 Additionally, some manual corrections may be required afterwards.
 
+As a fallback, `chrono-photo` provides optional camera shake reduction. 
+For details, see section [Camera shake reduction](options.md#camera-shake-reduction)
+in the options' documentation.
+
 The following points apply no matter whether photos or videos are recorded,
 but the focus is primarily on video.
 

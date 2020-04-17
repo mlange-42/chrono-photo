@@ -113,11 +113,11 @@ pub struct Cli {
 
     /// Camera shake reduction parameters. Optional, default none.
     /// Format: `anchor-radius/shake-radius`
-    #[structopt(long)]
+    #[structopt(long, value_name = "r1/r2")]
     shake: Option<ShakeParams>,
 
     /// Camera shake reduction anchors. Optional, default none. Format: `x1/y1 [x2/y2 [...]]`
-    #[structopt(long, name = "shake-anchors", value_name = "anchor")]
+    #[structopt(long, name = "shake-anchors", value_name = "x/y")]
     shake_anchors: Option<Vec<ShakeAnchor>>,
 
     /// Print debug information (i.e. parsed cmd parameters).

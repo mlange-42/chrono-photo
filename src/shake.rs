@@ -2,6 +2,8 @@
 
 use crate::ParseOptionError;
 use image;
+use image::flat::SampleLayout;
+use image::DynamicImage;
 use image::FlatSamples;
 use indicatif::ProgressBar;
 use std::path::PathBuf;
@@ -105,6 +107,57 @@ impl FromStr for ShakeAnchor {
     }
 }
 
+#[derive(Debug, Clone)]
+pub struct Crop {
+    x: u32,
+    y: u32,
+    w: u32,
+    h: u32,
+}
+
+impl Crop {
+    pub fn new(x: u32, y: u32, w: u32, h: u32) -> Self {
+        Crop { x, y, w, h }
+    }
+    pub fn create(offset: &[(i32, i32)], layout: &SampleLayout) -> Option<Vec<Self>> {
+        let mut xmin = 0;
+        let mut ymin = 0;
+        let mut xmax = 0;
+        let mut ymax = 0;
+        for (x, y) in offset {
+            if *x < xmin {
+                xmin = *x;
+            }
+            if *y < ymin {
+                ymin = *y;
+            }
+            if *x > xmax {
+                xmax = *x;
+            }
+            if *y > ymax {
+                ymax = *y;
+            }
+        }
+        if xmin == 0 && ymin == 0 && xmax == 0 && ymax == 0 {
+            None
+        } else {
+            let w = layout.width as i32 + xmin - xmax;
+            let h = layout.height as i32 + ymin - ymax;
+            Some(
+                offset
+                    .iter()
+                    .map(|(dx, dy)| {
+                        Crop::new((xmax - dx) as u32, (ymax - dy) as u32, w as u32, h as u32)
+                    })
+                    .collect(),
+            )
+        }
+    }
+    pub fn crop(&self, image: &mut DynamicImage) -> DynamicImage {
+        image.crop(self.x, self.y, self.w, self.h)
+    }
+}
+
 pub struct ShakeAnalyzer {}
 
 impl ShakeAnalyzer {
@@ -115,11 +168,12 @@ impl ShakeAnalyzer {
         anchor_radius: u32,
         search_radius: u32,
         show_progress: bool,
-    ) -> image::ImageResult<Vec<((i32, i32), i32)>> {
+    ) -> image::ImageResult<(Vec<(i32, i32)>, SampleLayout)> {
         let size = (2 * anchor_radius + 1) as i32;
         let search_size = (2 * search_radius + 1) as i32;
         let window_len = (size * size) as usize;
         let mut windows: Option<Vec<u8>> = None;
+        let mut layout: Option<SampleLayout> = None;
         let mut diffs = vec![0; (search_size * search_size) as usize];
 
         if show_progress {
@@ -135,16 +189,17 @@ impl ShakeAnalyzer {
             match &windows {
                 Some(_) => {}
                 None => {
-                    let ch = image
+                    let lay = image
                         .as_flat_samples_u8()
                         .expect(&format!(
                             "Problem converting image {:?}: not 8 bits per channel",
                             file
                         ))
-                        .layout
-                        .width_stride;
+                        .layout;
+                    let ch = lay.width_stride;
                     let wins = vec![0; window_len * ch];
                     windows = Some(wins);
+                    layout = Some(lay);
                     //channels = Some(ch);
                 }
             };
@@ -159,7 +214,7 @@ impl ShakeAnalyzer {
                     &mut wins,
                     anchor_radius,
                 );
-                result.push(((0, 0), 0));
+                result.push((0, 0));
             } else {
                 self.calc_diffs(
                     &image.as_flat_samples_u8().expect(&format!(
@@ -172,19 +227,19 @@ impl ShakeAnalyzer {
                     anchor_radius,
                     search_radius,
                 );
-                let (min_idx, min_diff) =
+                let (min_idx, _min_diff) =
                     diffs.iter().enumerate().min_by_key(|(_i, &d)| d).unwrap();
                 let xmin = (min_idx as i32 % search_size) - search_radius as i32;
                 let ymin = (min_idx as i32 / search_size) - search_radius as i32;
 
-                result.push(((xmin, ymin), *min_diff));
+                result.push((xmin, ymin));
             }
         }
         if show_progress {
             bar.finish_and_clear();
         }
 
-        Ok(result)
+        Ok((result, layout.unwrap()))
     }
 
     fn fill_windows(

@@ -204,6 +204,10 @@ OPTIONS:
         --sample <sample>           Restricts calculation of median and inter-quartile range to a sub-sample of input
                                     images. Use for large amounts of images to speed up calculations. Optional. Used
                                     with `--mode outlier` only
+        --shake <r1/r2>             Camera shake reduction parameters. Optional, default none. Format: `anchor-
+                                    radius/shake-radius`
+        --shake-anchors <x/y>...    Camera shake reduction anchors. Optional, default none. Format: `x1/y1 [x2/y2
+                                    [...]]`
     -s, --slice <slice>             Controls slicing to temp files (rows|pixels|count)/<number>. Used with `--mode
                                     outlier` only. Optional, default 'rows/4'
     -d, --temp-dir <path>           Temp directory. Used with `--mode outlier` only. Optional, default system temp
