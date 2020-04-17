@@ -13,6 +13,7 @@ fn main() {
     let radius = 8;
     let path = "test_data/generated";
     let dir = PathBuf::from(path);
+    print!("Directory: {:?}", dir);
     if !dir.is_dir() {
         std::fs::create_dir_all(&dir).expect(&format!("Unable to create directory {:?}", &dir));
         println!("  ... created.");
@@ -35,9 +36,18 @@ fn main() {
                 for ch in idx..(idx + 1) {
                     buffer[ch] = 0;
                 }
-                //println!("{:?}", &buffer[idx..(idx + 3)]);
             }
         }
+        let (cx, cy) = (1000, 700);
+        for xx in (cx - radius)..=(cx + radius) {
+            for yy in (cy - radius)..=(cy + radius) {
+                let idx = xy_to_index(size, channels, xx, yy);
+                for ch in idx..(idx + 1) {
+                    buffer[ch] = 0;
+                }
+            }
+        }
+
         let mut out_path = path.to_string();
         out_path.push_str(&format!("/image-{:05}.jpg", img));
 
