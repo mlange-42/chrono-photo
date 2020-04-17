@@ -179,9 +179,10 @@ USAGE:
     chrono-photo [FLAGS] [OPTIONS] --output <path> --pattern <pattern>
 
 FLAGS:
-        --debug      Print debug information (i.e. parsed cmd parameters)
+    -d, --debug      Prints debug information (i.e. parsed cmd parameters) before processing
     -h, --help       Prints help information
     -V, --version    Prints version information
+    -w, --wait       Keeps the terminal open after processing and wait for user key press
 
 OPTIONS:
     -b, --background <bg>           Background pixel selection mode (first|random|average|median). Optional, default
@@ -210,7 +211,7 @@ OPTIONS:
                                     [...]]`
     -s, --slice <slice>             Controls slicing to temp files (rows|pixels|count)/<number>. Used with `--mode
                                     outlier` only. Optional, default 'rows/4'
-    -d, --temp-dir <path>           Temp directory. Used with `--mode outlier` only. Optional, default system temp
+        --temp-dir <path>           Temp directory. Used with `--mode outlier` only. Optional, default system temp
                                     directory
         --threads <num>             Number of threads. Optional, default equal to number of processors
     -t, --threshold <thresh>        Outlier threshold mode (abs|rel)/<lower>[/<upper>]. Optional, default
@@ -220,7 +221,7 @@ OPTIONS:
                                     Optional
         --video-threads <num>       Number of threads for parallel video frame output. Optional, default equal to
                                     number of processors. Limiting this may be required if memory usage is too high
-    -w, --weights <w>...            Color channel weights (4 values: RGBA) for distance calculation. Optional, default
+        --weights <w>...            Color channel weights (4 values: RGBA) for distance calculation. Optional, default
                                     '1 1 1 1'
 ```
 

@@ -121,11 +121,11 @@ pub struct Cli {
     #[structopt(long, name = "shake-anchors", value_name = "x/y")]
     shake_anchors: Option<Vec<ShakeAnchor>>,
 
-    /// Print debug information (i.e. parsed cmd parameters).
+    /// Prints debug information (i.e. parsed cmd parameters) before processing.
     #[structopt(long, short)]
     debug: bool,
 
-    /// Keep the terminal open after processing and wait for user key press.
+    /// Keeps the terminal open after processing and wait for user key press.
     #[structopt(long, short)]
     wait: bool,
 }
