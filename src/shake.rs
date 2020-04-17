@@ -204,7 +204,7 @@ impl ShakeAnalyzer {
                         ))
                         .layout;
                     let ch = lay.width_stride;
-                    let wins = vec![0; window_len * ch];
+                    let wins = vec![0; anchors.len() * window_len * ch];
                     windows = Some(wins);
                     layout = Some(lay);
                     //channels = Some(ch);
