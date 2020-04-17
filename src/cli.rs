@@ -1,6 +1,7 @@
 //! Command-line interface for chrono-photo.
 use crate::flist::FrameRange;
 use crate::options::{BackgroundMode, Fade, OutlierSelectionMode, SelectionMode, Threshold};
+use crate::shake::{ShakeAnchor, ShakeParams, ShakeReduction};
 use crate::slicer::SliceLength;
 use crate::streams::Compression;
 use core::fmt;
@@ -110,6 +111,15 @@ pub struct Cli {
     #[structopt(long, name = "video-threads", value_name = "num")]
     video_threads: Option<usize>,
 
+    /// Camera shake reduction parameters. Optional, default none.
+    /// Format: `anchor-radius/shake-radius`
+    #[structopt(long, value_name = "r1/r2")]
+    shake: Option<ShakeParams>,
+
+    /// Camera shake reduction anchors. Optional, default none. Format: `x1/y1 [x2/y2 [...]]`
+    #[structopt(long, name = "shake-anchors", value_name = "x/y")]
+    shake_anchors: Option<Vec<ShakeAnchor>>,
+
     /// Print debug information (i.e. parsed cmd parameters).
     #[structopt(long)]
     debug: bool,
@@ -145,6 +155,11 @@ impl Cli {
                 warings.push("--compression".to_string());
             }
         }
+        if self.shake.is_some() != self.shake_anchors.is_some() {
+            return Err(ParseCliError(
+                "Provide both options or none: `--shake` and `--shake-anchors`".to_string(),
+            ));
+        }
 
         let mut weights = [1.0; 4];
         if let Some(w) = &self.weights {
@@ -152,6 +167,9 @@ impl Cli {
                 weights[i] = *v;
             }
         }
+
+        let shake_params = self.shake;
+        let shake_anchors = self.shake_anchors;
         let out = CliParsed {
             pattern: self.pattern,
             // is_16bit: self.is_16bit,
@@ -188,6 +206,15 @@ impl Cli {
             fade: self.fade.unwrap_or(Fade::none()),
             threads: self.threads,
             video_threads: self.video_threads,
+            shake_reduction: shake_params.and_then(|shake| {
+                shake_anchors.and_then(|anchors| {
+                    Some(ShakeReduction::new(
+                        anchors.iter().map(|a| a.anchor()).collect(),
+                        shake.anchor_radius(),
+                        shake.search_radius(),
+                    ))
+                })
+            }),
             debug: self.debug,
         };
 
@@ -248,6 +275,8 @@ pub struct CliParsed {
     pub threads: Option<usize>,
     /// Number of threads for parallel video frame output. Optional, default equal to number of processors.
     pub video_threads: Option<usize>,
+    /// Shake reduction
+    pub shake_reduction: Option<ShakeReduction>,
     /// Print debug information (i.e. parsed cmd parameters).
     pub debug: bool,
 }

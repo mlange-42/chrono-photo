@@ -13,13 +13,15 @@ We assume that you have such an image sequence ready, e.g. obtained by following
 File extensions are for Windows. On Linux or Mac OSX, they need to be adapted accordingly.
 Particularly Windows batch files (`.bat`) need to be replaces by Unix shell scripts (`.sh`). 
 
-For detailed explanation of all available options, see the [Command line options](options.md) documentation file.
+See the **[Command line options](options.md)** documentation file for detailed explanation of all available options.
 
 **Content**
 * [Working directory](#working-directory)
+* [Printing help message](#printing-help-message)
 * [Most simple command](#most-simple-command)
 * [Fast algorithm for large projects](#fast-algorithm-for-large-projects)
 * [Tweaking algorithm parameters](#tweaking-algorithm-parameters)
+* [Camera shake reduction](#camera-shake-reduction)
 * [Summary](#summary)
 
 ## Working directory
@@ -39,6 +41,17 @@ No further files from the installation directory are required.
 
 The above structure is not required, we assume it just for convenient command line usage.
 E.g., input images and output folder can be in completely different locations.
+
+## Printing help message
+
+To print help for `chrono-photo`, run
+```
+chrono-photo -h
+```
+or, for more comprehensive help texts
+```
+chrono-photo --help
+```
 
 ## Most simple command
 
@@ -104,6 +117,10 @@ We want to use the outlier algorithm, with an "absolute" threshold range
 (actually, it is relative to total color range 0 - 255).
 Selection between background pixels will be done randomly,
 while the most extreme outlier is selected in case outliers are found.
+
+## Camera shake reduction
+
+[TODO]
 
 ## Summary
 

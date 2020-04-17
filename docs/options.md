@@ -9,6 +9,8 @@
 [--background](#--background) &nbsp; [--weights](#--weights) &nbsp; [--fade](#--fade)
 * [Video creation](#video-creation)
   * [--video-in](#--video-in) &nbsp; [--video-out](#--video-out)
+* [Camera shake reduction](#camera-shake-reduction)
+  * [--shake](#--shake) &nbsp; [--shake-anchors](#--shake-anchors)
 * [Performance](#performance)
   * [--threads](#--threads) &nbsp; [--video-threads](#--video-threads) &nbsp; [--sample](#--sample) &nbsp; [--compression](#--compression) &nbsp; [--slice](#--slice)
 
@@ -224,6 +226,43 @@ In most cases, it is not necessary to set this option and just use `--video-in`.
 Everything here refer to the frames left _after_ selection through option [`--frames`](#--frames)!
 
 _Default:_ No video output, or `././.` if `--video-in` is specified.
+
+## Camera shake reduction
+
+To enable camera shake reduction, both of the following options must be supplied.
+By default, no camera shake reduction is applied.
+
+If camera shake is detected, images are cropped by the amount of shake for correction.
+Thus, the output image will be slightly smaller than the input images.
+
+#### `--shake`
+
+_Optional._ Shake anchor radius and search radius in format `anchor-radius/search-radius`.
+
+Example:
+```
+--shake 10/5
+```
+_Default:_ No camera shake reduction.
+
+#### `--shake-anchors`
+
+_Optional._ Pixel coordinates of shake detection anchors in the _first_ image. 
+Format `x1/y1 [x2/y2 ...]`.
+
+Anchors are optimally placed at positions with high contrast in both directions (x, y),
+like a dark corner on light background.
+Also, anchors should not be occluded by a moving object in any image of the sequence.
+
+Use an image editing software to get the exact pixel coordinates.
+Origin is the top-left corner of the image.
+
+Example:
+```
+--shake-anchors 1234/789 2345/890
+```
+
+_Default:_ No camera shake reduction.
 
 ## Performance
 

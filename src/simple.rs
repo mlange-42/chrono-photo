@@ -1,5 +1,6 @@
 use crate::color;
 use crate::options::Fade;
+use crate::shake::Crop;
 use image::flat::SampleLayout;
 use indicatif::ProgressBar;
 use rayon::prelude::*;
@@ -23,6 +24,7 @@ impl SimpleProcessor {
     pub fn process(
         self,
         files: &[PathBuf],
+        crop: &Option<Vec<Crop>>,
         image_indices: Option<&[usize]>,
         show_progress: bool,
     ) -> image::ImageResult<(Vec<u8>, SampleLayout)> {
@@ -36,94 +38,100 @@ impl SimpleProcessor {
 
         let mut layout: Option<SampleLayout> = None;
 
-        let mut fun = |sample_idx: usize, path: &PathBuf| -> image::ImageResult<()> {
-            let image = image::open(path)?;
-            let buff = image
-                .as_flat_samples_u8()
-                .expect("Unexpected format. Not an 8 bit image.");
-
-            let frame_offset = match image_indices {
-                Some(indices) => indices[0] as i32,
-                None => 0,
-            };
-
-            // Prepare data
-            match layout {
-                Some(lay) => {
-                    if buff.layout != lay {
-                        // TODO better error handling
-                        panic!("Image layout does not fit!".to_string());
-                    }
+        let mut fun =
+            |sample_idx: usize, image_idx: usize, path: &PathBuf| -> image::ImageResult<()> {
+                let mut image = image::open(path)?;
+                if let Some(crop) = crop {
+                    //println!("{:?}", crop[image_idx]);
+                    image = crop[image_idx].crop(&mut image);
                 }
-                None => {
-                    layout = Some(buff.layout);
-                    channels = Some(buff.layout.width_stride);
-                    buffer = Some(vec![
-                        0;
-                        buff.layout.height as usize * buff.layout.height_stride
-                    ]);
-                    extreme_value = Some(vec![
-                        if self.darker {
-                            std::f32::MAX
-                        } else {
-                            std::f32::MIN
-                        };
-                        buff.layout.height as usize
-                            * buff.layout.width as usize
-                    ]);
-                }
-            };
-            let channels = channels.unwrap();
-            let extremes = extreme_value.as_mut().unwrap();
+                let buff = image
+                    .as_flat_samples_u8()
+                    .expect("Unexpected format. Not an 8 bit image.");
 
-            /*for (idx, (out_pix, in_pix)) in buffer
-                .as_mut()
-                .unwrap()
-                .par_chunks_mut(channels)
-                .zip(buff.samples.par_chunks(channels))
-                .enumerate()
-            {*/
-            buffer
-                .as_mut()
-                .unwrap()
-                .par_chunks_mut(channels)
-                .zip(buff.samples.par_chunks(channels))
-                .zip(extremes.par_iter_mut())
-                .for_each(|((out_pix, in_pix), extreme)| {
-                    let mut value = 0.0;
-                    for ch in 0..channels {
-                        value += in_pix[ch] as f32 * self.weights[ch];
-                    }
-                    let mut is_extreme = false;
-                    if self.darker {
-                        //if value < extremes[idx] {
-                        if value < *extreme {
-                            is_extreme = true;
-                        }
-                    } else {
-                        //if value > extremes[idx] {
-                        if value > *extreme {
-                            is_extreme = true;
+                let frame_offset = match image_indices {
+                    Some(indices) => indices[0] as i32,
+                    None => 0,
+                };
+
+                // Prepare data
+                match layout {
+                    Some(lay) => {
+                        if buff.layout != lay {
+                            //println!("{:?} vs. {:?}", buff.layout, lay);
+                            // TODO better error handling
+                            panic!("Image layout does not fit!".to_string());
                         }
                     }
-                    if is_extreme {
-                        //extremes[idx] = value;
-                        *extreme = value;
-                        let fade = self.fade(sample_idx as i32, samples as i32, frame_offset);
-                        if fade > 0.0 {
-                            if fade >= 1.0 {
-                                for ch in 0..channels {
-                                    out_pix[ch] = in_pix[ch];
-                                }
+                    None => {
+                        layout = Some(buff.layout);
+                        channels = Some(buff.layout.width_stride);
+                        buffer = Some(vec![
+                            0;
+                            buff.layout.height as usize * buff.layout.height_stride
+                        ]);
+                        extreme_value = Some(vec![
+                            if self.darker {
+                                std::f32::MAX
                             } else {
-                                color::blend_into_u8(out_pix, &in_pix, fade);
+                                std::f32::MIN
+                            };
+                            buff.layout.height as usize
+                                * buff.layout.width as usize
+                        ]);
+                    }
+                };
+                let channels = channels.unwrap();
+                let extremes = extreme_value.as_mut().unwrap();
+
+                /*for (idx, (out_pix, in_pix)) in buffer
+                    .as_mut()
+                    .unwrap()
+                    .par_chunks_mut(channels)
+                    .zip(buff.samples.par_chunks(channels))
+                    .enumerate()
+                {*/
+                buffer
+                    .as_mut()
+                    .unwrap()
+                    .par_chunks_mut(channels)
+                    .zip(buff.samples.par_chunks(channels))
+                    .zip(extremes.par_iter_mut())
+                    .for_each(|((out_pix, in_pix), extreme)| {
+                        let mut value = 0.0;
+                        for ch in 0..channels {
+                            value += in_pix[ch] as f32 * self.weights[ch];
+                        }
+                        let mut is_extreme = false;
+                        if self.darker {
+                            //if value < extremes[idx] {
+                            if value < *extreme {
+                                is_extreme = true;
+                            }
+                        } else {
+                            //if value > extremes[idx] {
+                            if value > *extreme {
+                                is_extreme = true;
                             }
                         }
-                    }
-                });
+                        if is_extreme {
+                            //extremes[idx] = value;
+                            *extreme = value;
+                            let fade = self.fade(sample_idx as i32, samples as i32, frame_offset);
+                            if fade > 0.0 {
+                                if fade >= 1.0 {
+                                    for ch in 0..channels {
+                                        out_pix[ch] = in_pix[ch];
+                                    }
+                                } else {
+                                    color::blend_into_u8(out_pix, &in_pix, fade);
+                                }
+                            }
+                        }
+                    });
 
-            Ok(())
-        };
+                Ok(())
+            };
 
         match image_indices {
             Some(indices) => {
@@ -132,7 +140,7 @@ impl SimpleProcessor {
                     if show_progress {
                         bar.inc(1);
                     }
-                    fun(i, &files[*index])?;
+                    fun(i, *index, &files[*index])?;
                 }
                 if show_progress {
                     bar.finish_and_clear();
@@ -144,7 +152,7 @@ impl SimpleProcessor {
                     if show_progress {
                         bar.inc(1);
                     }
-                    fun(i, file)?;
+                    fun(i, i, file)?;
                 }
                 if show_progress {
                     bar.finish_and_clear();
