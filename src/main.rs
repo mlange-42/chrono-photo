@@ -19,31 +19,32 @@ use structopt::StructOpt;
 
 fn main() {
     let start = Instant::now();
-
-    /*let args = CliParsed {
-        pattern: "test_data/generated/image-*.jpg".to_string(),
-        frames: Some(FrameRange::new(None, Some(10), 1)),
-        video_in: None,
-        video_out: None,
-        temp_dir: Some(PathBuf::from("test_data/temp")),
-        output: PathBuf::from("test_data/out.jpg"),
-        output_blend: None,
-        mode: SelectionMode::Outlier,
-        threshold: Threshold::abs(0.05, 0.2),
-        outlier: OutlierSelectionMode::Extreme,
-        background: BackgroundMode::Random,
-        compression: Compression::GZip(6),
-        quality: 98,
-        slice: SliceLength::Rows(1),
-        sample: None,
-        threads: Some(1),
-        video_threads: Some(1),
-        fade: Fade::none(),
-        weights: [1.0, 1.0, 1.0, 1.0],
-        shake_reduction: Some(ShakeReduction::new(vec![(1000, 700)], 5, 5)),
-        debug: true,
-    };*/
-
+    /*
+        let args = CliParsed {
+            pattern: "C:\\Data\\Private\\Photos\\2020-04-17_Fabian_Chrono\\images_001\\*.jpg"
+                .to_string(),
+            frames: None,
+            video_in: None,
+            video_out: None,
+            temp_dir: Some(PathBuf::from("test_data/temp")),
+            output: PathBuf::from("test_data/out.jpg"),
+            output_blend: None,
+            mode: SelectionMode::Outlier,
+            threshold: Threshold::abs(0.05, 0.2),
+            outlier: OutlierSelectionMode::Extreme,
+            background: BackgroundMode::First,
+            compression: Compression::GZip(6),
+            quality: 98,
+            slice: SliceLength::Rows(1),
+            sample: None,
+            threads: Some(1),
+            video_threads: Some(1),
+            fade: Fade::none(),
+            weights: [0.0, 1.0, 1.0, 0.0],
+            shake_reduction: Some(ShakeReduction::new(vec![(772, 971), (1109, 539)], 10, 20)),
+            debug: true,
+        };
+    */
     let args: CliParsed = Cli::from_args().parse().unwrap();
 
     if args.debug {
