@@ -21,6 +21,7 @@ See the **[Command line options](options.md)** documentation file for detailed e
 * [Most simple command](#most-simple-command)
 * [Fast algorithm for large projects](#fast-algorithm-for-large-projects)
 * [Tweaking algorithm parameters](#tweaking-algorithm-parameters)
+* [Camera shake reduction](#camera-shake-reduction)
 * [Summary](#summary)
 
 ## Working directory
@@ -116,6 +117,10 @@ We want to use the outlier algorithm, with an "absolute" threshold range
 (actually, it is relative to total color range 0 - 255).
 Selection between background pixels will be done randomly,
 while the most extreme outlier is selected in case outliers are found.
+
+## Camera shake reduction
+
+[TODO]
 
 ## Summary
 

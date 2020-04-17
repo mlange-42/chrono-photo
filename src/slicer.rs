@@ -1,5 +1,6 @@
 //! Converts a series of images by time to images by row. I.e. transposes (x,y) in the cube in (x,y,t) to (x,t).
 
+use crate::shake::Crop;
 use crate::slicer::SliceLength::{Count, Pixels, Rows};
 use crate::streams::{Compression, ImageStream, PixelOutputStream};
 use crate::ParseEnumError;
@@ -102,6 +103,7 @@ where
     pub fn write_time_slices(
         &self,
         images: ImageStream,
+        crop: &Option<Vec<Crop>>,
         temp_dir: PathBuf,
         compression: &Compression,
         slices: &SliceLength,
@@ -122,13 +124,17 @@ where
         for (img_index, img) in images.enumerate() {
             bar.inc(1);
 
-            let dyn_img = img.unwrap();
+            let mut dyn_img = img.unwrap();
+            if let Some(crop) = crop {
+                dyn_img = crop[img_index].crop(&mut dyn_img);
+            }
             let pix = dyn_img
                 .as_flat_samples_u8()
                 .expect("Unexpected format. Not an 8 bit image.");
 
             let lay = match layout {
                 Some(lay) => {
+                    //println!("{:?} vs. {:?}", pix.layout, lay);
                     if pix.layout != lay {
                         return Err(TimeSliceError("Image layout does not fit!".to_string()));
                     }

@@ -1,8 +1,9 @@
 use chrono_photo::chrono::OutlierProcessor;
 use chrono_photo::cli::{Cli, CliParsed};
 use chrono_photo::flist::{FileLister, FrameRange};
-//use chrono_photo::options::{BackgroundMode, OutlierSelectionMode, SelectionMode, Threshold};
 use chrono_photo::options::SelectionMode;
+//use chrono_photo::options::{BackgroundMode, Fade, OutlierSelectionMode, SelectionMode, Threshold};
+use chrono_photo::shake::{Crop, ShakeAnalyzer};
 use chrono_photo::simple::SimpleProcessor;
 use chrono_photo::slicer::{SliceLength, TimeSliceError, TimeSlicer};
 use chrono_photo::streams::{Compression, ImageStream};
@@ -19,11 +20,11 @@ use structopt::StructOpt;
 fn main() {
     let start = Instant::now();
 
-    /*let mut args = CliParsed {
+    /*let args = CliParsed {
         pattern: "test_data/generated/image-*.jpg".to_string(),
         frames: Some(FrameRange::new(None, Some(10), 1)),
-        video_in: Some(FrameRange::new(Some(0), Some(5), 1)),
-        video_out: Some(FrameRange::new(None, None, 1)),
+        video_in: None,
+        video_out: None,
         temp_dir: Some(PathBuf::from("test_data/temp")),
         output: PathBuf::from("test_data/out.jpg"),
         output_blend: None,
@@ -35,10 +36,19 @@ fn main() {
         quality: 98,
         slice: SliceLength::Rows(1),
         sample: None,
+        threads: Some(1),
+        video_threads: Some(1),
+        fade: Fade::none(),
+        weights: [1.0, 1.0, 1.0, 1.0],
+        shake_reduction: Some(ShakeReduction::new(vec![(1000, 700)], 5, 5)),
         debug: true,
     };*/
 
     let args: CliParsed = Cli::from_args().parse().unwrap();
+
+    if args.debug {
+        println!("{:#?}", args);
+    }
 
     if let Some(threads) = args.threads {
         rayon::ThreadPoolBuilder::new()
@@ -47,16 +57,46 @@ fn main() {
             .expect("Error building thread pool. Pool already built.");
     }
 
+    let lister = FileLister::new(&args.pattern, &args.frames);
+    let files = lister.files_vec().expect(&format!(
+        "Unable to process search pattern {:?}",
+        &args.pattern
+    ));
+    let shake = args.shake_reduction.as_ref().and_then(|red| {
+        Some(
+            ShakeAnalyzer {}
+                .analyze(
+                    &files[..],
+                    red.anchors(),
+                    red.anchor_radius(),
+                    red.search_radius(),
+                    true,
+                )
+                .expect("Shake analysis failed!"),
+        )
+    });
+    let crop: Option<Vec<Crop>> = shake
+        .as_ref()
+        .and_then(|(offset, layout)| Crop::create(&offset[..], layout));
+
+    if args.shake_reduction.is_some() {
+        if crop.is_some() {
+            println!("Camera shake detected. Images will be corrected.");
+        } else {
+            println!("No camera shake detected. Images will not be corrected.");
+        }
+    }
+
     if args.mode == SelectionMode::Outlier {
-        run_outliers(args);
+        run_outliers(args, &crop);
     } else {
-        run_simple(args);
+        run_simple(args, &crop);
     }
 
     println!("Total time: {:?}", start.elapsed());
 }
 
-fn run_simple(mut args: CliParsed) {
+fn run_simple(mut args: CliParsed, crop: &Option<Vec<Crop>>) {
     let lister = FileLister::new(&args.pattern, &args.frames);
     let files = lister.files_vec().expect(&format!(
         "Unable to process search pattern {:?}",
@@ -74,14 +114,14 @@ fn run_simple(mut args: CliParsed) {
             args.video_in = Some(FrameRange::empty());
         }
         // Process to video
-        create_video_simple(&args, &files[..], args.video_threads);
+        create_video_simple(&args, &files[..], &crop, args.video_threads);
     } else {
         // Process to image
-        create_frame_simple(&args, &files[..], None, &args.output, true);
+        create_frame_simple(&args, &files[..], &crop, None, &args.output, true);
     }
 }
 
-fn run_outliers(mut args: CliParsed) {
+fn run_outliers(mut args: CliParsed, crop: &Option<Vec<Crop>>) {
     // Determine temp directory
     if args.temp_dir.is_none() {
         let mut dir = std::env::temp_dir();
@@ -100,13 +140,10 @@ fn run_outliers(mut args: CliParsed) {
         println!();
     }
 
-    if args.debug {
-        println!("{:#?}", args);
-    }
-
     // Convert to time slices and save to temp files
     let (temp_files, layout, image_count) = match to_time_slices(
         &args.pattern,
+        crop,
         false,
         &args.frames,
         &args.temp_dir.as_ref().unwrap(),
@@ -268,7 +305,7 @@ fn create_video(
                 create_frame(
                     &args,
                     &files,
-                    &layout,
+                    layout,
                     image_count,
                     Some(&indices[..]),
                     &output,
@@ -284,7 +321,12 @@ fn create_video(
     });
 }
 
-fn create_video_simple(args: &CliParsed, files: &[PathBuf], threads: Option<usize>) {
+fn create_video_simple(
+    args: &CliParsed,
+    files: &[PathBuf],
+    crop: &Option<Vec<Crop>>,
+    threads: Option<usize>,
+) {
     let video = &args
         .video_out
         .as_ref()
@@ -366,7 +408,7 @@ fn create_video_simple(args: &CliParsed, files: &[PathBuf], threads: Option<usiz
                     frame - v_lower,
                     v_upper - v_lower
                 );
-                create_frame_simple(&args, &files, Some(&indices[..]), &output, false);
+                create_frame_simple(&args, &files, crop, Some(&indices[..]), &output, false);
             } else {
                 println!("Skipping frame {}/{}", frame - v_lower, v_upper - v_lower);
             }
@@ -441,6 +483,7 @@ fn create_frame(
 fn create_frame_simple(
     args: &CliParsed,
     files: &[PathBuf],
+    crop: &Option<Vec<Crop>>,
     image_indices: Option<&[usize]>,
     output: &PathBuf,
     show_progress: bool,
@@ -452,7 +495,7 @@ fn create_frame_simple(
         args.mode == SelectionMode::Darker,
     );
     let (buff, layout) = processor
-        .process(files, image_indices, show_progress)
+        .process(files, crop, image_indices, show_progress)
         .unwrap();
 
     if show_progress {
@@ -510,6 +553,7 @@ fn save_image(buffer: &[u8], layout: &SampleLayout, out_path: &PathBuf, quality:
 
 fn to_time_slices(
     image_pattern: &str,
+    crop: &Option<Vec<Crop>>,
     is_16bit: bool,
     frames: &Option<FrameRange>,
     temp_path: &PathBuf,
@@ -519,8 +563,20 @@ fn to_time_slices(
     let images =
         ImageStream::from_pattern(image_pattern, frames).expect("Error processing pattern");
     if is_16bit {
-        TimeSlicer::new_16bit().write_time_slices(images, temp_path.clone(), compression, slices)
+        TimeSlicer::new_16bit().write_time_slices(
+            images,
+            crop,
+            temp_path.clone(),
+            compression,
+            slices,
+        )
     } else {
-        TimeSlicer::new_8bit().write_time_slices(images, temp_path.clone(), compression, slices)
+        TimeSlicer::new_8bit().write_time_slices(
+            images,
+            crop,
+            temp_path.clone(),
+            compression,
+            slices,
+        )
     }
 }
