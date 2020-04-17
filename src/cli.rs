@@ -14,7 +14,7 @@ use structopt::StructOpt;
 ///     `chrono-photo --help` for more detailed help.
 ///
 /// For more documentation and explanation of the algorithm, see the GitHub repository:
-///      https://github.com/mlange-42/chrono-photo
+///      https://mlange-42.github.io/chrono-photo/
 #[derive(StructOpt)]
 #[structopt(verbatim_doc_comment)]
 //#[structopt(name = "chrono-photo command line application")]
