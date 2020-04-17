@@ -8,6 +8,7 @@ from photo series or ([later](#how-to-prepare-videos)) video footage.
 
 * **[Download binaries](https://github.com/mlange-42/chrono-photo/releases/)**
 * [Sources on GitHub](https://github.com/mlange-42/chrono-photo)
+* [Image gallery](docs/gallery.md)
 
 <p align="center">
 <img src="https://user-images.githubusercontent.com/44003176/77975353-236da480-72fa-11ea-9ff9-5c110895fe5d.jpg" alt="A simple Chronophotography example" width="750" /><br/>
