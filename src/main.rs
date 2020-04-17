@@ -10,11 +10,11 @@ use chrono_photo::streams::{Compression, ImageStream};
 use image::flat::SampleLayout;
 use indicatif::ProgressBar;
 use rayon::prelude::*;
-use std::cmp;
 use std::fs::File;
 use std::option::Option::Some;
 use std::path::PathBuf;
 use std::time::Instant;
+use std::{cmp, env, fs};
 use structopt::StructOpt;
 
 fn main() {
@@ -44,8 +44,18 @@ fn main() {
         shake_reduction: Some(ShakeReduction::new(vec![(772, 971), (1109, 539)], 10, 20)),
         debug: true,
     };*/
-
-    let args: CliParsed = Cli::from_args().parse().unwrap();
+    let args: Vec<String> = env::args().collect();
+    let args: CliParsed = if args.len() == 2 && !args[1].starts_with('-') {
+        let mut content = fs::read_to_string(&args[1]).expect(&format!(
+            "Something went wrong reading the options file {:?}",
+            &args[1]
+        ));
+        content = "chrono-photo ".to_string() + &content.replace("\r\n", " ").replace("\n", " ");
+        let cli: Cli = content.parse().unwrap();
+        cli.parse().unwrap()
+    } else {
+        Cli::from_args().parse().unwrap()
+    };
 
     if args.debug {
         println!("{:#?}", args);

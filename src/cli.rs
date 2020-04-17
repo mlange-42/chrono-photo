@@ -6,6 +6,7 @@ use crate::slicer::SliceLength;
 use crate::streams::Compression;
 use core::fmt;
 use std::path::PathBuf;
+use std::str::FromStr;
 use structopt::StructOpt;
 
 /// Command-line tool for combining images into a single chrono-photograph or chrono-video.
@@ -230,6 +231,28 @@ impl Cli {
     }
 }
 
+impl FromStr for Cli {
+    type Err = ParseCliError;
+
+    fn from_str(str: &str) -> Result<Self, Self::Err> {
+        let quote_parts: Vec<_> = str.split('"').collect();
+        let mut args: Vec<String> = vec![];
+        for (i, part) in quote_parts.iter().enumerate() {
+            let part = part.trim();
+            if i % 2 == 0 {
+                args.extend(
+                    part.split(' ')
+                        .map(|s| s.trim().to_string())
+                        .filter(|s| !s.is_empty()),
+                );
+            } else {
+                args.push(part.to_string());
+            }
+        }
+        Ok(Cli::from_iter(args.iter()))
+    }
+}
+
 /// Parsed command line arguments.
 #[allow(dead_code)]
 #[derive(Debug)]
@@ -294,5 +317,19 @@ pub struct ParseCliError(String);
 impl fmt::Display for ParseCliError {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         self.0.fmt(f)
+    }
+}
+
+#[cfg(test)]
+mod test {
+    use crate::cli::Cli;
+
+    #[test]
+    fn args_from_string() {
+        let str = "chrono-photo --pattern \"test_data/generated/*.jpg\" --output test_data/temp --weights 0 1 1 0";
+        let cli: Cli = str.parse().unwrap();
+        let parsed = cli.parse().unwrap();
+
+        //println!("{:#?}", parsed);
     }
 }
