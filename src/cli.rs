@@ -125,7 +125,7 @@ pub struct Cli {
     #[structopt(long, short)]
     debug: bool,
 
-    /// Keeps the terminal open after processing and wait for user key press.
+    /// Keeps the terminal open after processing and waits for user key press.
     #[structopt(long, short)]
     wait: bool,
 }

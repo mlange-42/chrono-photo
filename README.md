@@ -183,7 +183,7 @@ FLAGS:
     -d, --debug      Prints debug information (i.e. parsed cmd parameters) before processing
     -h, --help       Prints help information
     -V, --version    Prints version information
-    -w, --wait       Keeps the terminal open after processing and wait for user key press
+    -w, --wait       Keeps the terminal open after processing and waits for user key press
 
 OPTIONS:
     -b, --background <bg>           Background pixel selection mode (first|random|average|median). Optional, default
