@@ -30,11 +30,11 @@ from photo series or ([later](#how-to-prepare-videos)) video footage.
 ## Features
 
 * Complete chrono-photography workflow in a single command
+* Create chrono-photos and chrono-videos
 * Different algorithms, maximum control
 * Process virtually unlimited amounts of images with minimal memory footprint
-* Create chrono-videos
-* Camera shake reduction
-* Multi-threaded
+* Camera shake correction
+* Multi-threading
 
 ## Installation
 
@@ -53,7 +53,7 @@ from photo series or ([later](#how-to-prepare-videos)) video footage.
 
 * [Recording material for chrono-photo](docs/tutorial_recording.md)
 * [Preparing video material](docs/tutorial_prepare.md)
-* [Creating chrono-photos](docs/tutorial_photos.md)
+* **[Creating chrono-photos](docs/tutorial_photos.md)**
 * [Creating chrono-videos](docs/tutorial_videos.md)
 
 ## Examples
