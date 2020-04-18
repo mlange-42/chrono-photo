@@ -112,6 +112,7 @@ fn main() {
     }
 }
 
+/// Runs the simple algorithm to image or video
 fn run_simple(args: &mut CliParsed, crop: &Option<Vec<Crop>>) {
     let lister = FileLister::new(&args.pattern, &args.frames);
     let files = lister.files_vec().expect(&format!(
@@ -137,6 +138,7 @@ fn run_simple(args: &mut CliParsed, crop: &Option<Vec<Crop>>) {
     }
 }
 
+/// Runs the outlier algorithm to image or video
 fn run_outliers(args: &mut CliParsed, crop: &Option<Vec<Crop>>) {
     // Determine temp directory
     if args.temp_dir.is_none() {
@@ -218,6 +220,7 @@ fn run_outliers(args: &mut CliParsed, crop: &Option<Vec<Crop>>) {
     bar.finish_and_clear();
 }
 
+/// Runs the outlier algorithm to video
 fn create_video(
     args: &CliParsed,
     files: &[PathBuf],
@@ -337,6 +340,7 @@ fn create_video(
     });
 }
 
+/// Runs the simple algorithm to video
 fn create_video_simple(
     args: &CliParsed,
     files: &[PathBuf],
@@ -456,6 +460,7 @@ fn name_and_extension(path: &PathBuf) -> Option<(String, String)> {
     Some((stem.unwrap().to_string(), ext.unwrap().to_string()))
 }
 
+/// Runs the outlier algorithm to image
 fn create_frame(
     args: &CliParsed,
     files: &[PathBuf],
@@ -496,6 +501,7 @@ fn create_frame(
     }
 }
 
+/// Runs the outlier algorithm to image
 fn create_frame_simple(
     args: &CliParsed,
     files: &[PathBuf],
@@ -520,6 +526,7 @@ fn create_frame_simple(
     save_image(&buff, &layout, &output, args.quality);
 }
 
+/// Saves an image buffer to a file
 fn save_image(buffer: &[u8], layout: &SampleLayout, out_path: &PathBuf, quality: u8) {
     let ext = out_path
         .extension()
@@ -567,6 +574,7 @@ fn save_image(buffer: &[u8], layout: &SampleLayout, out_path: &PathBuf, quality:
     }
 }
 
+/// Time-slices images
 fn to_time_slices(
     image_pattern: &str,
     crop: &Option<Vec<Crop>>,

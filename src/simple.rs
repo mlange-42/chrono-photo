@@ -1,3 +1,4 @@
+//! Outlier chrono-photo algorithm.
 use crate::color;
 use crate::options::Fade;
 use crate::shake::Crop;
@@ -6,6 +7,7 @@ use indicatif::ProgressBar;
 use rayon::prelude::*;
 use std::path::PathBuf;
 
+/// Core processor for image analysis with the simple algorithm.
 pub struct SimpleProcessor {
     weights: [f32; 4],
     fade: Fade,
