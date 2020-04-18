@@ -16,6 +16,7 @@ from photo series or ([later](#how-to-prepare-videos)) video footage.
 </p>
 
 **Content**
+* [Features](#features)
 * [Installation](#installation)
 * [Getting started](#getting-started)
 * [Tutorials](#tutorials)
@@ -24,6 +25,16 @@ from photo series or ([later](#how-to-prepare-videos)) video footage.
 * [Command line options](#command-line-options)
 * [How to prepare videos](#how-to-prepare-videos)
 * [Library / crate](#library--crate)
+* [License](#license)
+
+## Features
+
+* Complete chrono-photography workflow in a single command
+* Different algorithms, maximum control
+* Process virtually unlimited amounts of images with minimal memory footprint
+* Create chrono-videos
+* Camera shake reduction
+* Multi-threaded
 
 ## Installation
 
@@ -252,3 +263,7 @@ _Warning:_ The API is still incomplete and highly unstable, so be prepared for f
 Any help to stabilize the API is highly appreciated.
 
 For the latest development version, see branch [`dev`](https://github.com/mlange-42/chrono-photo/tree/dev).
+
+## License
+
+[MIT](LICENSE) &copy; M. Lange
