@@ -22,5 +22,6 @@ bstr = "0.2.12"
 byteorder = "1.3.4"
 indicatif = "0.14.0"
 rayon = "1.3.0"
+dont_disappear = "3.0.1"
 # rawloader = "0.36.2"
 structopt = {version = "0.3", features = ["wrap_help"]} # TODO put CLI in feature

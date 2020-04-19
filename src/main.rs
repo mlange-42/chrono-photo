@@ -14,7 +14,7 @@ use std::fs::File;
 use std::option::Option::Some;
 use std::path::PathBuf;
 use std::time::Instant;
-use std::{cmp, env, fs, io};
+use std::{cmp, env, fs};
 use structopt::StructOpt;
 
 fn main() {
@@ -107,8 +107,7 @@ fn main() {
     println!("Total time: {:?}", start.elapsed());
 
     if args.wait {
-        println!("Press enter to continue...");
-        io::stdin().read_line(&mut String::new()).unwrap();
+        dont_disappear::any_key_to_continue::default();
     }
 }
 
