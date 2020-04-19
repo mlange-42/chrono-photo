@@ -73,6 +73,7 @@ version = "0.6.1"
 dependencies = [
  "bstr",
  "byteorder",
+ "dont_disappear",
  "flate2",
  "glob",
  "image",
@@ -199,6 +200,99 @@ dependencies = [
 ]
 
 [[package]]
+name = "crossterm"
+version = "0.8.2"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "55a717305d2b8a02ee130be03114d8f9dde047121933e3a9bc8a8d8637becb8e"
+dependencies = [
+ "crossterm_cursor",
+ "crossterm_input",
+ "crossterm_screen",
+ "crossterm_style",
+ "crossterm_terminal",
+ "crossterm_utils",
+]
+
+[[package]]
+name = "crossterm_cursor"
+version = "0.1.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "e91c25e521708bd85fbdbdc34a854d1582793ab36e9aff2cee58fc79d7728e82"
+dependencies = [
+ "crossterm_utils",
+ "crossterm_winapi",
+ "winapi 0.3.8",
+]
+
+[[package]]
+name = "crossterm_input"
+version = "0.2.1"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "f68adc40b47caf472ae9db8ec24962cf0ce65d43495984edbbb93acd7df76f32"
+dependencies = [
+ "crossterm_screen",
+ "crossterm_utils",
+ "crossterm_winapi",
+ "libc",
+ "winapi 0.3.8",
+]
+
+[[package]]
+name = "crossterm_screen"
+version = "0.1.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "48eb1d3e7c5fea9b5a15c8667cb18b8c8fdfb28e38cd8faa048b9b7490cd9f69"
+dependencies = [
+ "crossterm_utils",
+ "crossterm_winapi",
+ "winapi 0.3.8",
+]
+
+[[package]]
+name = "crossterm_style"
+version = "0.2.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "00356047d50f19467f14caaaa4cde2112fc875e9cbe9e642a2ff34ca73ff30ed"
+dependencies = [
+ "crossterm_utils",
+ "crossterm_winapi",
+ "winapi 0.3.8",
+]
+
+[[package]]
+name = "crossterm_terminal"
+version = "0.1.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "f1b61af4ef3ed3624994e8af7ac87b6a483c2936e63eebe38d9a2810cd4a6d44"
+dependencies = [
+ "crossterm_cursor",
+ "crossterm_utils",
+ "crossterm_winapi",
+ "libc",
+]
+
+[[package]]
+name = "crossterm_utils"
+version = "0.1.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "d26f24386ea91f9c55a85531dd3ee3673e4c82729e64567928665aca3a47c741"
+dependencies = [
+ "crossterm_winapi",
+ "libc",
+ "termios",
+ "winapi 0.3.8",
+]
+
+[[package]]
+name = "crossterm_winapi"
+version = "0.1.5"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "b055e7cc627c452e6a9b977022f48a2db6f0ff73df446ca970f95eef9c381d45"
+dependencies = [
+ "winapi 0.3.8",
+]
+
+[[package]]
 name = "deflate"
 version = "0.8.3"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -206,6 +300,15 @@ checksum = "050ef6de42a33903b30a7497b76b40d3d58691d4d3eec355348c122444a388f0"
 dependencies = [
  "adler32",
  "byteorder",
+]
+
+[[package]]
+name = "dont_disappear"
+version = "3.0.1"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "80d2bb055933f31663051eae74e575723174944199baa8d1817a8d08e9ffc1b6"
+dependencies = [
+ "crossterm",
 ]
 
 [[package]]
