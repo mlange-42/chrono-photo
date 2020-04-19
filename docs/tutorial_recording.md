@@ -98,7 +98,8 @@ see these images:
 <p align="center">
 <img src="https://user-images.githubusercontent.com/44003176/79148074-3a65c980-7dc5-11ea-8798-91a817c95600.jpg" alt="Frame rate example with pigeons" width="1024" /><br/>
 <i>Different frame rates: A flock of pigeons at 30 fps (left) and 60 fps (right).</i>
-
+</p>
+<p align="center">
 <img src="https://user-images.githubusercontent.com/44003176/79621993-c6555980-8115-11ea-9881-3a796933d867.jpg" alt="Frame rate example with pigeons and red kite" width="1024" /><br/>
 <i>Different speed and size: Pigeons and a red kite at 30 fps.</i>
 </p>
