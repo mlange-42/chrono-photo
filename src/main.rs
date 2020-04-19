@@ -210,6 +210,7 @@ fn run_outliers(args: &mut CliParsed, crop: &Option<Vec<Crop>>) {
     // Delete temp file
     println!("Deleting {} time slices", temp_files.len());
     let bar = ProgressBar::new(temp_files.len() as u64);
+    bar.set_draw_delta((temp_files.len() / 200) as u64);
     for file in &temp_files {
         bar.inc(1);
         match std::fs::remove_file(file) {
