@@ -8,6 +8,7 @@ from photo series or ([later](#how-to-prepare-videos)) video footage.
 
 * **[Download binaries](https://github.com/mlange-42/chrono-photo/releases/)**
 * [Sources on GitHub](https://github.com/mlange-42/chrono-photo)
+* [Image gallery](docs/gallery.md)
 
 <p align="center">
 <img src="https://user-images.githubusercontent.com/44003176/77975353-236da480-72fa-11ea-9ff9-5c110895fe5d.jpg" alt="A simple Chronophotography example" width="750" /><br/>
@@ -15,6 +16,7 @@ from photo series or ([later](#how-to-prepare-videos)) video footage.
 </p>
 
 **Content**
+* [Features](#features)
 * [Installation](#installation)
 * [Getting started](#getting-started)
 * [Tutorials](#tutorials)
@@ -23,6 +25,16 @@ from photo series or ([later](#how-to-prepare-videos)) video footage.
 * [Command line options](#command-line-options)
 * [How to prepare videos](#how-to-prepare-videos)
 * [Library / crate](#library--crate)
+* [License](#license)
+
+## Features
+
+* Complete chrono-photography workflow in a single command
+* Create chrono-photos and chrono-videos
+* Different algorithms, maximum control
+* Process virtually unlimited amounts of images with minimal memory footprint
+* Camera shake correction
+* Multi-threading
 
 ## Installation
 
@@ -41,7 +53,7 @@ from photo series or ([later](#how-to-prepare-videos)) video footage.
 
 * [Recording material for chrono-photo](docs/tutorial_recording.md)
 * [Preparing video material](docs/tutorial_prepare.md)
-* [Creating chrono-photos](docs/tutorial_photos.md)
+* **[Creating chrono-photos](docs/tutorial_photos.md)**
 * [Creating chrono-videos](docs/tutorial_videos.md)
 
 ## Examples
@@ -182,7 +194,7 @@ FLAGS:
     -d, --debug      Prints debug information (i.e. parsed cmd parameters) before processing
     -h, --help       Prints help information
     -V, --version    Prints version information
-    -w, --wait       Keeps the terminal open after processing and wait for user key press
+    -w, --wait       Keeps the terminal open after processing and waits for user key press
 
 OPTIONS:
     -b, --background <bg>           Background pixel selection mode (first|random|average|median). Optional, default
@@ -251,3 +263,7 @@ _Warning:_ The API is still incomplete and highly unstable, so be prepared for f
 Any help to stabilize the API is highly appreciated.
 
 For the latest development version, see branch [`dev`](https://github.com/mlange-42/chrono-photo/tree/dev).
+
+## License
+
+[MIT](LICENSE) &copy; M. Lange

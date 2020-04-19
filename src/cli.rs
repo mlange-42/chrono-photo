@@ -125,7 +125,7 @@ pub struct Cli {
     #[structopt(long, short)]
     debug: bool,
 
-    /// Keeps the terminal open after processing and wait for user key press.
+    /// Keeps the terminal open after processing and waits for user key press.
     #[structopt(long, short)]
     wait: bool,
 }
@@ -239,6 +239,7 @@ impl Cli {
 impl FromStr for Cli {
     type Err = ParseCliError;
 
+    /// Parses a string into a Cli.
     fn from_str(str: &str) -> Result<Self, Self::Err> {
         let quote_parts: Vec<_> = str.split('"').collect();
         let mut args: Vec<String> = vec![];
@@ -313,6 +314,7 @@ pub struct CliParsed {
 }
 
 impl CliParsed {
+    /// Check for validity
     pub fn validate(self) -> Result<Self, ParseCliError> {
         Ok(self)
     }

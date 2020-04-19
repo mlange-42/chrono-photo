@@ -121,6 +121,7 @@ where
         let mut total_files = 0;
         println!("Time-slicing {} images", size_hint);
         let bar = ProgressBar::new(size_hint as u64);
+        bar.set_draw_delta((size_hint / 200) as u64);
         for (img_index, img) in images.enumerate() {
             bar.inc(1);
 

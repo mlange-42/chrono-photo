@@ -188,6 +188,7 @@ impl ShakeAnalyzer {
         }
         let mut result = Vec::with_capacity(files.len());
         let bar = ProgressBar::new(files.len() as u64);
+        bar.set_draw_delta((files.len() / 200) as u64);
         for (i, file) in files.iter().enumerate() {
             if show_progress {
                 bar.inc(1);

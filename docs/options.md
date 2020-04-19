@@ -162,7 +162,7 @@ _Default:_ `1 1 1 1`
 
 #### `--fade`
 
-_Optional._ Allows for fading outlier blending over frames. Format (clamp|repeat)/(abs/rel)/f,v/f,v[/f,v...]
+_Optional._ Allows for fading outlier blending over frames. Format `(clamp|repeat)/(abs/rel)/f,v/f,v[/f,v...]`
 
 Parts between `/` are:
 1. Fading mode: `clamp` or `repeat`. Specifies how frames outside the given fade transition are treated.

@@ -42,43 +42,6 @@ pub fn blend_into_f32_u8(a: &mut [f32], b: &[u8], blend: f32) {
         }
     }
 }
-/*
-/// Blend two color slices by a certain amount.
-pub fn blend_u8(a: &[u8], b: &[u8], blend: f32, out: &mut [u8]) {
-    if blend <= 0.0 {
-        for (i, a) in a.iter().enumerate() {
-            out[i] = *a;
-        }
-    } else if blend >= 1.0 {
-        for (i, b) in b.iter().enumerate() {
-            out[i] = *b;
-        }
-    } else {
-        for (i, (a, b)) in a.iter().zip(b).enumerate() {
-            let v = (*a as f32 + (*b as f32 - *a as f32) * blend).round() as u8;
-            out[i] = v;
-        }
-    }
-}
-
-/// Blend two float color [0, 255] (!) slices by a certain amount.
-pub fn blend_f32(a: &[f32], b: &[f32], blend: f32, out: &mut [f32]) {
-    if blend <= 0.0 {
-        for (i, a) in a.iter().enumerate() {
-            out[i] = *a;
-        }
-    } else if blend >= 1.0 {
-        for (i, b) in b.iter().enumerate() {
-            out[i] = *b;
-        }
-    } else {
-        for (i, (a, b)) in a.iter().zip(b).enumerate() {
-            let v = *a as f32 + (*b as f32 - *a as f32) * blend;
-            out[i] = v;
-        }
-    }
-}
-*/
 
 #[cfg(test)]
 mod test {

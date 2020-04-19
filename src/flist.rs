@@ -6,6 +6,7 @@ use std::collections::VecDeque;
 use std::path::PathBuf;
 use std::str::FromStr;
 
+/// A frame range, defined by start, end (both optional) and step.
 #[derive(Clone, Debug)]
 pub struct FrameRange {
     start: Option<i32>,
@@ -13,9 +14,11 @@ pub struct FrameRange {
     step: u32,
 }
 impl FrameRange {
+    /// Creates a new FrameRange
     pub fn new(start: Option<i32>, end: Option<i32>, step: u32) -> Self {
         FrameRange { start, end, step }
     }
+    /// Creates a new FrameRange without start and end, and with a step of 1.
     pub fn empty() -> Self {
         FrameRange {
             start: None,
@@ -23,15 +26,19 @@ impl FrameRange {
             step: 1,
         }
     }
+    /// The start frame
     pub fn start(&self) -> Option<i32> {
         self.start
     }
+    /// The end frame (exclusive)
     pub fn end(&self) -> Option<i32> {
         self.end
     }
+    /// The step
     pub fn step(&self) -> u32 {
         self.step
     }
+    /// The total number of frames, irrespective of step
     pub fn range(&self) -> Option<i32> {
         self.start.and_then(|s| self.end.and_then(|e| Some(e - s)))
     }
