@@ -12,7 +12,7 @@
 * [Camera shake reduction](#camera-shake-reduction)
   * [--shake](#--shake) &nbsp; [--shake-anchors](#--shake-anchors)
 * [Performance](#performance)
-  * [--threads](#--threads) &nbsp; [--video-threads](#--video-threads) &nbsp; [--sample](#--sample) &nbsp; [--compression](#--compression) &nbsp; [--slice](#--slice)
+  * [--threads](#--threads) &nbsp; [--video-threads](#--video-threads) &nbsp; [--shake-threads](#--shake-threads) &nbsp; [--sample](#--sample) &nbsp; [--compression](#--compression) &nbsp; [--slice](#--slice)
 * [Misc](#misc)
   * [--debug](#--debug) &nbsp; [--wait](#--wait)
 
@@ -282,7 +282,17 @@ _Optional._
 
 Number of threads to use for parallel processing for video / image sequence creation. 
 Entire frames are processed in parallel. 
-It may be necessary to limit the number of video threads is memory usage is too high.
+It may be necessary to limit the number of video threads if memory usage is too high.
+
+_Default:_ Number of processors.
+
+#### `--shake-threads`
+
+_Optional._
+
+Number of threads to use for parallel camera shake analysis. 
+Entire frames are processed in parallel. 
+It may be necessary to limit the number of shake threads if memory usage is too high.
 
 _Default:_ Number of processors.
 

@@ -221,6 +221,8 @@ OPTIONS:
                                     radius/shake-radius`
         --shake-anchors <x/y>...    Camera shake reduction anchors. Optional, default none. Format: `x1/y1 [x2/y2
                                     [...]]`
+        --shake-threads <num>       Number of threads for camera shake reduction. Optional, default equal to number of
+                                    processors. Limiting this may be required if memory usage is too high
     -s, --slice <slice>             Controls slicing to temp files (rows|pixels|count)/<number>. Used with `--mode
                                     outlier` only. Optional, default 'rows/4'
         --temp-dir <path>           Temp directory. Used with `--mode outlier` only. Optional, default system temp

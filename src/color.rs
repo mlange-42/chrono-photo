@@ -1,6 +1,6 @@
 //! Helper functions for colors
 
-/// Blend color b into color a.
+/// Blends color b into color a.
 pub fn blend_into_u8(a: &mut [u8], b: &[u8], blend: f32) {
     if blend <= 0.0 {
     } else if blend >= 1.0 {
@@ -14,7 +14,7 @@ pub fn blend_into_u8(a: &mut [u8], b: &[u8], blend: f32) {
         }
     }
 }
-/// Blend float color [0, 255](!) b into color a.
+/// Blends float color [0, 255](!) b into color a.
 pub fn blend_into_f32(a: &mut [f32], b: &[f32], blend: f32) {
     if blend <= 0.0 {
     } else if blend >= 1.0 {
@@ -28,7 +28,7 @@ pub fn blend_into_f32(a: &mut [f32], b: &[f32], blend: f32) {
         }
     }
 }
-/// Blend float color [0, 255](!) b into color a.
+/// Blends float color [0, 255](!) b into color a.
 pub fn blend_into_f32_u8(a: &mut [f32], b: &[u8], blend: f32) {
     if blend <= 0.0 {
     } else if blend >= 1.0 {
