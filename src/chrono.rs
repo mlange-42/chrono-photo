@@ -1,4 +1,4 @@
-//! Processes time-sliced data produced by [`TimeSlicer`](./time_slice/struct.TimeSlicer.html).
+//! Outlier chrono-photo algorithm for processing time-sliced data produced by [`TimeSlicer`](./time_slice/struct.TimeSlicer.html).
 use crate::color;
 use crate::options::{BackgroundMode, Fade, OutlierSelectionMode, Threshold};
 use crate::slicer::SliceLength;
@@ -27,7 +27,7 @@ struct ThreadData {
     rng: ThreadRng,
 }
 
-/// Core processor for image analysis.
+/// Core processor for image analysis with outlier algorithm.
 /// Analysis is based on files as created by [`TimeSlicer`](./time_slice/struct.TimeSlicer.html).
 pub struct OutlierProcessor {
     threshold: Threshold,
@@ -94,6 +94,7 @@ impl OutlierProcessor {
             println!("Processing {} time slices", files.len());
         }
         let bar = ProgressBar::new(files.len() as u64);
+        bar.set_draw_delta((files.len() / 200) as u64);
         for (out_row, file) in files.iter().enumerate() {
             if show_progress {
                 bar.inc(1);
@@ -183,11 +184,6 @@ impl OutlierProcessor {
 
                 let pix_offset = buff_row_start + col as usize * channels;
 
-                /*let coord = (
-                    (pix_offset % layout.height_stride) as usize / channels,
-                    (pix_offset / layout.height_stride) as usize,
-                );*/
-
                 let (blend, warning) =
                     self.calc_pixel(&pixel_data, &mut pixel, frame_offset as i32);
                 if warning {
@@ -244,11 +240,6 @@ impl OutlierProcessor {
                 }
             }
         }
-        /*for (sample_idx, pix) in pixel_data.chunks(channels).enumerate() {
-            for (i, p) in pix.iter().enumerate() {
-                self.data.values[i * samples + sample_idx] = *p;
-            }
-        }*/
 
         // Calculate medians and inverse inter-quartile range
         for i in 0..channels {
@@ -370,24 +361,6 @@ impl OutlierProcessor {
                             (self.data.rng.gen_range(0, samples), false)
                         } else {
                             self.sample_excluded(samples, num_outliers).unwrap()
-                            /*
-                            match self.sample_excluded(samples, num_outliers) {
-                                Ok(value) => value,
-                                Err(err) => {
-                                    println!(
-                                        "{:?}",
-                                        &self.data.outlier_indices[..num_outliers]
-                                            .iter()
-                                            .map(|v| v.1.sqrt())
-                                            .collect::<Vec<_>>()
-                                    );
-                                    for pix in pixel_data.chunks(channels) {
-                                        println!("{:?}", pix);
-                                    }
-                                    println!("Median: {:?}", median);
-                                    panic!("Problem at pixel {:?}: {:?}", coord, err)
-                                }
-                            }*/
                         }
                     }
                     _ => (0, false),

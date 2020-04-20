@@ -7,10 +7,13 @@ use crate::ParseEnumError;
 use image::flat::SampleLayout;
 use indicatif::ProgressBar;
 use num_traits::PrimInt;
+use rand::Rng;
 use rayon::prelude::*;
 use std::fmt;
 use std::path::PathBuf;
 use std::str::FromStr;
+
+const HEX_CHARS: &str = "0123456789abcdef";
 
 #[derive(Debug, Clone)]
 pub enum SliceLength {
@@ -111,6 +114,12 @@ where
         assert!(temp_dir.is_dir());
         let size_hint = images.len();
 
+        let mut rng = rand::thread_rng();
+        let chars: Vec<char> = HEX_CHARS.chars().collect();
+        let id: String = (0..12)
+            .map(|_| chars[rng.gen_range(0, chars.len())])
+            .collect();
+
         let mut layout: Option<SampleLayout> = None;
         let mut slicing: Option<(usize, usize)> = None;
         let mut count = 0;
@@ -121,6 +130,7 @@ where
         let mut total_files = 0;
         println!("Time-slicing {} images", size_hint);
         let bar = ProgressBar::new(size_hint as u64);
+        bar.set_draw_delta((size_hint / 200) as u64);
         for (img_index, img) in images.enumerate() {
             bar.inc(1);
 
@@ -163,17 +173,15 @@ where
                     (0..slice_count)
                         .map(|i| {
                             let mut path = PathBuf::from(&temp_dir);
-                            path.push(format!("temp-{:05}.bin", i));
+                            path.push(format!("temp-{}-{:05}.bin", id, i));
                             (i, path)
                         })
                         .collect(),
                 );
             }
 
-            let stride = slice_bytes; //lay.height_stride;
+            let stride = slice_bytes;
             let num_sample = pix.samples.len();
-            //for (row, stream) in out_streams.as_mut().unwrap().iter_mut().enumerate() {
-            /*for (row, path) in */
             total_bytes += files
                 .as_ref()
                 .unwrap()
@@ -210,15 +218,10 @@ where
                 (0..total_files)
                     .map(|i| {
                         let mut path = PathBuf::from(&temp_dir);
-                        path.push(format!("temp-{:05}.bin", i));
+                        path.push(format!("temp-{}-{:05}.bin", id, i));
                         path
                     })
                     .collect(),
-                /*out_streams
-                .unwrap()
-                .iter()
-                .map(|stream| stream.path().clone())
-                .collect(),*/
                 layout.unwrap(),
                 size_hint,
             ))

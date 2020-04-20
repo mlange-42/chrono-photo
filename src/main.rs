@@ -10,11 +10,11 @@ use chrono_photo::streams::{Compression, ImageStream};
 use image::flat::SampleLayout;
 use indicatif::ProgressBar;
 use rayon::prelude::*;
-use std::cmp;
 use std::fs::File;
 use std::option::Option::Some;
 use std::path::PathBuf;
 use std::time::Instant;
+use std::{cmp, env, fs};
 use structopt::StructOpt;
 
 fn main() {
@@ -44,8 +44,18 @@ fn main() {
         shake_reduction: Some(ShakeReduction::new(vec![(772, 971), (1109, 539)], 10, 20)),
         debug: true,
     };*/
-
-    let args: CliParsed = Cli::from_args().parse().unwrap();
+    let args: Vec<String> = env::args().collect();
+    let mut args: CliParsed = if args.len() == 2 && !args[1].starts_with('-') {
+        let mut content = fs::read_to_string(&args[1]).expect(&format!(
+            "Something went wrong reading the options file {:?}",
+            &args[1]
+        ));
+        content = "chrono-photo ".to_string() + &content.replace("\r\n", " ").replace("\n", " ");
+        let cli: Cli = content.parse().unwrap();
+        cli.parse().unwrap()
+    } else {
+        Cli::from_args().parse().unwrap()
+    };
 
     if args.debug {
         println!("{:#?}", args);
@@ -89,15 +99,20 @@ fn main() {
     }
 
     if args.mode == SelectionMode::Outlier {
-        run_outliers(args, &crop);
+        run_outliers(&mut args, &crop);
     } else {
-        run_simple(args, &crop);
+        run_simple(&mut args, &crop);
     }
 
     println!("Total time: {:?}", start.elapsed());
+
+    if args.wait {
+        dont_disappear::any_key_to_continue::default();
+    }
 }
 
-fn run_simple(mut args: CliParsed, crop: &Option<Vec<Crop>>) {
+/// Runs the simple algorithm to image or video
+fn run_simple(args: &mut CliParsed, crop: &Option<Vec<Crop>>) {
     let lister = FileLister::new(&args.pattern, &args.frames);
     let files = lister.files_vec().expect(&format!(
         "Unable to process search pattern {:?}",
@@ -122,7 +137,8 @@ fn run_simple(mut args: CliParsed, crop: &Option<Vec<Crop>>) {
     }
 }
 
-fn run_outliers(mut args: CliParsed, crop: &Option<Vec<Crop>>) {
+/// Runs the outlier algorithm to image or video
+fn run_outliers(args: &mut CliParsed, crop: &Option<Vec<Crop>>) {
     // Determine temp directory
     if args.temp_dir.is_none() {
         let mut dir = std::env::temp_dir();
@@ -193,6 +209,7 @@ fn run_outliers(mut args: CliParsed, crop: &Option<Vec<Crop>>) {
     // Delete temp file
     println!("Deleting {} time slices", temp_files.len());
     let bar = ProgressBar::new(temp_files.len() as u64);
+    bar.set_draw_delta((temp_files.len() / 200) as u64);
     for file in &temp_files {
         bar.inc(1);
         match std::fs::remove_file(file) {
@@ -203,6 +220,7 @@ fn run_outliers(mut args: CliParsed, crop: &Option<Vec<Crop>>) {
     bar.finish_and_clear();
 }
 
+/// Runs the outlier algorithm to video
 fn create_video(
     args: &CliParsed,
     files: &[PathBuf],
@@ -322,6 +340,7 @@ fn create_video(
     });
 }
 
+/// Runs the simple algorithm to video
 fn create_video_simple(
     args: &CliParsed,
     files: &[PathBuf],
@@ -441,6 +460,7 @@ fn name_and_extension(path: &PathBuf) -> Option<(String, String)> {
     Some((stem.unwrap().to_string(), ext.unwrap().to_string()))
 }
 
+/// Runs the outlier algorithm to image
 fn create_frame(
     args: &CliParsed,
     files: &[PathBuf],
@@ -481,6 +501,7 @@ fn create_frame(
     }
 }
 
+/// Runs the outlier algorithm to image
 fn create_frame_simple(
     args: &CliParsed,
     files: &[PathBuf],
@@ -505,6 +526,7 @@ fn create_frame_simple(
     save_image(&buff, &layout, &output, args.quality);
 }
 
+/// Saves an image buffer to a file
 fn save_image(buffer: &[u8], layout: &SampleLayout, out_path: &PathBuf, quality: u8) {
     let ext = out_path
         .extension()
@@ -552,6 +574,7 @@ fn save_image(buffer: &[u8], layout: &SampleLayout, out_path: &PathBuf, quality:
     }
 }
 
+/// Time-slices images
 fn to_time_slices(
     image_pattern: &str,
     crop: &Option<Vec<Crop>>,

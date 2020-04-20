@@ -1,3 +1,5 @@
+//! Data structures for options of the tool
+
 use crate::{ParseEnumError, ParseOptionError};
 use std::str::FromStr;
 
@@ -28,9 +30,12 @@ impl FromStr for SelectionMode {
     }
 }
 
+/// Fade extrapolation mode
 #[derive(Debug, PartialEq, Clone)]
 pub enum FadeMode {
+    /// Repeat the transition
     Repeat,
+    /// Clamp outside of original range
     Clamp,
     //RepeatMirror, TODO
 }
@@ -50,6 +55,7 @@ impl FromStr for FadeMode {
     }
 }
 
+/// Fade options
 #[derive(Debug, Clone)]
 pub struct Fade {
     is_none: bool,
@@ -59,7 +65,7 @@ pub struct Fade {
     values: Vec<f32>,
 }
 impl Fade {
-    /// Expects vector of (frame, value) pairs, ordered by frame
+    /// Expects vector of (frame, value) pairs, ordered by frame.
     pub fn new(mode: FadeMode, absolute: bool, frames: Vec<(i32, f32)>) -> Self {
         let offset = frames[0].0;
         let len = (frames
@@ -87,6 +93,7 @@ impl Fade {
         }
     }
 
+    /// An empty fade (all 100%)
     pub fn none() -> Self {
         Fade {
             is_none: true,
@@ -97,10 +104,12 @@ impl Fade {
         }
     }
 
+    /// Is this fade absolute?
     pub fn absolute(&self) -> bool {
         self.absolute
     }
 
+    /// Get the blend/fade value for a given frame.
     pub fn get(&self, frame: i32) -> f32 {
         if self.is_none {
             return 1.0;
@@ -175,7 +184,7 @@ impl FromStr for Fade {
     }
 }
 
-/// Outlier determination algorithm.
+/// Outlier algorithm threshold.
 #[derive(Debug, Clone)]
 pub struct Threshold {
     absolute: bool,
@@ -184,6 +193,7 @@ pub struct Threshold {
     scale: f32,
 }
 impl Threshold {
+    /// Creates a new treshold.
     pub fn new(absolute: bool, min: f32, max: f32) -> Self {
         if absolute {
             Threshold {
@@ -201,12 +211,15 @@ impl Threshold {
             }
         }
     }
+    /// Creates a new absolute treshold.
     pub fn abs(min: f32, max: f32) -> Self {
         Threshold::new(true, min, max)
     }
+    /// Creates a new relative treshold.
     pub fn rel(min: f32, max: f32) -> Self {
         Threshold::new(false, min, max)
     }
+    /// Returns the blend value for a certain distance of an outlier (or non-outlier).
     pub fn blend_value(&self, dist: f32) -> f32 {
         if dist <= self.min {
             0.0
@@ -216,12 +229,15 @@ impl Threshold {
             (dist - self.min) * self.scale
         }
     }
+    /// Is this treshold absolute?
     pub fn absolute(&self) -> bool {
         self.absolute
     }
+    /// Lower threshold (start of blending).
     pub fn min(&self) -> f32 {
         self.min
     }
+    /// Upper threshold (end of blending).
     pub fn max(&self) -> f32 {
         self.max
     }

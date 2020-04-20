@@ -13,6 +13,8 @@
   * [--shake](#--shake) &nbsp; [--shake-anchors](#--shake-anchors)
 * [Performance](#performance)
   * [--threads](#--threads) &nbsp; [--video-threads](#--video-threads) &nbsp; [--sample](#--sample) &nbsp; [--compression](#--compression) &nbsp; [--slice](#--slice)
+* [Misc](#misc)
+  * [--debug](#--debug) &nbsp; [--wait](#--wait)
 
 ## Input and output
 
@@ -160,7 +162,7 @@ _Default:_ `1 1 1 1`
 
 #### `--fade`
 
-_Optional._ Allows for fading outlier blending over frames. Format (clamp|repeat)/(abs/rel)/f,v/f,v[/f,v...]
+_Optional._ Allows for fading outlier blending over frames. Format `(clamp|repeat)/(abs/rel)/f,v/f,v[/f,v...]`
 
 Parts between `/` are:
 1. Fading mode: `clamp` or `repeat`. Specifies how frames outside the given fade transition are treated.
@@ -331,3 +333,15 @@ Examples:
 --slice count/100      -> Internally determines the amount of data written, in order to create 
                           a total of 100 time slices.
 ```
+
+## Misc
+
+#### `--debug`
+
+_Optional._ Switch to print the parsed command line arguments for debugging.
+
+#### `--wait`
+
+_Optional._ Switch to keep the terminal open and wait for user key press.
+Useful when running a `.bat`, `.sh` or `.chrono` file by double click,
+to let the user check for errors.

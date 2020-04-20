@@ -1,3 +1,4 @@
+//! Outlier chrono-photo algorithm.
 use crate::color;
 use crate::options::Fade;
 use crate::shake::Crop;
@@ -6,6 +7,7 @@ use indicatif::ProgressBar;
 use rayon::prelude::*;
 use std::path::PathBuf;
 
+/// Core processor for image analysis with the simple algorithm.
 pub struct SimpleProcessor {
     weights: [f32; 4],
     fade: Fade,
@@ -136,6 +138,7 @@ impl SimpleProcessor {
         match image_indices {
             Some(indices) => {
                 let bar = ProgressBar::new(indices.len() as u64);
+                bar.set_draw_delta((indices.len() / 200) as u64);
                 for (i, index) in indices.iter().enumerate() {
                     if show_progress {
                         bar.inc(1);
@@ -148,6 +151,7 @@ impl SimpleProcessor {
             }
             None => {
                 let bar = ProgressBar::new(files.len() as u64);
+                bar.set_draw_delta((files.len() / 200) as u64);
                 for (i, file) in files.iter().enumerate() {
                     if show_progress {
                         bar.inc(1);
