@@ -9,6 +9,7 @@ use chrono_photo::slicer::{SliceLength, TimeSliceError, TimeSlicer};
 use chrono_photo::streams::{Compression, ImageStream};
 use image::flat::SampleLayout;
 use indicatif::ProgressBar;
+use path_absolutize::*;
 use rayon::prelude::*;
 use std::fs::File;
 use std::option::Option::Some;
@@ -19,32 +20,16 @@ use structopt::StructOpt;
 
 fn main() {
     let start = Instant::now();
+    let test = false;
 
-    /*let args = CliParsed {
-        pattern: "C:\\Data\\Private\\Photos\\2020-04-17_Fabian_Chrono\\images_001\\*.jpg"
-            .to_string(),
-        frames: None,
-        video_in: None,
-        video_out: None,
-        temp_dir: Some(PathBuf::from("test_data/temp")),
-        output: PathBuf::from("test_data/out.jpg"),
-        output_blend: None,
-        mode: SelectionMode::Outlier,
-        threshold: Threshold::abs(0.05, 0.2),
-        outlier: OutlierSelectionMode::Extreme,
-        background: BackgroundMode::First,
-        compression: Compression::GZip(6),
-        quality: 98,
-        slice: SliceLength::Rows(1),
-        sample: None,
-        threads: Some(1),
-        video_threads: Some(1),
-        fade: Fade::none(),
-        weights: [0.0, 1.0, 1.0, 0.0],
-        shake_reduction: Some(ShakeReduction::new(vec![(772, 971), (1109, 539)], 10, 20)),
-        debug: true,
-    };*/
-    let args: Vec<String> = env::args().collect();
+    let args: Vec<String> = if test {
+        vec![
+            "chrono-photo".to_string(),
+            "cmd_examples/path-test.chrono".to_string(),
+        ]
+    } else {
+        env::args().collect()
+    };
     let mut args: CliParsed = if args.len() == 2 && !args[1].starts_with('-') {
         let mut content = fs::read_to_string(&args[1]).expect(&format!(
             "Something went wrong reading the options file {:?}",
@@ -146,13 +131,17 @@ fn run_outliers(args: &mut CliParsed, crop: &Option<Vec<Crop>>) {
         dir.push("chrono-photo");
         args.temp_dir = Some(dir);
     }
-    let temp_dir = args.temp_dir.as_ref().unwrap();
+    let rel_temp_dir = args.temp_dir.as_ref().unwrap();
+    let temp_dir = rel_temp_dir.absolutize().expect(&format!(
+        "Unable to convert to absolte path: {:?}",
+        rel_temp_dir
+    ));
     print!("Temp directory: {:?}", temp_dir);
 
     // Create temp dir (only 1 level of creation depth)
     if !temp_dir.is_dir() {
-        std::fs::create_dir(temp_dir)
-            .expect(&format!("Unable to create temp directory {:?}", temp_dir));
+        std::fs::create_dir(&temp_dir)
+            .expect(&format!("Unable to create temp directory {:?}", &temp_dir));
         println!(" -> created.");
     } else {
         println!();
@@ -529,24 +518,30 @@ fn create_frame_simple(
 
 /// Saves an image buffer to a file
 fn save_image(buffer: &[u8], layout: &SampleLayout, out_path: &PathBuf, quality: u8) {
-    let ext = out_path
+    let abs_path = out_path.absolutize().expect(&format!(
+        "Unable to convert to absolte path: {:?}",
+        out_path
+    ));
+
+    let ext = abs_path
         .extension()
         .expect("Expects an extension for output file to determine image format.")
         .to_str()
         .expect("Expects Unicode encoding for output file.")
         .to_lowercase();
 
-    let parent = out_path
+    let parent = abs_path
         .parent()
-        .expect(&format!("Not a valid output path: {:?}", out_path));
+        .expect(&format!("Not a valid output path: {:?}", abs_path));
+
     if !parent.is_dir() {
         std::fs::create_dir(parent)
             .expect(&format!("Unable to create output directory {:?}", parent));
     }
 
     if ext == "jpg" || ext == "jpeg" {
-        let mut file = File::create(&out_path)
-            .expect(&format!("Unable to create output file {:?}.", &out_path));
+        let mut file = File::create(&abs_path)
+            .expect(&format!("Unable to create output file {:?}.", &abs_path));
         let mut enc = image::jpeg::JPEGEncoder::new_with_quality(&mut file, quality);
         enc.encode(
             &buffer,
@@ -558,10 +553,10 @@ fn save_image(buffer: &[u8], layout: &SampleLayout, out_path: &PathBuf, quality:
                 image::ColorType::Rgb8
             },
         )
-        .expect(&format!("Unable to write output file {:?}.", &out_path));
+        .expect(&format!("Unable to write output file {:?}.", &abs_path));
     } else {
         image::save_buffer(
-            &out_path,
+            &abs_path,
             &buffer,
             layout.width,
             layout.height,
@@ -571,7 +566,7 @@ fn save_image(buffer: &[u8], layout: &SampleLayout, out_path: &PathBuf, quality:
                 image::ColorType::Rgb8
             },
         )
-        .expect(&format!("Unable to save output file {:?}", &out_path));
+        .expect(&format!("Unable to save output file {:?}", &abs_path));
     }
 }
 

@@ -212,7 +212,9 @@ where
         }*/
 
         if count == 0 {
-            Err(TimeSliceError("No images found for pattern {}".to_string()))
+            Err(TimeSliceError(
+                "No images found for given pattern".to_string(),
+            ))
         } else {
             Ok((
                 (0..total_files)
