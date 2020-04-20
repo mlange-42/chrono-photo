@@ -81,6 +81,7 @@ fn main() {
                     red.anchors(),
                     red.anchor_radius(),
                     red.search_radius(),
+                    args.shake_threads,
                     true,
                 )
                 .expect("Shake analysis failed!"),

@@ -112,6 +112,11 @@ pub struct Cli {
     #[structopt(long, name = "video-threads", value_name = "num")]
     video_threads: Option<usize>,
 
+    /// Number of threads for camera shake reduction. Optional, default equal to number of processors.
+    /// Limiting this may be required if memory usage is too high.
+    #[structopt(long, name = "shake-threads", value_name = "num")]
+    shake_threads: Option<usize>,
+
     /// Camera shake reduction parameters. Optional, default none.
     /// Format: `anchor-radius/shake-radius`
     #[structopt(long, value_name = "r1/r2")]
@@ -211,6 +216,7 @@ impl Cli {
             fade: self.fade.unwrap_or(Fade::none()),
             threads: self.threads,
             video_threads: self.video_threads,
+            shake_threads: self.shake_threads,
             shake_reduction: shake_params.and_then(|shake| {
                 shake_anchors.and_then(|anchors| {
                     Some(ShakeReduction::new(
@@ -304,6 +310,8 @@ pub struct CliParsed {
     pub threads: Option<usize>,
     /// Number of threads for parallel video frame output. Optional, default equal to number of processors.
     pub video_threads: Option<usize>,
+    /// Number of threads for camera shake reduction. Optional, default equal to number of processors.
+    pub shake_threads: Option<usize>,
     /// Shake reduction
     pub shake_reduction: Option<ShakeReduction>,
     /// Print debug information (i.e. parsed cmd parameters).
