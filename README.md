@@ -1,5 +1,7 @@
 # chrono-photo
 
+[![Build Status](https://travis-ci.com/mlange-42/chrono-photo.svg?branch=master)](https://travis-ci.com/mlange-42/chrono-photo)
+
 Chronophotography command line tool and library in [Rust](https://www.rust-lang.org/).
 
 This tool helps to create chrono-photos like 
