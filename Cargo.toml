@@ -1,6 +1,6 @@
 [package]
 name = "chrono-photo"
-version = "0.6.3"
+version = "0.6.4"
 authors = ["m-lange <martin_lange_@gmx.net>"]
 edition = "2018"
 
