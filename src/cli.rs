@@ -317,7 +317,7 @@ pub struct CliParsed {
     /// Print debug information (i.e. parsed cmd parameters).
     pub debug: bool,
 
-    /// Keep the terminal open after processing and wait for user key press.
+    /// Keep the terminal and UI open after processing and wait for user key press.
     pub wait: bool,
 }
 
@@ -328,7 +328,7 @@ impl CliParsed {
     }
 }
 
-/// Error type for failed parsing of `String`s to `enum`s.
+/// Error type for failed parsing command line argument.
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub struct ParseCliError(String);
 

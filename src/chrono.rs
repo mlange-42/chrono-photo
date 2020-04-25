@@ -83,12 +83,10 @@ impl OutlierProcessor {
         let mut buffer = vec![0; layout.height as usize * layout.height_stride];
         let mut is_outlier = vec![0; layout.height as usize * layout.height_stride];
 
-        let mut pixel_data = Vec::new();
         let mut pixel = vec![0; channels];
 
         let mut warnings = 0;
         let slice_bytes = slices.bytes(&layout);
-        //let slice_count = slices.count(&layout);
 
         if show_progress {
             println!("Processing {} time slices", files.len());
@@ -150,9 +148,6 @@ impl OutlierProcessor {
                     }
                 }
             }
-            if pixel_data.len() != num_rows * channels {
-                pixel_data = vec![0; num_rows * channels];
-            }
             if self.sample_indices.is_empty() {
                 if let Some(cnt) = self.sample_count {
                     if cnt >= num_rows {
@@ -173,19 +168,15 @@ impl OutlierProcessor {
             }
             (0..(num_bytes / channels)).into_iter().for_each(|col| {
                 let col_offset = col as usize * channels;
-                for row in 0..num_rows {
-                    //let pix_start = row * layout.height_stride + col_offset;
-                    let pix_start = row * num_bytes + col_offset;
-                    for ch in 0..channels {
-                        let v = data[pix_start + ch];
-                        pixel_data[row * channels + ch] = v;
-                    }
-                }
-
                 let pix_offset = buff_row_start + col as usize * channels;
 
-                let (blend, warning) =
-                    self.calc_pixel(&pixel_data, &mut pixel, frame_offset as i32);
+                let (blend, warning) = self.calc_pixel(
+                    &data,
+                    col_offset,
+                    num_bytes,
+                    &mut pixel,
+                    frame_offset as i32,
+                );
                 if warning {
                     warnings += 1;
                 }
@@ -216,12 +207,14 @@ impl OutlierProcessor {
 
     fn calc_pixel(
         &mut self,
-        pixel_data: &[u8],
+        data: &[u8],
+        offset: usize,
+        stride: usize,
         mut pixel: &mut [u8],
         frame_offset: i32,
     ) -> (u8, bool) {
         let channels = pixel.len();
-        let samples = pixel_data.len() / channels;
+        let samples = data.len() / stride;
         let sub_samples = self.sample_indices.len();
 
         let threshold_sq = self.threshold.min() * self.threshold.min();
@@ -232,10 +225,10 @@ impl OutlierProcessor {
         // Prepare medians
         // TODO: allow restriction to a sample
         for (sample_idx, data_idx) in self.sample_indices.iter().enumerate() {
-            let idx = data_idx * channels;
+            let idx = data_idx * stride + offset;
             for ch in 0..channels {
                 if self.weights[ch] != 0.0 {
-                    let p = pixel_data[idx + ch];
+                    let p = data[idx + ch];
                     self.data.values[ch * sub_samples + sample_idx] = p;
                 }
             }
@@ -265,7 +258,9 @@ impl OutlierProcessor {
         let mut max_dist_sq = 0.0;
         let mut max_index = 0;
 
-        for (sample_idx, pix) in pixel_data.chunks(channels).enumerate() {
+        for sample_idx in 0..samples {
+            let pix_offset = sample_idx * stride + offset;
+            let pix = &data[pix_offset..(pix_offset + channels)];
             let mut dist_sq = 0.0;
             for (i, p) in pix.iter().enumerate() {
                 let w = self.weights[i];
@@ -282,7 +277,6 @@ impl OutlierProcessor {
                     };
                 }
             }
-            //println!("{:?}, {:?}", dist_sq.sqrt(), threshold_sq.sqrt());
             if dist_sq >= threshold_sq {
                 self.data.outlier_indices[num_outliers] = (sample_idx, dist_sq);
                 num_outliers += 1;
@@ -300,7 +294,9 @@ impl OutlierProcessor {
         match self.background {
             BackgroundMode::Average => {
                 let mut mean = [0.0; 4];
-                for pix in pixel_data.chunks(channels) {
+                for sample_idx in 0..samples {
+                    let pix_offset = sample_idx * stride + offset;
+                    let pix = &data[pix_offset..(pix_offset + channels)];
                     for (i, p) in pix.iter().enumerate() {
                         mean[i] += *p as f32;
                     }
@@ -310,8 +306,8 @@ impl OutlierProcessor {
                 }
                 if has_outliers {
                     if num_outliers == 1 {
-                        let offset = self.data.outlier_indices[0].0 * channels;
-                        let sample = &pixel_data[offset..(offset + channels)];
+                        let off = self.data.outlier_indices[0].0 * stride + offset;
+                        let sample = &data[off..(off + channels)];
                         for ch in 0..channels {
                             pixel[ch] = (mean[ch] * (samples as f32 / (samples - 1) as f32)
                                 - sample[ch] as f32 / samples as f32)
@@ -322,9 +318,9 @@ impl OutlierProcessor {
                         for (sample_idx, _dist_sq) in
                             self.data.outlier_indices.iter().take(num_outliers)
                         {
-                            let offset = sample_idx * channels;
+                            let off = sample_idx * stride + offset;
                             for ch in 0..channels {
-                                outlier_sum[ch] += pixel_data[offset + ch] as f32;
+                                outlier_sum[ch] += data[off + ch] as f32;
                             }
                         }
                         // TODO: check the equation again!
@@ -365,8 +361,8 @@ impl OutlierProcessor {
                     }
                     _ => (0, false),
                 };
-                let sample =
-                    &pixel_data[(sample_idx * channels)..(sample_idx * channels + channels)];
+                let off = sample_idx * stride + offset;
+                let sample = &data[off..(off + channels)];
 
                 for ch in 0..channels {
                     pixel[ch] = sample[ch];
@@ -383,8 +379,8 @@ impl OutlierProcessor {
             if num_outliers == 1 {
                 // Only one outlier
                 let (sample_idx, dist_sq) = self.data.outlier_indices[0];
-                let sample =
-                    &pixel_data[(sample_idx * channels)..(sample_idx * channels + channels)];
+                let off = sample_idx * stride + offset;
+                let sample = &data[off..(off + channels)];
 
                 let fade = self.fade(sample_idx as i32, samples as i32, frame_offset);
                 let blend = fade * self.threshold.blend_value(dist_sq.sqrt());
@@ -404,8 +400,8 @@ impl OutlierProcessor {
                         for (sample_idx, dist_sq) in
                             self.data.outlier_indices.iter().take(num_outliers)
                         {
-                            let offset = sample_idx * channels;
-                            let sample = &pixel_data[offset..(offset + channels)];
+                            let off = sample_idx * stride + offset;
+                            let sample = &data[off..(off + channels)];
                             // Blend outlier into background
                             let fade = self.fade(*sample_idx as i32, samples as i32, frame_offset);
                             let blend = fade * self.threshold.blend_value(dist_sq.sqrt());
@@ -416,8 +412,8 @@ impl OutlierProcessor {
                         for (sample_idx, dist_sq) in
                             self.data.outlier_indices.iter().take(num_outliers).rev()
                         {
-                            let offset = sample_idx * channels;
-                            let sample = &pixel_data[offset..(offset + channels)];
+                            let off = sample_idx * stride + offset;
+                            let sample = &data[off..(off + channels)];
                             // Blend outlier into background
                             let fade = self.fade(*sample_idx as i32, samples as i32, frame_offset);
                             let blend = fade * self.threshold.blend_value(dist_sq.sqrt());
@@ -436,12 +432,14 @@ impl OutlierProcessor {
                     {
                         if num_outliers == 1 {
                             let (sample_idx, dist_sq) = self.data.outlier_indices[0];
-                            let sample = &pixel_data
-                                [(sample_idx * channels)..(sample_idx * channels + channels)];
+                            let off = sample_idx * stride + offset;
+                            let sample = &data[off..(off + channels)];
                             (sample_idx, sample, dist_sq.sqrt())
                         } else {
                             let mut mean = [0.0; 4];
-                            for pix in pixel_data.chunks(channels) {
+                            for sample_idx in 0..samples {
+                                let pix_offset = sample_idx * stride + offset;
+                                let pix = &data[pix_offset..(pix_offset + channels)];
                                 for (i, p) in pix.iter().enumerate() {
                                     mean[i] += *p as f32;
                                 }
@@ -457,9 +455,9 @@ impl OutlierProcessor {
                             for (sample_idx, dist_sq) in
                                 self.data.outlier_indices.iter().take(num_outliers)
                             {
-                                let offset = sample_idx * channels;
+                                let off = sample_idx * stride + offset;
                                 for ch in 0..channels {
-                                    mean[ch] += pixel_data[offset + ch] as f32;
+                                    mean[ch] += data[off + ch] as f32;
                                 }
                                 mean_dist += dist_sq.sqrt();
                             }
@@ -479,8 +477,8 @@ impl OutlierProcessor {
                             | OutlierSelectionMode::AllForward
                             | OutlierSelectionMode::AllBackward => (0, 0.0),
                         };
-                        let sample = &pixel_data
-                            [(sample_idx * channels)..(sample_idx * channels + channels)];
+                        let off = sample_idx * stride + offset;
+                        let sample = &data[off..(off + channels)];
                         (sample_idx, sample, dist_sq.sqrt())
                     };
                     // Blend outlier into background
