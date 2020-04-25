@@ -1,5 +1,7 @@
 # chrono-photo
 
+[![Build Status](https://travis-ci.com/mlange-42/chrono-photo.svg?branch=master)](https://travis-ci.com/mlange-42/chrono-photo)
+
 Chronophotography command line tool and library in [Rust](https://www.rust-lang.org/).
 
 This tool helps to create chrono-photos like 
@@ -31,7 +33,9 @@ from photo series or ([later](#how-to-prepare-videos)) video footage.
 
 * Complete chrono-photography workflow in a single command
 * Create chrono-photos and chrono-videos
-* Different algorithms, maximum control
+* Different algorithms, maximum control:
+  * Powerful and flexible outlier-based core algorithm
+  * Simple and fast alternative algorithms
 * Process virtually unlimited amounts of images with minimal memory footprint
 * Camera shake correction
 * Multi-threading
