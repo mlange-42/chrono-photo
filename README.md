@@ -31,7 +31,9 @@ from photo series or ([later](#how-to-prepare-videos)) video footage.
 
 * Complete chrono-photography workflow in a single command
 * Create chrono-photos and chrono-videos
-* Different algorithms, maximum control
+* Different algorithms, maximum control:
+  * Powerful and flexible outlier-based core algorithm
+  * Simple and fast alternative algorithms
 * Process virtually unlimited amounts of images with minimal memory footprint
 * Camera shake correction
 * Multi-threading
