@@ -1,4 +1,4 @@
-..\target\release\chrono-photo ^
+..\chrono-photo ^
   --pattern "../test_data/generated/image-*.jpg" ^
   --video-in 0/5/2 ^
   --video-out ././. ^

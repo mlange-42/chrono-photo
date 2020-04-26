@@ -1,4 +1,4 @@
-..\target\release\chrono-photo ^
+..\chrono-photo ^
   --pattern "../test_data/generated/image-*.jpg" ^
   --frames ././1 ^
   --temp-dir ../test_data/temp ^
