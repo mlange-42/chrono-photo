@@ -1,4 +1,4 @@
-..\chrono-photo ^
+..\target\release\chrono-photo ^
   --pattern "../test_data/generated/image-*.jpg" ^
   --frames ././1 ^
   --temp-dir ../test_data/temp ^
@@ -7,11 +7,8 @@
   --mode outlier ^
   --threshold abs/0.05/0.2 ^
   --background first ^
-  --outlier extreme ^
+  --outlier forward ^
   --quality 98 ^
-  --compression gzip/6 ^
-  --slice rows/2 ^
-  --sample 20 ^
-  --weights 1 1 1 0 ^
+  --fade repeat/abs/0,1/5,0 ^
   --debug
 pause
