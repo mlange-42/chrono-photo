@@ -18,10 +18,18 @@ branches:
     - "/\\d+\\.\\d+\\.\\d+/"
 
 script:
-  - cargo build --release --verbose
+  - cargo build --release
   - cargo test --verbose
 
-cache: cargo
+# Need to cache the whole `.cargo` directory to keep .crates.toml for
+# cargo-update to work
+cache:
+  directories:
+    - /home/travis/.cargo
+
+# But don't cache the cargo registry
+before_cache:
+  - rm -rf /home/travis/.cargo/registry
 
 before_deploy:
   - rm -rf ${REPO} || exit 0
