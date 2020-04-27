@@ -346,7 +346,7 @@ mod test {
     fn args_from_string() {
         let str = "chrono-photo --pattern \"test_data/generated/*.jpg\" --output test_data/temp --weights 0 1 1 0";
         let cli: Cli = str.parse().unwrap();
-        let parsed = cli.parse().unwrap();
+        let _parsed = cli.parse().unwrap();
 
         //println!("{:#?}", parsed);
     }
