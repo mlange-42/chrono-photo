@@ -18,7 +18,7 @@ branches:
     - "/\\d+\\.\\d+\\.\\d+/"
 
 script:
-  - if [[ "$TRAVIS_OS_NAME" == "linux" ]]; cargo test --verbose; fi
+  - cargo test --verbose
   - cargo build --release
 
 # Need to cache the whole `.cargo` directory to keep .crates.toml for
