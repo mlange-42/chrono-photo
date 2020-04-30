@@ -15,7 +15,7 @@ branches:
   only:
     - master
     - dev
-    - "/\\d+\\.\\d+\\.\\d+/"
+    - "/^\\d+\\.\\d+\\.\\d+/"
 
 script:
   - cargo test --verbose
@@ -46,7 +46,7 @@ before_deploy:
 deploy:
   provider: releases
   skip_cleanup: true
-  api_key:
+  token:
     secure: Kgs3kGGo4mj837OAVV5AIVutrGX4Gv5JoNatuoYJs7aTIQSIvnAfaZ7abUDDns2Q4baxSM6oKzIRMpJGnf+IO1BHiL3v2Pr3UyZZzLqNra1KCtFL6tw/YpB8e8ZTRg4jinEXzI58LXfPPW8XfDl1QPf4k7TzINrJIq/hyb8CYbJKqQ61okMadkGW0fc/Pnkj1YgXr+Jq2WVIVxgh3gojJIDVE+Hc4ykPiyrQCB5Y3T61HBhyKFU9HyOM3EwBNjqlAIB7j/cVh9Ltcg97FEEyVdx0xWaDvMLAlq6VqzYGDp989uoBnq7L/7UId9AAFy13gooZsjEFd8yJ/ASoqr8pi+11GweWxVw7waWZifGwOE2UZZJLfPnUOgtMSaRODBsW8PFVlzi3rd5D8hLDN6profTRiu6XjcQxyG9mpMqfVOZJvd1DxhtBeOhzYTxPVnl/6wCQHwB4KdjlqyBp1hL1zi2i/Be9RCdHU/lCSt2UPU169FFxHG+XIbq/SIAki/+9wTtFw6EHgX201udcaRMVxnr32c4iT2w6zimbKgdQ1rDL7QajeJM98LZE6jWPC/VWcIwgm56n4mbR0++e1wAuIaFV7fLf8uW2nXgG+QSSK1AqXWbIZMtTc8G7W48ghjvHPnNt9JArmYgNJFdD/s3icB4b7mmQVCJ8giH2vUwexYA=
   file: ${REPO}-${TRAVIS_TAG}-${TRAVIS_OS_NAME}.tar.gz
   on:
